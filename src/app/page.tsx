@@ -1,103 +1,142 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    setIsClient(true);
+    // Load chat history from local storage on initial render
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem('anemo-chat-history');
+      if (savedMessages) {
+        setMessages(JSON.parse(savedMessages));
+      } else {
+        // Add a default welcome message if no history exists
+        setMessages([{ role: 'system', content: "Hello! I'm anemo.ai, your personal support assistant. How can I help you today?" }]);
+      }
+    }
+  }, []);
+
+  const sendMessage = async () => {
+    if (input.trim() === '') return;
+
+    const newMessage = { role: 'user', content: input };
+    setMessages(prevMessages => [...prevMessages, newMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: [...messages, newMessage] }),
+      });
+
+      const data = await response.json();
+      if (data.data) {
+        setMessages(prevMessages => [...prevMessages, data.data]);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    // Save chat history to local storage whenever messages or loading state changes
+    if (isClient) {
+      localStorage.setItem('anemo-chat-history', JSON.stringify(messages));
+    }
+    // Scroll to the bottom to show the latest message
+    scrollToBottom();
+  }, [messages, loading, isClient]);
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans antialiased relative">
+      <main className="flex-grow p-4 md:p-8 overflow-y-auto">
+        <div className="flex flex-col space-y-4 w-full max-w-4xl mx-auto">
+          <AnimatePresence initial={false}>
+            {messages.map((msg, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className={`p-4 rounded-xl max-w-lg shadow-lg ${
+                  msg.role === 'user' ? 'bg-blue-600 text-white self-end rounded-br-md' : 'bg-slate-700 text-white self-start rounded-bl-md'
+                }`}
+              >
+                <p className="font-medium leading-relaxed">{msg.content}</p>
+              </motion.div>
+            ))}
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="p-4 rounded-xl bg-slate-700 self-start text-white shadow-lg max-w-lg"
+              >
+                <div className="flex items-center space-x-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                  </span>
+                  <p>AI is typing...</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {/* This spacer ensures the last message is visible above the input box */}
+          <div className="h-48" />
+          <div ref={messagesEndRef} />
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+      {/* Floating Input Box */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 flex items-center justify-center z-10">
+        <div className="w-full max-w-4xl flex space-x-4">
+          <input
+            type="text"
+            className="flex-grow p-4 rounded-full border border-slate-700 bg-slate-700/60 backdrop-blur-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                sendMessage();
+              }
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <motion.button
+            onClick={sendMessage}
+            className="p-4 rounded-full bg-blue-600 text-white font-semibold flex-shrink-0 flex items-center justify-center hover:bg-blue-700 transition-colors duration-200"
+            initial={{ scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Send message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+            </svg>
+          </motion.button>
+        </div>
+      </div>
     </div>
   );
 }
+
+
