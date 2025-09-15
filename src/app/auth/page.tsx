@@ -1,35 +1,40 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from 'next/navigation'; // <-- Add this import
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@lib/supabaseClient';
 
 export default function AuthPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const router = useRouter(); // <-- Add this line
+  const [message, setMessage] = useState('');
+  const router = useRouter();
 
   const handleSignup = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setMessage(error ? error.message : "Check your email for confirmation!");
-    setLoading(false);
+    setMessage('');
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+      setMessage(error ? error.message : 'Check your email for confirmation!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogin = async () => {
     setLoading(true);
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (user) {
-      // <-- Add this block to redirect on successful login
-      router.push('/dashboard');
-    } else {
-      setMessage(error ? error.message : "Login failed!");
+    setMessage('');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (data?.user) {
+        router.push('/dashboard');
+      } else {
+        setMessage(error ? error.message : 'Login failed!');
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
