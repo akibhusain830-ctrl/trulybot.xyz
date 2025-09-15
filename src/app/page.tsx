@@ -1,142 +1,147 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion'
 
-export default function Home() {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    // Load chat history from local storage on initial render
-    if (typeof window !== 'undefined') {
-      const savedMessages = localStorage.getItem('anemo-chat-history');
-      if (savedMessages) {
-        setMessages(JSON.parse(savedMessages));
-      } else {
-        // Add a default welcome message if no history exists
-        setMessages([{ role: 'system', content: "Hello! I'm anemo.ai, your personal support assistant. How can I help you today?" }]);
-      }
-    }
-  }, []);
-
-  const sendMessage = async () => {
-    if (input.trim() === '') return;
-
-    const newMessage = { role: 'user', content: input };
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: [...messages, newMessage] }),
-      });
-
-      const data = await response.json();
-      if (data.data) {
-        setMessages(prevMessages => [...prevMessages, data.data]);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    // Save chat history to local storage whenever messages or loading state changes
-    if (isClient) {
-      localStorage.setItem('anemo-chat-history', JSON.stringify(messages));
-    }
-    // Scroll to the bottom to show the latest message
-    scrollToBottom();
-  }, [messages, loading, isClient]);
-
+export default function HomePage() {
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans antialiased relative">
-      <main className="flex-grow p-4 md:p-8 overflow-y-auto">
-        <div className="flex flex-col space-y-4 w-full max-w-4xl mx-auto">
-          <AnimatePresence initial={false}>
-            {messages.map((msg, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className={`p-4 rounded-xl max-w-lg shadow-lg ${
-                  msg.role === 'user' ? 'bg-blue-600 text-white self-end rounded-br-md' : 'bg-slate-700 text-white self-start rounded-bl-md'
-                }`}
-              >
-                <p className="font-medium leading-relaxed">{msg.content}</p>
-              </motion.div>
-            ))}
-            {loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="p-4 rounded-xl bg-slate-700 self-start text-white shadow-lg max-w-lg"
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                  </span>
-                  <p>AI is typing...</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {/* This spacer ensures the last message is visible above the input box */}
-          <div className="h-48" />
-          <div ref={messagesEndRef} />
-        </div>
-      </main>
+    <main className="relative min-h-screen font-sans text-white overflow-hidden bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-black">
+      {/* Radial Glow */}
+      <div className="absolute top-1/3 left-1/2 w-[700px] h-[700px] bg-blue-600/30 rounded-full blur-3xl opacity-40 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0" />
 
-      {/* Floating Input Box */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 flex items-center justify-center z-10">
-        <div className="w-full max-w-4xl flex space-x-4">
-          <input
-            type="text"
-            className="flex-grow p-4 rounded-full border border-slate-700 bg-slate-700/60 backdrop-blur-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-            placeholder="Type your message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                sendMessage();
-              }
-            }}
-          />
-          <motion.button
-            onClick={sendMessage}
-            className="p-4 rounded-full bg-blue-600 text-white font-semibold flex-shrink-0 flex items-center justify-center hover:bg-blue-700 transition-colors duration-200"
-            initial={{ scale: 1 }}
-            whileHover={{ scale: 1.1 }}
+      {/* Navbar */}
+      <header className="flex justify-between items-center px-6 py-4 border-b border-slate-800 backdrop-blur-md bg-[#0f0f0f]/80 sticky top-0 z-10">
+        <div className="text-xl font-bold tracking-tight">anemo.ai</div>
+        <nav className="space-x-6 text-sm text-slate-300">
+          <a href="#features" className="hover:text-white transition">Features</a>
+          <a href="#pricing" className="hover:text-white transition">Pricing</a>
+          <a href="/about" className="hover:text-white transition">About</a>
+          <a href="/sign-in" className="bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-700 transition">Sign In</a>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative text-center px-6 py-24 z-10">
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-blue-400 to-white bg-clip-text text-transparent tracking-tight leading-snug mb-6"
+        >
+          India’s Smartest AI Chatbot for E-Commerce
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-slate-400 text-lg max-w-2xl mx-auto mb-8"
+        >
+          Paste your business info — FAQs, pricing, policies — and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers.
+        </motion.p>
+        <div className="flex justify-center gap-4">
+          <motion.a
+            href="/dashboard"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            aria-label="Send message"
+            className="bg-blue-600/80 backdrop-blur-md px-6 py-3 rounded-lg text-white font-semibold hover:bg-blue-700 transition-all duration-200 shadow-lg"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-            </svg>
-          </motion.button>
+            Try it Free
+          </motion.a>
+          <motion.a
+            href="/widget?user=demo"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="border border-slate-600/60 backdrop-blur-md px-6 py-3 rounded-lg text-white font-semibold hover:border-white transition-all duration-200 shadow-lg"
+          >
+            View Demo
+          </motion.a>
         </div>
-      </div>
-    </div>
-  );
-}
+      </section>
 
+      {/* Features */}
+      <section id="features" className="px-6 py-16 max-w-4xl mx-auto z-10 relative">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-2xl font-semibold mb-6 text-center"
+        >
+          How It Works
+        </motion.h2>
+        <div className="grid md:grid-cols-3 gap-6 text-center">
+          {[
+            { title: '✍️ Paste Your Content', desc: 'Add your FAQs, pricing, policies, or onboarding info manually.' },
+            { title: '🤖 Train Your Bot', desc: 'We instantly convert your content into a smart, searchable assistant.' },
+            { title: '🔗 Embed Anywhere', desc: 'Copy one line of code to add your chatbot to any website.' },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.2 }}
+              viewport={{ once: true }}
+              className="bg-[#1a1a1a]/60 backdrop-blur-lg border border-slate-700 p-6 rounded-xl shadow-xl hover:shadow-2xl transition"
+            >
+              <h3 className="font-bold mb-2">{item.title}</h3>
+              <p className="text-slate-400 text-sm">{item.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="px-6 py-16 bg-[#121212]/80 border-t border-slate-800 relative z-10">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-2xl font-semibold mb-6 text-center"
+        >
+          Pricing Plans
+        </motion.h2>
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {[
+            { name: 'Free', desc: '3 content blocks · 100 messages/month', price: '₹0', cta: 'Start Free' },
+            { name: 'Pro', desc: 'Unlimited content · Branding · Analytics', price: '₹499/mo', cta: 'Upgrade' },
+            { name: 'Agency', desc: 'Multi-org · Team access · Priority support', price: 'Custom', cta: 'Contact Us' },
+          ].map((plan, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.2 }}
+              viewport={{ once: true }}
+              className="bg-[#1a1a1a]/60 backdrop-blur-lg border border-slate-700 p-6 rounded-xl text-center shadow-xl hover:shadow-2xl transition"
+            >
+              <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
+              <p className="text-slate-400 text-sm mb-4">{plan.desc}</p>
+              <div className="text-2xl font-bold mb-4">{plan.price}</div>
+              <a
+                href={plan.name === 'Agency' ? '#contact' : '/dashboard'}
+                className={`px-4 py-2 rounded text-sm font-semibold ${
+                  plan.name === 'Agency'
+                    ? 'border border-slate-600 text-white hover:border-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                } transition`}
+              >
+                {plan.cta}
+              </a>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800 relative z-10">
+        <p>Made in India 🇮🇳 · Built for Indian businesses · © {new Date().getFullYear()} anemo.ai</p>
+        <div className="mt-2 space-x-4">
+          <a href="/about" className="hover:text-white transition">About</a>
+          <a href="#pricing" className="hover:text-white transition">Pricing</a>
+          <a href="/sign-in" className="hover:text-white transition">Sign In</a>
+        </div>
+      </footer>
+    </main>
+  )
+}
 
