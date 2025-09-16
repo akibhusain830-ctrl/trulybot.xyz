@@ -1,13 +1,21 @@
 'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
-// (The types and helper functions remain the same)
 type Role = 'bot' | 'user';
 type Message = { id: string; role: Role; text: string; at: number; error?: boolean };
+
 const STORAGE_KEY = 'anemo_conv_ui_final_v3';
 const INTRO_KEY = 'anemo_seen_intro_ui_final_v3';
-const SUGGESTIONS = [ 'How do I embed Anemo on my site?', 'What plans do you offer?', 'Can you answer product FAQs?' ];
-function uid() { return Math.random().toString(36).slice(2, 10); }
+const SUGGESTIONS = [
+  'How do I embed Anemo on my site?',
+  'What plans do you offer?',
+  'Can you answer product FAQs?'
+];
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -24,47 +32,40 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  
-  // (Standard useEffect hooks remain the same)
+
+  const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
+    setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
+  }, []);
+
   useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw) as Message[]; if (Array.isArray(parsed) && parsed.length) setMessages(parsed); } } catch {} }, []);
   useEffect(() => { try { if (messages.length) { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80))); } } catch {} }, [messages]);
-  useEffect(() => { const seen = localStorage.getItem(INTRO_KEY); if (!seen && messages.length === 0) { push('bot', "Hi — I'm Anemo, your support assistant. Ask about setup, pricing, or embedding."); localStorage.setItem(INTRO_KEY, '1'); } }, []);
-  useEffect(() => { requestAnimationFrame(() => { if (listRef.current) { listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }); } }); }, [messages, typing]);
-
-  // --- NEW: Advanced Auto-Focus Logic ---
+  
   useEffect(() => {
-    // Focus on initial load
-    textareaRef.current?.focus();
+    const seen = localStorage.getItem(INTRO_KEY);
+    if (!seen && messages.length === 0) {
+      push('bot', "Hi — I'm Anemo, your support assistant. Ask about setup, pricing, or embedding.");
+      localStorage.setItem(INTRO_KEY, '1');
+    }
+  }, [messages.length, push]);
 
-    // Add a global keydown listener to focus the input when the user starts typing
+  useEffect(() => { requestAnimationFrame(() => { if (listRef.current) { listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }); } }); }, [messages, typing]);
+  
+  useEffect(() => {
+    textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      // If the user is typing and not already in an input/textarea, focus our chat input
-      if (
-        document.activeElement !== textareaRef.current &&
-        !['INPUT', 'TEXTAREA'].includes(target.tagName) &&
-        e.key.length === 1 // Catches printable characters, ignores keys like Shift, Ctrl etc.
-      ) {
+      if ( document.activeElement !== textareaRef.current && !['INPUT', 'TEXTAREA'].includes(target.tagName) && e.key.length === 1 ) {
         textareaRef.current?.focus();
       }
     };
-
     window.addEventListener('keydown', handleGlobalKeyPress);
-
-    // Cleanup the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('keydown', handleGlobalKeyPress);
-    };
-  }, []); // Empty array ensures this runs only once on mount
-
-  const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => { setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]); }, []);
+    return () => { window.removeEventListener('keydown', handleGlobalKeyPress); };
+  }, []);
 
   const callApi = useCallback(async (prompt: string) => {
-    setErrorMsg(null);
     setLoading(true);
     setTyping(true);
     const messageHistory = [...messages, { role: 'user', text: prompt, id: 'temp', at: Date.now() }].slice(-8);
@@ -73,19 +74,17 @@ export default function ChatWidget() {
       const res = await fetchWithTimeout('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: messageHistory }) }, 12000);
       if (!res) throw new Error('No response');
       const json = await res.json().catch(() => null);
-      if (!res.ok || json?.error) { const msg = json?.error || `Server error ${res.status}`; push('bot', msg, { error: true }); setErrorMsg(msg); return; }
+      if (!res.ok || json?.error) { const msg = json?.error || `Server error ${res.status}`; push('bot', msg, { error: true }); return; }
       const reply = json?.reply?.toString().trim();
-      if (!reply) { push('bot', 'Assistant returned no content', { error: true }); setErrorMsg('Assistant returned no content'); return; }
+      if (!reply) { push('bot', 'Assistant returned no content', { error: true }); return; }
       push('bot', reply);
-    } catch (err: any) {
-      const isAbort = err?.name === 'AbortError';
-      const msg = isAbort ? 'Request timed out. Try again.' : err?.message || 'Network error';
+    } catch (err: unknown) {
+      const isAbort = (err as Error)?.name === 'AbortError';
+      const msg = isAbort ? 'Request timed out. Try again.' : (err as Error)?.message || 'Network error';
       push('bot', msg, { error: true });
-      setErrorMsg(msg);
     } finally {
       setLoading(false);
       setTyping(false);
-      // Re-focus the input after the bot replies
       textareaRef.current?.focus();
     }
   }, [messages, push]);
@@ -130,21 +129,25 @@ export default function ChatWidget() {
         </form>
       </div>
     <style>{`
-      /* The CSS styles from our last version remain the same */
       .anemo-chat-root {
         --bg-color: #000; --card-bg: #111; --border-color: #30363d; --text-primary: #e6edf3;
         --text-secondary: #7d8590; --accent-color: #2563eb; --bot-bubble-bg: #1c1c1c;
         --user-bubble-bg: #2563eb; --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; --border-radius: 24px;
       }
-      .anemo-chat-root { display: flex; justify-content: center; align-items: center; padding: 16px; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--bg-color); }
-      .card { width: 100%; max-width: 600px; height: 90vh; max-height: 800px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; }
+      .anemo-chat-root { display: flex; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--card-bg); }
+      .card {
+        width: 100%; height: 100%; max-height: 100%; background: var(--card-bg);
+        border: none; border-radius: 0; box-shadow: none;
+        display: flex; flex-direction: column; overflow: hidden;
+      }
       .head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
       .brand { font-size: 1.1rem; font-weight: 600; }
       .sub { font-size: 0.8rem; color: var(--text-secondary); }
-      .body { flex-grow: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; scrollbar-color: var(--border-color) transparent; }
-      .body::-webkit-scrollbar { width: 6px; }
+      .body { flex-grow: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+      .body::-webkit-scrollbar { width: 8px; }
       .body::-webkit-scrollbar-track { background: transparent; }
-      .body::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 20px; }
+      .body::-webkit-scrollbar-thumb { background-color: rgba(125, 125, 125, 0.2); border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
+      .body::-webkit-scrollbar-thumb:hover { background-color: rgba(125, 125, 125, 0.4); }
       .row { display: flex; animation: slideIn 0.3s ease-out forwards; }
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .row.user { justify-content: flex-end; }

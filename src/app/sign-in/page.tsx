@@ -2,7 +2,8 @@
 'use client'
 
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation'; // NEW: Import the router
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // --- Google Icon Component ---
 const GoogleIcon = () => (
@@ -16,44 +17,31 @@ const GoogleIcon = () => (
 
 
 export default function SignInPage() {
-    // NEW: Initialize the router
     const router = useRouter();
-
-    const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.2 } } };
+    const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
     const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } };
 
-    // NEW: Create a function to handle the form submission
     const handleSignIn = async (event: React.FormEvent) => {
         event.preventDefault();
-
-        // ** In a real app, you would make an API call here to authenticate the user **
-        // For example: await fetch('/api/auth/signin', { ... });
-
-        // For now, we'll just simulate a successful login and redirect.
-        console.log("Simulating successful sign-in...");
-
-        // Redirect to the homepage
         router.push('/');
     };
 
     return (
         <main className="min-h-screen font-sans text-white bg-black flex items-center justify-center p-6">
             <div className="absolute top-0 left-0 w-full h-full bg-blue-900/40 rounded-full blur-[150px] pointer-events-none z-0 opacity-50" />
-
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7, ease: 'easeOut' }}
-                className="relative z-10 w-full max-w-md"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: 'easeOut' }} className="relative z-10 w-full max-w-md">
                 <div className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 md:p-10 rounded-3xl border border-slate-800 shadow-2xl shadow-blue-900/30">
                     <motion.div variants={formVariants} initial="hidden" animate="visible">
                         <motion.div variants={itemVariants} className="text-center mb-8">
                             <h1 className="text-3xl font-bold tracking-tighter">Welcome Back</h1>
                             <p className="text-slate-400 mt-2 text-sm">Sign in to continue to your dashboard.</p>
                         </motion.div>
-                        
-                        {/* CHANGED: The form now calls our new handleSignIn function */}
+                        <motion.div variants={itemVariants}>
+                            <a href="#" className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-full text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors mb-6">
+                                <GoogleIcon />
+                                Continue with Google
+                            </a>
+                        </motion.div>
                         <form className="space-y-5" onSubmit={handleSignIn}>
                             <motion.div variants={itemVariants}>
                                 <label className="text-sm font-medium text-slate-400" htmlFor="email">Email</label>
@@ -72,7 +60,8 @@ export default function SignInPage() {
                     </motion.div>
                 </div>
                 <p className="text-center text-sm text-slate-500 mt-6">
-                    Don't have an account? <a href="/sign-up" className="font-semibold text-blue-400 hover:text-blue-300">Sign Up</a>
+                    {/* FIXED: Replaced ' with &apos; */}
+                    Don&apos;t have an account? <Link href="/sign-up" className="font-semibold text-blue-400 hover:text-blue-300">Sign Up</Link>
                 </p>
             </motion.div>
         </main>
