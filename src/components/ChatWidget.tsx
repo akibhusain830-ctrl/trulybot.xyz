@@ -42,7 +42,7 @@ export default function ChatWidget() {
 
   useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw) as Message[]; if (Array.isArray(parsed) && parsed.length) setMessages(parsed); } } catch {} }, []);
   useEffect(() => { try { if (messages.length) { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80))); } } catch {} }, [messages]);
-
+  
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
@@ -52,7 +52,7 @@ export default function ChatWidget() {
   }, [messages.length, push]);
 
   useEffect(() => { requestAnimationFrame(() => { if (listRef.current) { listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }); } }); }, [messages, typing]);
-
+  
   useEffect(() => {
     textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
