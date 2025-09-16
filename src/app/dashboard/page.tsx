@@ -1,7 +1,6 @@
-// src/app/dashboard/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'; // NEW: Import useEffect
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 // (All the Icon and Card components are the same as before)
@@ -25,7 +24,7 @@ const EmbedCodeWidget = ({ delay }) => {
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: delay }} className="md:col-span-2 lg:col-span-3 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
             <h3 className="text-lg font-bold">Embed Your Chatbot</h3>
-            <p className="text-sm text-slate-400 mt-1 mb-4">Paste this snippet into your website's HTML right before the closing `&lt;/body&gt;` tag.</p>
+            <p className="text-sm text-slate-400 mt-1 mb-4">Paste this snippet into your website&apos;s HTML right before the closing `&lt;/body&gt;` tag.</p>
             <div className="bg-black rounded-lg p-4 flex items-center justify-between"><code className="text-sm text-slate-300 overflow-x-auto whitespace-nowrap">{codeSnippet}</code><button onClick={handleCopy} className="ml-4 flex-shrink-0 flex items-center gap-2 bg-slate-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-slate-600 transition-colors">{copyText === 'Copy' ? <CopyIcon /> : <CheckIcon />}{copyText}</button></div>
         </motion.div>
     );
@@ -33,11 +32,9 @@ const EmbedCodeWidget = ({ delay }) => {
 
 
 export default function DashboardPage() {
-    // NEW: State to hold the real data from the backend
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // NEW: useEffect runs when the page loads to fetch the data
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
@@ -51,23 +48,23 @@ export default function DashboardPage() {
             }
         };
         fetchDashboardData();
-    }, []); // Runs once when the page loads
+    }, []);
 
     if (loading) {
         return <div className="p-8 text-slate-400 animate-pulse">Loading dashboard data...</div>;
     }
 
-  return (
+ return (
     <div className="p-8">
       <header className="flex justify-between items-center pb-6 border-b border-slate-800">
         <div>
           <h1 className="text-3xl font-bold tracking-tighter">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Welcome back, here's a summary of your bot's activity.</p>
+          {/* FIXED: Replaced ' with &apos; to fix build error */}
+          <p className="text-slate-400 mt-1">Welcome back, here&apos;s a summary of your bot&apos;s activity.</p>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        {/* CHANGED: The cards now display real (simulated) data from the API */}
         <KpiCard title="Total Conversations" value={stats?.totalConversations?.toLocaleString() || "0"} subtitle="Last 30 days" icon={<ConversationsIcon />} delay={0.1} />
         <KpiCard title="Resolution Rate" value={`${stats?.resolutionRate || 0}%`} subtitle="Automated" icon={<ResolutionIcon />} delay={0.2} />
         <KpiCard title="Avg. Response Time" value={`${stats?.avgResponseTime || 0}s`} subtitle="Instantaneous" icon={<SpeedIcon />} delay={0.3} />

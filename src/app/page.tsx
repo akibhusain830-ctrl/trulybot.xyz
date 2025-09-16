@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 // --- Reusable Component for the Floating UI Cards ---
 const FloatingCard = ({ className, children, animationProps }) => (
@@ -37,9 +38,10 @@ export default function HomePage() {
 
       <header className="relative z-20 flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center gap-12">
-          <a href="/" className="text-xl font-bold tracking-tight">anemo.ai</a>
+          <Link href="/" className="text-xl font-bold tracking-tight">anemo.ai</Link>
+          {/*-- ALL NAV LINKS RESTORED --*/}
           <nav className="hidden md:flex items-center gap-8 text-sm text-slate-400">
-            <a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a>
+            <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
@@ -48,79 +50,52 @@ export default function HomePage() {
           {isLoggedIn ? (
               <button onClick={() => setIsLoggedIn(false)} className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors">Sign Out</button>
             ) : (
-              <a href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</a>
+              <Link href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</Link>
             )}
         </div>
       </header>
       
       <section className="relative w-full max-w-7xl mx-auto px-6 pt-16 pb-32 z-10">
         <div className="hidden lg:grid grid-cols-6 gap-8 items-center">
-            
             <div className="col-span-1 flex flex-col gap-y-24">
-                {/* CHANGED: Card Content Updated */}
-                <FloatingCard
-                  className="w-56 transform -rotate-6 translate-x-4"
-                  animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.6 } }, whileHover: { scale: 1.05 }, }} >
+                <FloatingCard className="w-56 transform -rotate-6 translate-x-4" animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.6 } }, whileHover: { scale: 1.05 }, }} >
                    <div className="flex items-center gap-2 text-slate-400 mb-2"> <MessageIcon /> <p className="text-xs">Chats Completed</p> </div>
                    <div className="text-3xl font-bold text-white">4.5k+</div>
                    <p className="text-xs text-slate-500">this month</p>
                 </FloatingCard>
-                <FloatingCard
-                  className="w-56 ml-10 transform rotate-3"
-                  animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.8 } }, whileHover: { scale: 1.05 }, }} >
-                   <div className="flex items-center gap-2 text-slate-400 mb-2"> <SmileIcon /> <p className="text-xs">Customer Satisfaction</p> </div>
+                <FloatingCard className="w-56 ml-10 transform rotate-3" animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.8 } }, whileHover: { scale: 1.05 }, }} >
+                   <div className="flex items-center gap-2 text-slate-400 mb-2"> <SmileIcon /> <p className="text-xs">Increased Customer Satisfaction</p> </div>
                    <div className="text-3xl font-bold text-white">92%</div>
-                   <p className="text-xs text-slate-500">Increased Rate</p>
+                   <p className="text-xs text-slate-500">CSAT Score</p>
                 </FloatingCard>
             </div>
-            
             <motion.div variants={heroVariants} initial="hidden" animate="visible" className="col-span-4 text-center">
-              <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-                India’s Smartest AI Chatbot
-                <br />
-                {/* CHANGED: Added whitespace-nowrap to prevent breaking */}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
-                  for E-Commerce
-                </span>
-              </motion.h1>
+              <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight"> India’s Smartest AI Chatbot <br /> <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span> </motion.h1>
               <motion.p variants={itemVariants} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10"> Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers. </motion.p>
               <motion.div variants={itemVariants} className="flex justify-center items-center gap-4">
                 <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-                <a href="/widget?user=demo" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
+                <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
               </motion.div>
             </motion.div>
-
             <div className="col-span-1 flex flex-col gap-y-24">
-                {/* CHANGED: Card Content Updated */}
-                <FloatingCard
-                  className="w-56 transform rotate-6 -translate-x-4"
-                  animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.7 } }, whileHover: { scale: 1.05 } }} >
+                <FloatingCard className="w-56 transform rotate-6 -translate-x-4" animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.7 } }, whileHover: { scale: 1.05 } }} >
                   <div className="flex items-center gap-2 text-slate-400 mb-2"> <ClockIcon /> <p className="text-xs">100+ Hours of Time Saved</p> </div>
                   <div className="text-3xl font-bold text-white">100+</div>
                    <p className="text-xs text-slate-500">per month</p>
                 </FloatingCard>
-                 <FloatingCard
-                  className="w-56 ml-[-2rem] transform -rotate-3"
-                  animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.9 } }, whileHover: { scale: 1.05 } }} >
+                 <FloatingCard className="w-56 ml-[-2rem] transform -rotate-3" animationProps={{ initial: { opacity: 0, y: 50 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut", delay: 0.9 } }, whileHover: { scale: 1.05 } }} >
                    <div className="flex items-center gap-2 text-slate-400 mb-2"> <ArrowDownIcon /> <p className="text-xs">Reduce Support Costs</p> </div>
                    <div className="text-3xl font-bold text-white">Up to 80%</div>
                    <p className="text-xs text-slate-500">in the first 3 months</p>
                 </FloatingCard>
             </div>
         </div>
-        
         <div className="lg:hidden text-center">
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-              India’s Smartest AI Chatbot
-              <br />
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
-                for E-Commerce
-              </span>
-            </motion.h1>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight"> India’s Smartest AI Chatbot <br /> <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span> </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10"> Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers. </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="flex justify-center items-center gap-4">
                 <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-                <a href="/widget?user=demo" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
+                <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
             </motion.div>
         </div>
       </section>
