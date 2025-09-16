@@ -60,7 +60,6 @@ export default function SignInPage() {
                     </motion.div>
                 </div>
                 <p className="text-center text-sm text-slate-500 mt-6">
-                    {/* FIXED: Replaced ' with &apos; */}
                     Don&apos;t have an account? <Link href="/sign-up" className="font-semibold text-blue-400 hover:text-blue-300">Sign Up</Link>
                 </p>
             </motion.div>
