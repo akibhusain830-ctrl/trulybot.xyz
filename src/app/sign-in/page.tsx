@@ -1,5 +1,4 @@
-// src/app/sign-in/page.tsx
-'use client'
+/'use client'
 
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -65,4 +64,4 @@ export default function SignInPage() {
             </motion.div>
         </main>
     );
-}
+}/ src/app/sign-in/page.tsx
