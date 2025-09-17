@@ -14,7 +14,6 @@ const GoogleIcon = () => (
     </svg>
 );
 
-
 export default function SignInPage() {
     const router = useRouter();
     const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
@@ -65,3 +64,4 @@ export default function SignInPage() {
         </main>
     );
 }
+
