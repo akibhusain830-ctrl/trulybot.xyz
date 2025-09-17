@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, ReactNode } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion, Variants, MotionProps } from 'framer-motion';
 import Link from 'next/link';
 
 // --- Reusable Component for the Floating UI Cards ---
 interface FloatingCardProps {
   className?: string;
   children: ReactNode;
-  animationProps?: any; 
+  animationProps?: MotionProps; 
 }
 
 const FloatingCard = ({ className, children, animationProps }: FloatingCardProps) => (
@@ -100,8 +100,8 @@ export default function HomePage() {
               Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers.
             </motion.p>
             <motion.div variants={itemVariants} className="flex justify-center items-center gap-4">
-              <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">Try it Free</a>
-              <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors">View Demo</a>
+              <Link href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">Try it Free</Link>
+              <Link href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors">View Demo</Link>
             </motion.div>
           </motion.div>
 
@@ -143,13 +143,20 @@ export default function HomePage() {
             Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="flex justify-center items-center gap-4">
-            <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">Try it Free</a>
-            <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors">View Demo</a>
+            <Link href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">Try it Free</Link>
+            <Link href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors">View Demo</Link>
           </motion.div>
         </div>
       </section>
 
-      {/* --- ALL SECTIONS BELOW ARE NOW RESTORED --- */}
+      <section id="features" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter">
+          A smarter workflow, instantly.
+        </motion.h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+          {/* ... Feature Cards ... */}
+        </div>
+      </section>
     </main>
   );
 }
