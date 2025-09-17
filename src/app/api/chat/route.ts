@@ -1,11 +1,18 @@
+// src/app/api/chat/route.ts
 import { NextResponse } from "next/server";
-import OpenAI, { type ChatCompletionMessageParam } from "openai";
+import OpenAI from "openai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = apiKey ? new OpenAI({ apiKey }) : null;
+
+// Define a lightweight type for messages
+type ChatCompletionMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
 
 interface ChatMessage {
   role: "user" | "bot";
@@ -26,16 +33,12 @@ export async function POST(req: Request) {
     }
 
     if (!openai) {
-      return NextResponse.json(
-        { error: "OPENAI_API_KEY not configured on the server" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "OPENAI_API_KEY not configured on the server" });
     }
 
     const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-    // ✅ Cast messages into proper OpenAI type
-    const preparedMessages: ChatCompletionMessageParam[] = messages.map((msg) => ({
+    const preparedMessages: ChatCompletionMessage[] = messages.map((msg) => ({
       role: msg.role === "bot" ? "assistant" : "user",
       content: msg.text,
     }));
@@ -48,20 +51,24 @@ export async function POST(req: Request) {
           content: "You are Anemo, a helpful support assistant for e-commerce.",
         },
         ...preparedMessages,
-      ] satisfies ChatCompletionMessageParam[], // ✅ Type-safe
+      ],
       temperature: 0.2,
       max_tokens: 800,
     });
 
-    const reply = completion.choices[0]?.message?.content?.trim();
+    const reply = completion?.choices?.[0]?.message?.content?.trim();
     if (!reply) {
-      return NextResponse.json({ error: "Model returned an empty response" }, { status: 502 });
+      return NextResponse.json(
+        { error: "Model returned an empty response" },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({ reply });
   } catch (err: unknown) {
     console.error("API /chat error:", err);
-    const message = err instanceof Error ? err.message : "Unexpected server error";
+    const message =
+      err instanceof Error ? err.message : "Unexpected server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
