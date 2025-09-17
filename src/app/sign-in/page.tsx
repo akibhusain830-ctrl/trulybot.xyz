@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion'; // <-- import easeOut
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,7 +17,7 @@ const GoogleIcon = () => (
 export default function SignInPage() {
     const router = useRouter();
     const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
-    const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.42, 0, 1, 1] } } };
+    const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } } };
 
     const handleSignIn = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -27,7 +27,7 @@ export default function SignInPage() {
     return (
         <main className="min-h-screen font-sans text-white bg-black flex items-center justify-center p-6">
             <div className="absolute top-0 left-0 w-full h-full bg-blue-900/40 rounded-full blur-[150px] pointer-events-none z-0 opacity-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: [0.42, 0, 1, 1] }} className="relative z-10 w-full max-w-md">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: easeOut }} className="relative z-10 w-full max-w-md">
                 <div className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 md:p-10 rounded-3xl border border-slate-800 shadow-2xl shadow-blue-900/30">
                     <motion.div variants={formVariants} initial="hidden" animate="visible">
                         <motion.div variants={itemVariants} className="text-center mb-8">
