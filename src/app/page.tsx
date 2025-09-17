@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { motion, easeOut } from 'framer-motion';
+import { motion, easeOut, type MotionProps } from 'framer-motion';
 import Link from 'next/link';
 
 // --- Reusable Component for the Floating UI Cards ---
@@ -12,7 +12,7 @@ const FloatingCard = ({
 }: {
   className?: string;
   children: React.ReactNode;
-  animationProps?: any;
+  animationProps?: MotionProps;
 }) => (
   <motion.div
     {...animationProps}
@@ -234,9 +234,50 @@ export default function HomePage() {
         </div>
       </section>
       
-      {/* ... rest of your page stays unchanged ... */}
-      {/* (features, pricing, footer) */}
-      {/* Copy from previous answer, omitted here for brevity. */}
+      <section id="features" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> A smarter workflow, instantly. </motion.h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+          {[
+            { graphic: <PasteGraphic />, title: 'Paste Your Content', desc: 'Simply provide your existing FAQs, policies, or even a link to your website. Our AI will automatically read, understand, and index the knowledge.' },
+            { graphic: <TrainGraphic />, title: 'Train Your Bot', desc: 'Our AI instantly converts your content into a conversational brain. It understands user intent and handles complex queries to provide accurate, helpful answers.' },
+            { graphic: <EmbedGraphic />, title: 'Embed Anywhere', desc: 'Copy a single line of code to add the chatbot to your site. Customize its look to match your brand and provide your customers with 24/7 support.' },
+          ].map((item, i) => (
+            <motion.div key={item.title} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 cursor-pointer">
+              <div className="mb-6 h-[80px] flex items-center">{item.graphic}</div>
+              <h3 className="font-bold mb-2 text-white">{item.title}</h3>
+              <p className="text-slate-400 text-sm">{item.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> Fair pricing for every stage. </motion.h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { name: 'Basic', desc: '1000 messages / month', price: '₹99/mo', cta: 'Start Basic' },
+            { name: 'Pro', desc: 'Unlimited messages', price: '₹299/mo', cta: 'Go Pro' },
+            { name: 'Ultra', desc: 'Custom branding + logo, Unlimited messages', price: '₹499/mo', cta: 'Go Ultra' },
+          ].map((plan, i) => (
+             <motion.div key={plan.name} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 flex flex-col">
+              <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
+              <p className="text-slate-400 text-sm mb-6 flex-grow">{plan.desc}</p>
+              <div className="text-3xl font-bold mb-6">{plan.price}</div>
+              <a href={'/dashboard'} className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+                  plan.name === 'Basic' ? 'bg-slate-100 text-black hover:bg-slate-200' :
+                  plan.name === 'Pro' ? 'bg-green-600 text-white hover:bg-green-700' :
+                  'bg-blue-600 text-white hover:bg-blue-700'
+              }`}>
+                {plan.cta}
+              </a>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="relative z-10 px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800">
+        <p>Made in India 🇮🇳 · Built for Indian businesses · © {new Date().getFullYear()} anemo.ai</p>
+      </footer>
     </main>
   );
 }
