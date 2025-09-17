@@ -1,6 +1,5 @@
-// src/app/dashboard/layout.tsx
 import React from 'react';
-import Link from 'next/link'; // NEW: Import Link
+import Link from 'next/link';
 
 // (SVG Icons remain the same)
 const HomeIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> );
@@ -19,12 +18,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen w-full bg-black text-white flex font-sans">
       <aside className="w-64 flex-shrink-0 bg-[#111] border-r border-slate-800 flex flex-col">
         <div className="h-20 flex items-center px-6 border-b border-slate-800">
-          {/* FIXED: Replaced <a> with <Link> for client-side navigation */}
           <Link href="/" className="text-xl font-bold tracking-tight">anemo.ai</Link>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navItems.map((item) => (
-            <Link // FIXED: Also use Link component here for consistency
+            <Link
               key={item.name}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
