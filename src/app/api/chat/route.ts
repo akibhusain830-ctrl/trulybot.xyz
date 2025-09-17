@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = apiKey ? new OpenAI({ apiKey }) : null;
 
-// Define a lightweight type for messages
+// Minimal type for messages
 type ChatCompletionMessage = {
   role: "system" | "user" | "assistant";
   content: string;
