@@ -150,7 +150,13 @@ export default function HomePage() {
       </section>
 
       <section id="features" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
-        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter">
+        <motion.h2
+          variants={scrollAnimationVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.8 }}
+          className="text-4xl font-bold mb-12 text-center tracking-tighter"
+        >
           A smarter workflow, instantly.
         </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
