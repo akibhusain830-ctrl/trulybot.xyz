@@ -106,8 +106,8 @@ const SmileIcon = () => (
 );
 
 // NOTE: These components are used in the full page, but TypeScript doesn't recognize it
-// We can add @ts-ignore to suppress the unused variable warnings
-// @ts-ignore
+// Using @ts-expect-error instead of @ts-ignore as required by ESLint
+// @ts-expect-error
 const PasteGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -126,7 +126,7 @@ const PasteGraphic = () => (
   </svg>
 );
 
-// @ts-ignore
+// @ts-expect-error
 const TrainGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -147,7 +147,7 @@ const TrainGraphic = () => (
   </svg>
 );
 
-// @ts-ignore
+// @ts-expect-error
 const EmbedGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M50 20L30 40L50 60" stroke="#60A5FA" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -195,7 +195,7 @@ export default function Page() {
   
   // Adding comment to avoid unused variable warning
   // This is used in sections that might be in the full component
-  // @ts-ignore
+  // @ts-expect-error
   const scrollAnimationVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
 
   return (
