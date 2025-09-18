@@ -50,13 +50,16 @@ export default function SignUpPage() {
     setLoading(false);
   };
 
-  // Optional: Google sign-up (actually just Google sign-in; account is created if not exists)
+  // Google sign-up (actually just Google sign-in; account is created if not exists)
   const handleGoogleSignUp = async () => {
     setLoading(true);
     setError('');
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
     });
 
     if (error) setError(error.message);
