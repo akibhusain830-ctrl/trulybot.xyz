@@ -36,10 +36,8 @@ export default function ChatWidget() {
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [composerHeight, setComposerHeight] = useState(62);
 
   useEffect(() => {
-    // Check if mobile device
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -56,7 +54,6 @@ export default function ChatWidget() {
         if (textarea) {
           textarea.style.height = 'auto';
           textarea.style.height = `${textarea.scrollHeight}px`;
-          setComposerHeight(textarea.offsetHeight + 30);
         }
       };
       textareaRef.current.addEventListener('input', adjustHeight);
@@ -291,9 +288,7 @@ export default function ChatWidget() {
         </div>
       </div>
       <style jsx global>{`
-        *, *::before, *::after {
-          box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         html, body {
           margin: 0;
@@ -304,7 +299,6 @@ export default function ChatWidget() {
           background: #111;
         }
 
-        /* Use dynamic viewport units for all screen heights */
         .anemo-chat-root {
           --bg-color: #000;
           --card-bg: #111;
@@ -315,7 +309,7 @@ export default function ChatWidget() {
           --bot-bubble-bg: #1c1c1c;
           --user-bubble-bg: #2563eb;
           --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-          
+
           display: flex;
           height: 100dvh;
           width: 100vw;
@@ -323,7 +317,6 @@ export default function ChatWidget() {
           font-family: var(--font-family);
           background: var(--bg-color);
         }
-
         .sidebar {
           width: 60px;
           height: 100dvh;
@@ -334,7 +327,6 @@ export default function ChatWidget() {
           padding-top: 20px;
           flex-shrink: 0;
         }
-
         .sidebar-item {
           width: 40px;
           height: 40px;
@@ -348,12 +340,10 @@ export default function ChatWidget() {
           margin-bottom: 8px;
           cursor: pointer;
         }
-
         .sidebar-item.active {
           background: rgba(255,255,255,0.1);
           color: var(--text-primary);
         }
-
         .main-container {
           flex: 1;
           display: flex;
@@ -362,16 +352,16 @@ export default function ChatWidget() {
           width: 100vw;
           overflow: hidden;
         }
-
         .card {
           display: flex;
           flex-direction: column;
           height: 100dvh;
-          width: 100%;
+          width: 100vw;
           max-width: 800px;
           background: var(--card-bg);
+          overflow: hidden;
+          margin: 0;
         }
-
         .head {
           display: flex;
           align-items: center;
@@ -380,104 +370,80 @@ export default function ChatWidget() {
           border-bottom: 1px solid var(--border-color);
           flex-shrink: 0;
         }
-
         .brand {
           font-size: 1.1rem;
           font-weight: 600;
         }
-
         .sub {
           font-size: 0.8rem;
           color: var(--text-secondary);
         }
-
         .body {
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 16px 0;
+          padding: 0;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          width: 100vw;
         }
-
-        .body::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-
+        .body::-webkit-scrollbar { width: 6px; height: 6px; }
         .body::-webkit-scrollbar-thumb {
           background: rgba(255, 255, 255, 0.15);
           border-radius: 6px;
         }
-
         .row {
           display: flex;
-          padding: 0 16px;
+          padding: 0;
           animation: fadeIn 0.3s ease-out forwards;
           margin-bottom: 4px;
         }
-
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
-        .row.user {
-          justify-content: flex-end;
-        }
-
-        .row.bot {
-          justify-content: flex-start;
-        }
-
+        .row.user { justify-content: flex-end; }
+        .row.bot { justify-content: flex-start; }
         .bubble {
           padding: 12px 16px;
           border-radius: 18px;
-          max-width: 85%;
+          max-width: 100vw;
+          width: auto;
           display: flex;
           flex-direction: column;
           gap: 6px;
           word-break: break-word;
         }
-
         .row.user .bubble {
           background: var(--user-bubble-bg);
           color: white;
           border-bottom-right-radius: 4px;
-          margin-right: 4px;
+          margin-right: 0;
         }
-
         .row.bot .bubble {
           background: var(--bot-bubble-bg);
           color: var(--text-primary);
           border-bottom-left-radius: 4px;
-          margin-left: 4px;
+          margin-left: 0;
         }
-
         .bubble .text {
           font-size: 1rem;
           line-height: 1.5;
           white-space: pre-wrap;
         }
-
         .bubble .meta {
           font-size: 0.75rem;
           opacity: 0.7;
           align-self: flex-end;
         }
-
-        .bubble.typing {
-          padding: 12px;
-        }
-
+        .bubble.typing { padding: 12px; }
         .bubble.typing .dots {
           display: flex;
           gap: 4px;
           align-items: center;
           height: 12px;
         }
-
         .bubble.typing .dots span {
           width: 8px;
           height: 8px;
@@ -485,28 +451,19 @@ export default function ChatWidget() {
           background: var(--text-secondary);
           animation: bounce 1.2s infinite;
         }
-
-        .bubble.typing .dots span:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-
-        .bubble.typing .dots span:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-
+        .bubble.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .bubble.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-6px); }
         }
-
         .sugs {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          padding: 0 16px 16px;
+          padding: 0 8px 16px 8px;
           justify-content: center;
         }
-
         .chip {
           background: var(--bot-bubble-bg);
           border: 1px solid var(--border-color);
@@ -517,20 +474,19 @@ export default function ChatWidget() {
           cursor: pointer;
           transition: all 0.2s;
         }
-
         .chip:hover {
           background: rgba(255,255,255,0.1);
           border-color: var(--text-secondary);
           color: var(--text-primary);
         }
-
         .composer {
-          padding: 12px 16px 16px;
+          width: 100vw;
+          padding: 12px 0 24px 0;
           border-top: 1px solid var(--border-color);
-          /* Use safe area inset for bottom, so input never goes under taskbar/notch */
-          padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
+          background: var(--card-bg);
+          position: relative;
+          z-index: 2;
         }
-
         .composer-inner {
           display: flex;
           align-items: center;
@@ -541,11 +497,7 @@ export default function ChatWidget() {
           padding: 6px 6px 6px 16px;
           transition: border-color 0.2s;
         }
-
-        .composer-inner:focus-within {
-          border-color: var(--accent-color);
-        }
-
+        .composer-inner:focus-within { border-color: var(--accent-color); }
         .composer textarea {
           flex: 1;
           background: transparent;
@@ -559,7 +511,6 @@ export default function ChatWidget() {
           resize: none;
           outline: none;
         }
-
         .composer .send {
           width: 40px;
           height: 40px;
@@ -574,16 +525,11 @@ export default function ChatWidget() {
           flex-shrink: 0;
           transition: all 0.2s;
         }
-
         .composer .send:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
-
-        .composer .send:not(:disabled):hover {
-          transform: scale(1.05);
-        }
-
+        .composer .send:not(:disabled):hover { transform: scale(1.05); }
         button.ghost {
           color: var(--text-secondary);
           background: transparent;
@@ -597,56 +543,75 @@ export default function ChatWidget() {
           cursor: pointer;
           transition: all 0.2s;
         }
-
         button.ghost:hover {
           background: rgba(255,255,255,0.1);
           color: var(--text-primary);
         }
 
-        /* MOBILE OPTIMIZATION */
-        @media (max-width: 768px) {
-          .anemo-chat-root {
-            flex-direction: column;
-            height: 100dvh;
-            width: 100vw;
-            min-height: 100dvh;
+        /* DESKTOP: always add extra safe bottom padding */
+        @media (min-width: 769px) {
+          .composer {
+            padding-bottom: max(24px, env(safe-area-inset-bottom, 0));
           }
-          .main-container, .card {
+        }
+
+        /* MOBILE: zero gap, full edge, sticky composer */
+        @media (max-width: 768px) {
+          .anemo-chat-root, .main-container, .card, .body, .row, .composer {
             width: 100vw !important;
-            max-width: 100vw !important;
             min-width: 100vw !important;
+            max-width: 100vw !important;
+            margin: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+          }
+          .anemo-chat-root, .main-container, .card {
             height: 100dvh !important;
-            max-height: 100dvh !important;
             min-height: 100dvh !important;
+            max-height: 100dvh !important;
             border-radius: 0 !important;
           }
-
-          .row {
-            padding: 0 0 !important;
-          }
+          .sidebar { display: none !important; }
           .body {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+            padding: 0 !important;
+            gap: 12px !important;
+            width: 100vw;
+          }
+          .row {
+            padding: 0 !important;
+            margin: 0 !important;
           }
           .bubble {
-            max-width: 95vw;
+            max-width: 100vw !important;
+            width: 100vw !important;
+            border-radius: 18px !important;
+            margin: 0 !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
           }
-          .row.user .bubble {
-            margin-right: 8px;
+          .row.user .bubble, .row.bot .bubble {
+            margin: 0 !important;
           }
-          .row.bot .bubble {
-            margin-left: 8px;
+          .sugs {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
           }
           .composer {
-            padding-left: env(safe-area-inset-left, 0);
-            padding-right: env(safe-area-inset-right, 0);
-            padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
-            padding-top: 12px;
-            padding-right: 8px;
-            padding-left: 8px;
+            position: fixed !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            z-index: 1000 !important;
+            width: 100vw !important;
+            padding-left: env(safe-area-inset-left,0);
+            padding-right: env(safe-area-inset-right,0);
+            padding-bottom: max(16px, env(safe-area-inset-bottom,0));
+            border-radius: 0 !important;
+            background: var(--card-bg) !important;
+            border-top: 1px solid var(--border-color);
           }
           .head {
-            padding: 12px;
+            padding: 12px !important;
           }
         }
       `}</style>
