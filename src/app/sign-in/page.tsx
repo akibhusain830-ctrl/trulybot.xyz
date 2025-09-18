@@ -1,8 +1,10 @@
 'use client'
 
-import { motion, easeOut } from 'framer-motion'; // <-- import easeOut
+import { motion, easeOut } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 // --- Google Icon Component ---
 const GoogleIcon = () => (
@@ -16,12 +18,50 @@ const GoogleIcon = () => (
 
 export default function SignInPage() {
     const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const supabase = createClient();
+
     const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
     const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } } };
 
-    const handleSignIn = async (event: React.FormEvent) => {
+    const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        router.push('/');
+        setLoading(true);
+        setError('');
+
+        const formData = new FormData(event.currentTarget);
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            setError(error.message);
+        } else {
+            router.push('/dashboard');
+        }
+        setLoading(false);
+    };
+
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError('');
+
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/dashboard`
+            }
+        });
+
+        if (error) {
+            setError(error.message);
+        }
+        setLoading(false);
     };
 
     return (
@@ -34,24 +74,52 @@ export default function SignInPage() {
                             <h1 className="text-3xl font-bold tracking-tighter">Welcome Back</h1>
                             <p className="text-slate-400 mt-2 text-sm">Sign in to continue to your dashboard.</p>
                         </motion.div>
+                        {error && (
+                            <motion.div variants={itemVariants} className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <p className="text-red-400 text-sm">{error}</p>
+                            </motion.div>
+                        )}
                         <motion.div variants={itemVariants}>
-                            <a href="#" className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-full text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors mb-6">
+                            <button
+                                type="button"
+                                onClick={handleGoogleSignIn}
+                                disabled={loading}
+                                className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-full text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors mb-6 disabled:opacity-50"
+                            >
                                 <GoogleIcon />
-                                Continue with Google
-                            </a>
+                                {loading ? "Signing in..." : "Continue with Google"}
+                            </button>
                         </motion.div>
                         <form className="space-y-5" onSubmit={handleSignIn}>
                             <motion.div variants={itemVariants}>
                                 <label className="text-sm font-medium text-slate-400" htmlFor="email">Email</label>
-                                <input id="email" type="email" placeholder="you@example.com" required className="mt-2 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"/>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    required
+                                    className="mt-2 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                />
                             </motion.div>
                             <motion.div variants={itemVariants}>
                                 <label className="text-sm font-medium text-slate-400" htmlFor="password">Password</label>
-                                <input id="password" type="password" placeholder="••••••••" required className="mt-2 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"/>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    required
+                                    className="mt-2 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                />
                             </motion.div>
                             <motion.div variants={itemVariants} className="pt-2">
-                                <button type="submit" className="w-full bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">
-                                    Sign In
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                >
+                                    {loading ? "Signing In..." : "Sign In"}
                                 </button>
                             </motion.div>
                         </form>
