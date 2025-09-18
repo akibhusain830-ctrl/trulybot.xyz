@@ -4,18 +4,20 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 type Role = 'bot' | 'user';
 type Message = { id: string; role: Role; text: string; at: number; error?: boolean };
 
-const STORAGE_KEY = 'anemo_conv_ui_final_v3';
-const INTRO_KEY = 'anemo_seen_intro_ui_final_v3';
+const STORAGE_KEY = 'anemo_v4_conv';
+const INTRO_KEY = 'anemo_v4_seen_intro';
 const SUGGESTIONS = [
   'How do I embed Anemo on my site?',
   'What plans do you offer?',
   'Can you answer product FAQs?'
 ];
 
+// Generate unique id for each message
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+// Fetch with timeout utility
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -37,24 +39,20 @@ export default function ChatWidget() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Detect mobile
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth <= 800);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Autogrow textarea
   useEffect(() => {
-    // Dynamically adjust textarea height
     if (textareaRef.current) {
       const adjustHeight = () => {
-        const textarea = textareaRef.current;
-        if (textarea) {
-          textarea.style.height = 'auto';
-          textarea.style.height = `${textarea.scrollHeight}px`;
-        }
+        textareaRef.current!.style.height = 'auto';
+        textareaRef.current!.style.height = `${textareaRef.current!.scrollHeight}px`;
       };
       textareaRef.current.addEventListener('input', adjustHeight);
       window.addEventListener('resize', adjustHeight);
@@ -65,36 +63,41 @@ export default function ChatWidget() {
     }
   }, []);
 
+  // Push new message
   const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
     setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
   }, []);
 
-  useEffect(() => { 
-    try { 
-      const raw = localStorage.getItem(STORAGE_KEY); 
-      if (raw) { 
-        const parsed = JSON.parse(raw) as Message[]; 
-        if (Array.isArray(parsed) && parsed.length) setMessages(parsed); 
-      } 
-    } catch {} 
+  // Load chat history
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Message[];
+        if (Array.isArray(parsed) && parsed.length) setMessages(parsed);
+      }
+    } catch {}
   }, []);
-  
-  useEffect(() => { 
-    try { 
-      if (messages.length) { 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80))); 
-      } 
-    } catch {} 
+
+  // Persist chat history
+  useEffect(() => {
+    try {
+      if (messages.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80)));
+      }
+    } catch {}
   }, [messages]);
 
+  // Show intro
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
-      push('bot', "Hi — I'm Anemo, your support assistant. Ask about setup, pricing, or embedding.");
+      push('bot', "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding.");
       localStorage.setItem(INTRO_KEY, '1');
     }
   }, [messages.length, push]);
 
+  // Scroll to bottom
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTo({
@@ -104,6 +107,7 @@ export default function ChatWidget() {
     }
   }, [messages, typing]);
 
+  // Focus textarea on load and keyboard typing
   useEffect(() => {
     textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -117,11 +121,10 @@ export default function ChatWidget() {
       }
     };
     window.addEventListener('keydown', handleGlobalKeyPress);
-    return () => {
-      window.removeEventListener('keydown', handleGlobalKeyPress);
-    };
+    return () => window.removeEventListener('keydown', handleGlobalKeyPress);
   }, []);
 
+  // Chat API call
   const callApi = useCallback(
     async (prompt: string) => {
       setLoading(true);
@@ -169,6 +172,7 @@ export default function ChatWidget() {
     [messages, push]
   );
 
+  // Submit
   const submit = useCallback(
     (raw?: string) => {
       const prompt = (raw ?? input).trim();
@@ -180,7 +184,6 @@ export default function ChatWidget() {
     },
     [input, suggestions, callApi, push]
   );
-  
   const handleKey = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -190,7 +193,8 @@ export default function ChatWidget() {
     },
     [loading, submit]
   );
-  
+
+  // Clear conversation
   const clearConversation = useCallback(() => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
@@ -198,7 +202,7 @@ export default function ChatWidget() {
     setTimeout(() => {
       push(
         'bot',
-        "Hi — I'm Anemo, your support assistant. Ask about setup, pricing, or embedding."
+        "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding."
       );
       localStorage.setItem(INTRO_KEY, '1');
       setSuggestions(SUGGESTIONS);
@@ -206,412 +210,378 @@ export default function ChatWidget() {
   }, [push]);
 
   return (
-    <div className="anemo-chat-root">
-      {!isMobile && (
-        <div className="sidebar">
-          <button className="sidebar-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-          </button>
-        </div>
-      )}
-      <div className="main-container">
-        <div className="card">
-          <header className="head">
-            <div>
-              <div className="brand">Anemo</div>
-              <div className="sub">Smart assistant</div>
-            </div>
-            <button
-              className="mini ghost"
-              onClick={clearConversation}
-              title="Clear conversation"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-          </header>
-          <div
-            className="body"
-            ref={listRef}
-          >
-            {messages.map((m) => (
-              <div key={m.id} className={`row ${m.role}`}>
-                <div className={`bubble ${m.role} ${m.error ? 'err' : ''}`}>
-                  <div className="text">{m.text}</div>
-                  <div className="meta">{new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
-              </div>
-            ))}
-            {typing && (
-              <div className="row bot">
-                <div className="bubble bot typing">
-                  <div className="dots"><span /><span /><span /></div>
-                </div>
-              </div>
-            )}
+    <div className="anemo-v4-root">
+      <div className="anemo-v4-chat-container">
+        <header className="anemo-v4-header">
+          <div className="anemo-v4-brand">
+            <span className="anemo-logo">🌀</span>
+            <span className="anemo-title">Anemo</span>
+            <span className="anemo-badge">AI</span>
           </div>
-          {suggestions && !messages.find(m => m.role === 'user') && (
-            <div className="sugs">
-              {suggestions.map((s) => (
-                <button key={s} className="chip" onClick={() => submit(s)} disabled={loading}>
-                  {s}
-                </button>
-              ))}
+          <div className="anemo-v4-header-actions">
+            <button className="anemo-v4-clear-btn" onClick={clearConversation} title="Clear conversation">
+              <svg width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </header>
+        <main className="anemo-v4-messages" ref={listRef}>
+          {messages.map((m) => (
+            <div key={m.id} className={`anemo-v4-msg-row ${m.role}`}>
+              <div className={`anemo-v4-bubble ${m.role} ${m.error ? 'err' : ''}`}>
+                <div className="bubble-inner">
+                  <div className="bubble-text">{m.text}</div>
+                  <div className="bubble-meta">{new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {typing && (
+            <div className="anemo-v4-msg-row bot">
+              <div className="anemo-v4-bubble bot typing">
+                <div className="bubble-inner">
+                  <div className="bubble-dots"><span /><span /><span /></div>
+                </div>
+              </div>
             </div>
           )}
-          <form 
-            className="composer" 
-            onSubmit={(e) => { 
-              e.preventDefault(); 
-              if (!loading) submit(); 
-            }}
-          >
-            <div className="composer-inner">
-              <textarea 
-                ref={textareaRef} 
-                value={input} 
-                onChange={(e) => setInput(e.target.value)} 
-                onKeyDown={handleKey} 
-                placeholder="Ask anything..." 
-                rows={1} 
-                disabled={loading} 
-              />
-              <button 
-                type="submit" 
-                className="send" 
-                disabled={loading || !input.trim()} 
-                title="Send message"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </main>
+        {suggestions && !messages.find(m => m.role === 'user') && (
+          <div className="anemo-v4-suggestions">
+            {suggestions.map((s) => (
+              <button key={s} className="anemo-v4-suggestion" onClick={() => submit(s)} disabled={loading}>
+                {s}
               </button>
-            </div>
-          </form>
-        </div>
+            ))}
+          </div>
+        )}
+        <form 
+          className="anemo-v4-composer" 
+          onSubmit={e => { e.preventDefault(); if (!loading) submit(); }}
+        >
+          <div className="anemo-v4-composer-inner">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder="Message Anemo..."
+              rows={1}
+              disabled={loading}
+              aria-label="Chat input"
+            />
+            <button
+              type="submit"
+              className="anemo-v4-send"
+              disabled={loading || !input.trim()}
+              title="Send message"
+              aria-label="Send"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </form>
       </div>
       <style jsx global>{`
-        *, *::before, *::after { box-sizing: border-box; }
-
+        /* Accent color and dark theme base */
+        :root {
+          --anemo-accent: #2563eb;
+          --anemo-bg: #0f1117;
+          --anemo-surface: #1a1d23;
+          --anemo-bubble-user: var(--anemo-accent);
+          --anemo-bubble-bot: #22242a;
+          --anemo-border: #23272f;
+          --anemo-gray: #7d8590;
+          --anemo-text: #e6edf3;
+          --anemo-radius: 18px;
+        }
         html, body {
-          margin: 0;
-          padding: 0;
+          background: var(--anemo-bg);
+          color: var(--anemo-text);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
           height: 100%;
           width: 100%;
-          overflow: hidden;
-          background: #111;
-        }
-
-        .anemo-chat-root {
-          --bg-color: #000;
-          --card-bg: #111;
-          --border-color: #30363d;
-          --text-primary: #e6edf3;
-          --text-secondary: #7d8590;
-          --accent-color: #2563eb;
-          --bot-bubble-bg: #1c1c1c;
-          --user-bubble-bg: #2563eb;
-          --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-
-          display: flex;
-          height: 100dvh;
-          width: 100vw;
-          color: var(--text-primary);
-          font-family: var(--font-family);
-          background: var(--bg-color);
-        }
-        .sidebar {
-          width: 60px;
-          height: 100dvh;
-          background: #0a0a0a;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding-top: 20px;
-          flex-shrink: 0;
-        }
-        .sidebar-item {
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          background: transparent;
-          border: none;
-          color: var(--text-secondary);
-          margin-bottom: 8px;
-          cursor: pointer;
-        }
-        .sidebar-item.active {
-          background: rgba(255,255,255,0.1);
-          color: var(--text-primary);
-        }
-        .main-container {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          height: 100dvh;
-          width: 100vw;
-          overflow: hidden;
-        }
-        .card {
-          display: flex;
-          flex-direction: column;
-          height: 100dvh;
-          width: 100vw;
-          max-width: 800px;
-          background: var(--card-bg);
-          overflow: hidden;
           margin: 0;
+          padding: 0;
         }
-        .head {
+        .anemo-v4-root {
+          min-height: 100dvh;
+          width: 100vw;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--anemo-bg);
+        }
+        .anemo-v4-chat-container {
+          background: var(--anemo-surface);
+          border-radius: 18px;
+          box-shadow: 0 4px 32px 0 #0007;
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          max-width: 480px;
+          height: 90dvh;
+          min-height: 420px;
+          max-height: 700px;
+          overflow: hidden;
+          border: 1.5px solid var(--anemo-border);
+        }
+        .anemo-v4-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 16px;
-          border-bottom: 1px solid var(--border-color);
-          flex-shrink: 0;
+          padding: 18px 22px 12px 22px;
+          border-bottom: 1px solid var(--anemo-border);
+          background: var(--anemo-surface);
+          z-index: 1;
         }
-        .brand {
-          font-size: 1.1rem;
+        .anemo-v4-brand {
+          display: flex;
+          align-items: center;
+          gap: 0.6em;
           font-weight: 600;
+          font-size: 1.2rem;
         }
-        .sub {
-          font-size: 0.8rem;
-          color: var(--text-secondary);
+        .anemo-logo {
+          font-size: 1.5em;
         }
-        .body {
-          flex: 1;
+        .anemo-title {
+          letter-spacing: 0.03em;
+        }
+        .anemo-badge {
+          background: var(--anemo-accent);
+          color: #fff;
+          font-size: 0.8em;
+          border-radius: 7px;
+          padding: 0 0.4em;
+          margin-left: 0.3em;
+          font-weight: 700;
+        }
+        .anemo-v4-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .anemo-v4-clear-btn {
+          background: none;
+          border: none;
+          color: var(--anemo-gray);
+          cursor: pointer;
+          border-radius: 50%;
+          transition: background 0.15s;
+          width: 34px;
+          height: 34px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .anemo-v4-clear-btn:hover {
+          background: #21232a;
+          color: var(--anemo-accent);
+        }
+        .anemo-v4-messages {
+          flex: 1 1 0;
           overflow-y: auto;
-          overflow-x: hidden;
-          padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          width: 100vw;
+          gap: 12px;
+          padding: 22px 12px 16px 12px;
+          background: var(--anemo-surface);
+          scroll-behavior: smooth;
         }
-        .body::-webkit-scrollbar { width: 6px; height: 6px; }
-        .body::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.15);
-          border-radius: 6px;
-        }
-        .row {
+        .anemo-v4-msg-row {
           display: flex;
+          width: 100%;
+        }
+        .anemo-v4-msg-row.user { justify-content: flex-end; }
+        .anemo-v4-msg-row.bot { justify-content: flex-start; }
+        .anemo-v4-bubble {
+          max-width: 78%;
+          border-radius: var(--anemo-radius);
           padding: 0;
-          animation: fadeIn 0.3s ease-out forwards;
-          margin-bottom: 4px;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .row.user { justify-content: flex-end; }
-        .row.bot { justify-content: flex-start; }
-        .bubble {
-          padding: 12px 16px;
-          border-radius: 18px;
-          max-width: 100vw;
-          width: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          word-break: break-word;
-        }
-        .row.user .bubble {
-          background: var(--user-bubble-bg);
-          color: white;
-          border-bottom-right-radius: 4px;
-          margin-right: 0;
-        }
-        .row.bot .bubble {
-          background: var(--bot-bubble-bg);
-          color: var(--text-primary);
-          border-bottom-left-radius: 4px;
-          margin-left: 0;
-        }
-        .bubble .text {
+          background: var(--anemo-bubble-bot);
+          color: var(--anemo-text);
           font-size: 1rem;
-          line-height: 1.5;
+          margin-bottom: 2px;
+          box-shadow: 0 1px 4px #0002;
+          position: relative;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          transition: background 0.2s;
+        }
+        .anemo-v4-bubble.user {
+          background: var(--anemo-bubble-user);
+          color: #fff;
+          border-bottom-right-radius: 6px;
+          margin-left: auto;
+        }
+        .anemo-v4-bubble.bot {
+          background: var(--anemo-bubble-bot);
+          color: var(--anemo-text);
+          border-bottom-left-radius: 6px;
+          margin-right: auto;
+        }
+        .anemo-v4-bubble.err {
+          background: #6e1b1b;
+          color: #fff;
+        }
+        .bubble-inner {
+          padding: 13px 16px 9px 16px;
+          display: flex;
+          flex-direction: column;
+        }
+        .bubble-text {
+          font-size: 1.04rem;
+          line-height: 1.65;
           white-space: pre-wrap;
         }
-        .bubble .meta {
-          font-size: 0.75rem;
-          opacity: 0.7;
+        .bubble-meta {
+          font-size: 0.81rem;
+          opacity: 0.62;
           align-self: flex-end;
+          margin-top: 2px;
         }
-        .bubble.typing { padding: 12px; }
-        .bubble.typing .dots {
+        .bubble-dots {
           display: flex;
           gap: 4px;
           align-items: center;
-          height: 12px;
+          height: 14px;
         }
-        .bubble.typing .dots span {
-          width: 8px;
-          height: 8px;
+        .bubble-dots span {
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
-          background: var(--text-secondary);
-          animation: bounce 1.2s infinite;
+          background: var(--anemo-gray);
+          display: inline-block;
+          animation: anemo-bounce 1s infinite;
         }
-        .bubble.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
-        .bubble.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce {
+        .bubble-dots span:nth-child(2) { animation-delay: 0.18s; }
+        .bubble-dots span:nth-child(3) { animation-delay: 0.36s; }
+        @keyframes anemo-bounce {
           0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
+          40% { transform: translateY(-7px); }
         }
-        .sugs {
+        .anemo-v4-suggestions {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px;
-          padding: 0 8px 16px 8px;
+          gap: 9px;
+          padding: 8px 16px 10px 16px;
           justify-content: center;
+          background: var(--anemo-surface);
+          border-top: 1px solid var(--anemo-border);
         }
-        .chip {
-          background: var(--bot-bubble-bg);
-          border: 1px solid var(--border-color);
-          color: var(--text-secondary);
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-size: 0.85rem;
+        .anemo-v4-suggestion {
+          background: #23263e;
+          color: var(--anemo-gray);
+          border: 0;
+          border-radius: 15px;
+          padding: 7px 15px;
+          font-size: 0.97em;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.13s, color 0.13s;
         }
-        .chip:hover {
-          background: rgba(255,255,255,0.1);
-          border-color: var(--text-secondary);
-          color: var(--text-primary);
+        .anemo-v4-suggestion:hover, .anemo-v4-suggestion:focus {
+          background: var(--anemo-accent);
+          color: #fff;
         }
-        .composer {
-          width: 100vw;
-          padding: 12px 0 24px 0;
-          border-top: 1px solid var(--border-color);
-          background: var(--card-bg);
+        .anemo-v4-composer {
+          padding: 0 16px 20px 16px;
+          background: var(--anemo-surface);
+          border-top: 1.5px solid var(--anemo-border);
           position: relative;
           z-index: 2;
         }
-        .composer-inner {
+        .anemo-v4-composer-inner {
           display: flex;
-          align-items: center;
-          gap: 12px;
-          background: var(--bot-bubble-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 24px;
-          padding: 6px 6px 6px 16px;
-          transition: border-color 0.2s;
+          align-items: flex-end;
+          gap: 11px;
+          background: #181a21;
+          border-radius: 19px;
+          border: 1.5px solid var(--anemo-border);
+          padding: 7px 9px 7px 20px;
+          transition: border-color 0.21s;
         }
-        .composer-inner:focus-within { border-color: var(--accent-color); }
-        .composer textarea {
+        .anemo-v4-composer-inner:focus-within {
+          border-color: var(--anemo-accent);
+        }
+        .anemo-v4-composer textarea {
           flex: 1;
           background: transparent;
           border: none;
-          color: var(--text-primary);
-          font-size: 1rem;
+          color: var(--anemo-text);
+          font-size: 1.09rem;
           font-family: inherit;
-          padding: 8px 0;
-          min-height: 24px;
-          max-height: 120px;
+          padding: 7px 0;
+          min-height: 28px;
+          max-height: 110px;
           resize: none;
           outline: none;
         }
-        .composer .send {
-          width: 40px;
-          height: 40px;
+        .anemo-v4-send {
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--accent-color);
+          background: var(--anemo-accent);
           color: white;
           border: none;
           cursor: pointer;
           flex-shrink: 0;
-          transition: all 0.2s;
+          transition: background 0.13s, transform 0.15s;
         }
-        .composer .send:disabled {
-          opacity: 0.5;
+        .anemo-v4-send:disabled {
+          opacity: 0.53;
           cursor: not-allowed;
         }
-        .composer .send:not(:disabled):hover { transform: scale(1.05); }
-        button.ghost {
-          color: var(--text-secondary);
-          background: transparent;
-          border: none;
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        button.ghost:hover {
-          background: rgba(255,255,255,0.1);
-          color: var(--text-primary);
+        .anemo-v4-send:not(:disabled):hover {
+          background: #1744ad;
+          transform: scale(1.07);
         }
 
-        /* DESKTOP: always add extra safe bottom padding */
-        @media (min-width: 769px) {
-          .composer {
-            padding-bottom: max(24px, env(safe-area-inset-bottom, 0));
-          }
-        }
-
-        /* MOBILE: zero gap, full edge, sticky composer */
-        @media (max-width: 768px) {
-          .anemo-chat-root, .main-container, .card, .body, .row, .composer {
+        /* Responsive mobile styling */
+        @media (max-width: 600px) {
+          .anemo-v4-root, .anemo-v4-chat-container {
+            border-radius: 0 !important;
             width: 100vw !important;
+            max-width: 100vw !important;
             min-width: 100vw !important;
-            max-width: 100vw !important;
-            margin: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-          }
-          .anemo-chat-root, .main-container, .card {
             height: 100dvh !important;
-            min-height: 100dvh !important;
             max-height: 100dvh !important;
-            border-radius: 0 !important;
+            min-height: 100dvh !important;
           }
-          .sidebar { display: none !important; }
-          .body {
-            padding: 0 !important;
-            gap: 12px !important;
-            width: 100vw;
+          .anemo-v4-chat-container {
+            box-shadow: none !important;
+            border: none;
+            min-height: 100dvh;
           }
-          .row {
-            padding: 0 !important;
-            margin: 0 !important;
+          .anemo-v4-header {
+            padding: 14px 10px 7px 10px;
           }
-          .bubble {
-            max-width: 100vw !important;
-            width: 100vw !important;
-            border-radius: 18px !important;
-            margin: 0 !important;
-            padding-left: 12px !important;
-            padding-right: 12px !important;
+          .anemo-v4-messages {
+            padding: 13px 3vw 12vw 3vw;
+            gap: 10px;
           }
-          .row.user .bubble, .row.bot .bubble {
-            margin: 0 !important;
+          .anemo-v4-bubble {
+            max-width: 96vw;
+            font-size: 1.01rem;
           }
-          .sugs {
-            padding-left: 8px !important;
-            padding-right: 8px !important;
-          }
-          .composer {
+          .anemo-v4-composer {
             position: fixed !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            z-index: 1000 !important;
-            width: 100vw !important;
-            padding-left: env(safe-area-inset-left,0);
-            padding-right: env(safe-area-inset-right,0);
-            padding-bottom: max(16px, env(safe-area-inset-bottom,0));
-            border-radius: 0 !important;
-            background: var(--card-bg) !important;
-            border-top: 1px solid var(--border-color);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            border-radius: 0;
+            border-top: 1.5px solid var(--anemo-border);
+            padding: 0 5vw 6vw 5vw;
+            background: var(--anemo-surface);
+            z-index: 10;
           }
-          .head {
-            padding: 12px !important;
+          .anemo-v4-composer-inner {
+            border-radius: 16px;
+            padding-left: 12px;
+            padding-right: 6px;
           }
         }
       `}</style>
