@@ -35,14 +35,14 @@ export default function ChatWidget() {
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  
+
   const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
     setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
   }, []);
 
   useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw) as Message[]; if (Array.isArray(parsed) && parsed.length) setMessages(parsed); } } catch {} }, []);
   useEffect(() => { try { if (messages.length) { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80))); } } catch {} }, [messages]);
-  
+
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
@@ -52,7 +52,7 @@ export default function ChatWidget() {
   }, [messages.length, push]);
 
   useEffect(() => { requestAnimationFrame(() => { if (listRef.current) { listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }); } }); }, [messages, typing]);
-  
+
   useEffect(() => {
     textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -134,7 +134,11 @@ export default function ChatWidget() {
         --text-secondary: #7d8590; --accent-color: #2563eb; --bot-bubble-bg: #1c1c1c;
         --user-bubble-bg: #2563eb; --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; --border-radius: 24px;
       }
-      .anemo-chat-root { display: flex; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--card-bg); }
+      .anemo-chat-root {
+        display: flex; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--card-bg);
+        /* NEW: Make it edge-to-edge on mobile */
+        margin: 0; padding: 0; width: 100vw; min-height: 100vh; box-sizing: border-box;
+      }
       .card {
         width: 100%; height: 100%; max-height: 100%; background: var(--card-bg);
         border: none; border-radius: 0; box-shadow: none;
@@ -173,6 +177,13 @@ export default function ChatWidget() {
       .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
       button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
       button.ghost:hover { background: rgba(255,255,255,0.1); }
+      @media (max-width: 600px) {
+        .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
+        .card { border-radius: 0 !important; box-shadow: none !important; }
+        .body { padding: 12px !important; }
+        .composer { padding: 10px 8px !important; }
+        .sugs { padding: 0 8px 8px !important; }
+      }
     `}</style>
     </div>
   );
