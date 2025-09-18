@@ -77,7 +77,6 @@ export default function ChatWidget() {
     };
   }, []);
 
-  // Mobile keyboard fix: scroll into view when keyboard shown
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 700 && textareaRef.current) {
@@ -211,7 +210,6 @@ export default function ChatWidget() {
         </form>
       </div>
       <style>{`
-      /* General resets */
       html, body, .anemo-chat-root, .card {
         box-sizing: border-box;
         padding: 0;
@@ -240,12 +238,10 @@ export default function ChatWidget() {
         flex-grow: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 20px 0 20px 0;
+        padding: 12px 0 12px 0;
         display: flex;
         flex-direction: column;
         gap: 18px;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(125,125,125,0.2) transparent;
         width: 100vw;
         max-width: 100vw;
       }
@@ -261,9 +257,9 @@ export default function ChatWidget() {
         padding: 12px 16px;
         border-radius: 16px;
         background: var(--bot-bubble-bg);
-        max-width: 82vw;
-        margin-left: 2vw;
-        margin-right: 2vw;
+        max-width: 90vw;
+        margin-left: auto;
+        margin-right: auto;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -274,16 +270,16 @@ export default function ChatWidget() {
         background: var(--user-bubble-bg);
         color: white;
         border-bottom-right-radius: 6px;
-        margin-right: 2vw;
-        margin-left: 16vw;
+        margin-right: 8px;
+        margin-left: 20vw;
         align-items: flex-end;
       }
       .row.bot .bubble {
         background: var(--bot-bubble-bg);
         color: var(--text-primary);
         border-bottom-left-radius: 6px;
-        margin-left: 2vw;
-        margin-right: 16vw;
+        margin-left: 8px;
+        margin-right: 20vw;
         align-items: flex-start;
       }
       .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
@@ -298,10 +294,9 @@ export default function ChatWidget() {
       .chip { flex-shrink: 0; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
       .chip:hover { background: #30363d; border-color: #444; color: var(--text-primary); }
 
-      /* Composer bar styles */
       .composer {
         display: flex; align-items: end; justify-content: center;
-        padding: 0 0 16px 0;
+        padding: 0 0 10px 0;
         border: none;
         flex-shrink: 0;
         background: transparent;
@@ -314,11 +309,11 @@ export default function ChatWidget() {
         display: flex; align-items: center; gap: 10px;
         width: 100%;
         max-width: 600px;
-        margin: 0 10px;
+        margin: 0 8px;
         background: var(--bot-bubble-bg);
         border-radius: 18px;
         border: 1px solid var(--border-color);
-        padding: 6px 14px 6px 14px;
+        padding: 6px 12px 6px 12px;
         box-shadow: 0 2px 18px 0 rgba(0,0,0,0.10);
       }
       .composer textarea {
@@ -350,11 +345,11 @@ export default function ChatWidget() {
         .card { border-radius: 0 !important; box-shadow: none !important; }
         .body { padding: 8px 0 8px 0 !important; }
         .composer { padding: 0 0 8px 0 !important; }
-        .sugs { padding: 0 4px 8px !important; }
-        .composer-inner { max-width: 100vw; margin: 0 5px; padding: 6px 6px; }
-        .bubble { max-width: 82vw; padding: 11px 12px; }
-        .row.user .bubble { margin-right: 2vw; margin-left: 15vw; }
-        .row.bot .bubble { margin-left: 2vw; margin-right: 15vw; }
+        .sugs { padding: 0 2vw 8px !important; }
+        .composer-inner { max-width: 100vw; margin: 0 4px; padding: 6px 6px; }
+        .bubble { max-width: 90vw; }
+        .row.user .bubble { margin-right: 8px; margin-left: 18vw; }
+        .row.bot .bubble { margin-left: 8px; margin-right: 18vw; }
       }
       `}</style>
     </div>
