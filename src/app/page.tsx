@@ -106,7 +106,7 @@ const SmileIcon = () => (
 );
 
 // NOTE: These components are used in the full page, but TypeScript doesn't recognize it
-// @ts-expect-error - This component is used in features section but TypeScript can't detect it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PasteGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -125,7 +125,7 @@ const PasteGraphic = () => (
   </svg>
 );
 
-// @ts-expect-error - This component is used in how-it-works section but TypeScript can't detect it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TrainGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -146,7 +146,7 @@ const TrainGraphic = () => (
   </svg>
 );
 
-// @ts-expect-error - This component is used in features component but TypeScript can't detect it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EmbedGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M50 20L30 40L50 60" stroke="#60A5FA" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -192,8 +192,7 @@ export default function Page() {
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
   
-  // Adding comment to avoid unused variable warning
-  // @ts-expect-error - This variable is used in animation sections that are below in the full code
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const scrollAnimationVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
 
   return (
