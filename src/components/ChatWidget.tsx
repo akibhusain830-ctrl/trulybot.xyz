@@ -230,10 +230,10 @@ export default function ChatWidget() {
         flex-grow: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 24px 0 24px 0;
+        padding: 28px 0 28px 0;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
         scrollbar-width: thin;
         scrollbar-color: rgba(125,125,125,0.2) transparent;
         width: 100vw;
@@ -247,11 +247,31 @@ export default function ChatWidget() {
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .row.user { justify-content: flex-end; }
       .row.bot { justify-content: flex-start; }
-      .bubble { padding: 12px 18px; border-radius: 20px; max-width: 420px; display: flex; flex-direction: column; gap: 8px; word-break: break-word; }
-      .bubble.bot { background: var(--bot-bubble-bg); border-bottom-left-radius: 6px; }
-      .bubble.user { background: var(--user-bubble-bg); color: white; border-bottom-right-radius: 6px; }
-      .bubble .text { font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
-      .bubble .meta { font-size: 0.75rem; color: var(--text-secondary); text-align: right; }
+      .bubble {
+        padding: 12px 22px;
+        border-radius: 16px;
+        max-width: 540px;
+        background: var(--bot-bubble-bg);
+        margin-left: 18px;
+        margin-right: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        word-break: break-word;
+        box-shadow: 0 2px 8px 0 rgba(0,0,0,0.02);
+      }
+      .row.user .bubble {
+        background: var(--user-bubble-bg);
+        color: white;
+        border-bottom-right-radius: 6px;
+      }
+      .row.bot .bubble {
+        background: var(--bot-bubble-bg);
+        color: var(--text-primary);
+        border-bottom-left-radius: 6px;
+      }
+      .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+      .bubble .meta { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
       .bubble.user .meta { color: rgba(255,255,255,0.6); }
       .bubble.typing .dots { display: flex; gap: 4px; align-items: center; }
       .bubble.typing .dots span { width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-secondary); animation: bounce 1.2s infinite; }
@@ -263,33 +283,40 @@ export default function ChatWidget() {
       .chip:hover { background: #30363d; border-color: #444; color: var(--text-primary); }
       /* --- Composer --- */
       .composer {
-        display: flex; align-items: center; justify-content: center;
-        padding: 18px 0 14px 0;
-        border-top: 1px solid var(--border-color);
+        display: flex; align-items: end; justify-content: center;
+        padding: 0 0 26px 0;
+        border: none;
         flex-shrink: 0;
-        background: var(--card-bg);
+        background: transparent;
         width: 100vw;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
       }
       .composer-inner {
         display: flex; align-items: center; gap: 12px;
-        width: 420px; max-width: 98vw; min-width: 0;
-        background: var(--bot-bubble-bg); border-radius: 20px; border: 1px solid var(--border-color);
-        padding: 2px 8px 2px 16px;
+        width: 100%;
+        max-width: 660px;
+        background: var(--bot-bubble-bg);
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        padding: 8px 18px 8px 18px;
+        box-shadow: 0 2px 18px 0 rgba(0,0,0,0.10);
       }
       .composer textarea {
         flex-grow: 1;
         background: transparent;
         border: none;
-        border-radius: 20px;
+        border-radius: 16px;
         padding: 10px 0px 10px 0px;
         outline: none;
         resize: none;
         color: var(--text-primary);
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-family: inherit;
         line-height: 1.5;
-        min-height: 24px;
-        max-height: 48px;
+        min-height: 28px;
+        max-height: 68px;
         box-shadow: none;
         width: 100%;
       }
@@ -300,24 +327,21 @@ export default function ChatWidget() {
       .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
       button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
       button.ghost:hover { background: rgba(255,255,255,0.1); }
-      @media (max-width: 800px) {
-        .composer-inner { width: 98vw; min-width: 0; max-width: 100vw; }
-        .bubble { max-width: 98vw; }
+      @media (max-width: 900px) {
+        .composer-inner, .bubble { max-width: 98vw; }
       }
       @media (max-width: 600px) {
         .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
         .card { border-radius: 0 !important; box-shadow: none !important; }
         .body { padding: 12px 0 12px 0 !important; }
-        .composer { padding: 10px 0 10px 0 !important; }
+        .composer { padding: 0 0 16px 0 !important; }
         .sugs { padding: 0 8px 8px !important; }
-        .composer-inner { width: 98vw; min-width: 0; max-width: 100vw; }
-        .composer textarea { min-height: 20px; max-height: 40px; }
-        .bubble { max-width: 98vw; }
+        .composer-inner, .bubble { max-width: 98vw; }
+        .composer-inner { padding: 6px 10px 6px 10px; }
       }
-      /* Remove double scrollbars and prevent overflow */
-      html, body { overflow-x: hidden !important; }
-      .anemo-chat-root, .card, .body {
+      html, body, .anemo-chat-root, .card {
         box-sizing: border-box;
+        overflow-x: hidden !important;
       }
       /* Remove React/Angular footer bar if any (should not exist, but just in case) */
       .MuiPaper-root, .mat-bottom-sheet-container { display: none !important; }
