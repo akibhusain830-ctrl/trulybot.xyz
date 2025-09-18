@@ -234,6 +234,7 @@ export default function ChatWidget() {
         flex-grow: 1;
         overflow-y: auto;
         overflow-x: hidden;
+        /* Add side padding for mobile! */
         padding: 28px 0 28px 0;
         display: flex;
         flex-direction: column;
@@ -268,15 +269,15 @@ export default function ChatWidget() {
         background: var(--user-bubble-bg);
         color: white;
         border-bottom-right-radius: 6px;
-        margin-right: 6vw;
-        margin-left: 16vw;
+        margin-right: 2vw;
+        margin-left: 25vw;
       }
       .row.bot .bubble {
         background: var(--bot-bubble-bg);
         color: var(--text-primary);
         border-bottom-left-radius: 6px;
-        margin-left: 6vw;
-        margin-right: 16vw;
+        margin-left: 2vw;
+        margin-right: 25vw;
       }
       .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
       .bubble .meta { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
@@ -292,7 +293,7 @@ export default function ChatWidget() {
       /* --- Composer --- */
       .composer {
         display: flex; align-items: end; justify-content: center;
-        padding: 0 0 26px 0;
+        padding: 0 0 20px 0;
         border: none;
         flex-shrink: 0;
         background: transparent;
@@ -310,6 +311,7 @@ export default function ChatWidget() {
         border: 1px solid var(--border-color);
         padding: 8px 18px 8px 18px;
         box-shadow: 0 2px 18px 0 rgba(0,0,0,0.10);
+        margin: 0 8px; /* mobile horizontal margin */
       }
       .composer textarea {
         flex-grow: 1;
@@ -342,10 +344,10 @@ export default function ChatWidget() {
         .body { padding: 12px 0 12px 0 !important; }
         .composer { padding: 0 0 12px 0 !important; }
         .sugs { padding: 0 8px 8px !important; }
-        .composer-inner { max-width: 98vw; padding: 6px 8px 6px 8px; }
-        .bubble { max-width: 96vw; }
-        .row.user .bubble { margin-right: 6vw; margin-left: 15vw; }
-        .row.bot .bubble { margin-left: 6vw; margin-right: 15vw; }
+        .composer-inner { max-width: 98vw; padding: 6px 8px 6px 8px; margin: 0 4px; }
+        .bubble { max-width: 94vw; }
+        .row.user .bubble { margin-right: 2vw; margin-left: 20vw; }
+        .row.bot .bubble { margin-left: 2vw; margin-right: 20vw; }
       }
       html, body, .anemo-chat-root, .card {
         box-sizing: border-box;
