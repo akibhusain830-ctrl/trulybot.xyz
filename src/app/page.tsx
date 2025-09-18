@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext'; // Add this import
 
 // --- Hamburger Icon ---
 const HamburgerIcon = ({ open }: { open: boolean }) => (
@@ -17,11 +18,13 @@ const HamburgerIcon = ({ open }: { open: boolean }) => (
 const MobileMenu = ({
   open,
   onClose,
-  isLoggedIn
+  isLoggedIn,
+  signOut
 }: {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
+  signOut?: () => void;
 }) => (
   <AnimatePresence>
     {open && (
@@ -46,7 +49,15 @@ const MobileMenu = ({
           <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
           <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
           {isLoggedIn ? (
-            <button className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors" onClick={onClose}>Sign Out</button>
+            <button 
+              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors" 
+              onClick={() => {
+                if (signOut) signOut();
+                onClose();
+              }}
+            >
+              Sign Out
+            </button>
           ) : (
             <Link href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors" onClick={onClose}>Sign In</Link>
           )}
@@ -167,8 +178,9 @@ const floatingCards = [
   },
 ];
 
-export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export default function Page() {
+  // Replace local state with auth context
+  const { user, signOut, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
@@ -191,10 +203,22 @@ export default function HomePage() {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
-          {isLoggedIn ? (
-            <button onClick={() => setIsLoggedIn(false)} className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors">Sign Out</button>
-          ) : (
-            <Link href="/sign-in" className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</Link>
+          {!loading && (
+            user ? (
+              <button 
+                onClick={signOut} 
+                className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link 
+                href="/sign-in" 
+                className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+              >
+                Sign In
+              </Link>
+            )
           )}
           {/* Hamburger on mobile */}
           <button
@@ -205,7 +229,12 @@ export default function HomePage() {
             <HamburgerIcon open={menuOpen} />
           </button>
         </div>
-        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} isLoggedIn={isLoggedIn} />
+        <MobileMenu 
+          open={menuOpen} 
+          onClose={() => setMenuOpen(false)} 
+          isLoggedIn={!!user} 
+          signOut={signOut}
+        />
       </header>
       
       <section className="relative w-full max-w-7xl mx-auto px-2 sm:px-6 pt-16 pb-32 z-10">
@@ -235,7 +264,7 @@ export default function HomePage() {
           </div>
           <motion.div variants={heroVariants} initial="hidden" animate="visible" className="col-span-4 text-center">
             <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-              India’s Smartest AI Chatbot <br />
+              India's Smartest AI Chatbot <br />
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span>
             </motion.h1>
             <motion.p variants={itemVariants} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10">
@@ -273,7 +302,7 @@ export default function HomePage() {
         {/* Mobile floating cards: sleek, animated grid below hero */}
         <div className="lg:hidden flex flex-col items-center">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-            India’s Smartest AI Chatbot <br />
+            India's Smartest AI Chatbot <br />
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span>
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10">
