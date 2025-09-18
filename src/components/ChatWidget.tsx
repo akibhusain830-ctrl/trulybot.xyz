@@ -36,6 +36,22 @@ export default function ChatWidget() {
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // THIS is important for keyboard-aware chat height on mobile
+  const [composerHeight, setComposerHeight] = useState(62); // default px
+
+  useEffect(() => {
+    // Dynamically set composer height for chat area sizing (fixes keyboard issue)
+    if (textareaRef.current) {
+      const resize = () => {
+        setTimeout(() => {
+          setComposerHeight(textareaRef.current?.offsetHeight ? textareaRef.current.offsetHeight + 30 : 62);
+        }, 150);
+      };
+      window.addEventListener('resize', resize);
+      return () => window.removeEventListener('resize', resize);
+    }
+  }, []);
+
   const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
     setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
   }, []);
@@ -77,7 +93,6 @@ export default function ChatWidget() {
     };
   }, []);
 
-  // Mobile keyboard fix: scroll into view when keyboard shown
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 700 && textareaRef.current) {
@@ -185,7 +200,15 @@ export default function ChatWidget() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
         </header>
-        <div className="body" ref={listRef}>
+        <div
+          className="body"
+          ref={listRef}
+          style={{
+            height: `calc(100vh - ${composerHeight}px - 56px)`, // 56px = .head
+            minHeight: 0,
+            flexGrow: 1,
+          }}
+        >
           {messages.map((m) => (
             <div key={m.id} className={`row ${m.role}`}>
               <div className={`bubble ${m.role} ${m.error ? 'err' : ''}`}>
@@ -246,38 +269,111 @@ export default function ChatWidget() {
         max-width: 100vw;
         background: var(--card-bg);
       }
+      .body::-webkit-scrollbar { width: 8px; background: transparent; }
+      .body::-webkit-scrollbar-thumb { background-color: rgba(125, 125, 125, 0.2); border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
+      .body::-webkit-scrollbar-track { background: transparent; }
+      .body::-webkit-scrollbar-thumb:hover { background-color: rgba(125, 125, 125, 0.4); }
       .row { display: flex; animation: slideIn 0.3s ease-out forwards; }
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .row.user { justify-content: flex-end; }
       .row.bot { justify-content: flex-start; }
       .bubble {
-        max-width: 90vw;
-        margin: 0;
-        border-radius: 16px;
         padding: 12px 16px;
+        border-radius: 16px;
         background: var(--bot-bubble-bg);
-        word-break: break-word;
-      }
-      .row.bot .bubble {
-        background: var(--bot-bubble-bg);
-        color: var(--text-primary);
-        margin-left: 8px;
+        max-width: 90vw;
+        margin-left: auto;
         margin-right: auto;
-        border-bottom-left-radius: 6px;
-        align-items: flex-start;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        word-break: break-word;
+        box-shadow: 0 2px 8px 0 rgba(0,0,0,0.02);
       }
       .row.user .bubble {
         background: var(--user-bubble-bg);
         color: white;
-        margin-right: 8px;
-        margin-left: auto;
         border-bottom-right-radius: 6px;
+        margin-right: 10px;
+        margin-left: 18vw;
         align-items: flex-end;
       }
+      /* 🔥🔥 FIXED: Bot bubbles now have only a small left margin and are left-aligned */
+      .row.bot .bubble {
+        background: var(--bot-bubble-bg);
+        color: var(--text-primary);
+        border-bottom-left-radius: 6px;
+        margin-left: 8px;
+        margin-right: auto;
+        align-items: flex-start;
+      }
+      .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+      .bubble .meta { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
+      .bubble.user .meta { color: rgba(255,255,255,0.6); }
+      .bubble.typing .dots { display: flex; gap: 4px; align-items: center; }
+      .bubble.typing .dots span { width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-secondary); animation: bounce 1.2s infinite; }
+      .bubble.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
+      .bubble.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes bounce { 0%, 80%, 100% { transform: scale(0.5); opacity: 0.5; } 40% { transform: scale(1.0); opacity: 1; } }
+      .sugs { display: flex; gap: 8px; padding: 0 12px 12px; overflow-x: auto; flex-shrink: 0; }
+      .chip { flex-shrink: 0; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+      .chip:hover { background: #30363d; border-color: #444; color: var(--text-primary); }
+
+      .composer {
+        display: flex; align-items: end; justify-content: center;
+        padding: 0 0 6px 0;
+        border: none;
+        flex-shrink: 0;
+        background: transparent;
+        width: 100vw;
+        z-index: 10;
+      }
+      .composer-inner {
+        display: flex; align-items: center; gap: 10px;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 8px;
+        background: var(--bot-bubble-bg);
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        box-shadow: 0 2px 18px 0 rgba(0,0,0,0.10);
+      }
+      .composer textarea {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        border-radius: 16px;
+        padding: 10px 0px 10px 0px;
+        outline: none;
+        resize: none;
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-family: inherit;
+        line-height: 1.5;
+        min-height: 28px;
+        max-height: 68px;
+        box-shadow: none;
+        width: 100%;
+      }
+      .composer textarea:focus { outline: none; }
+      .composer .send {
+        background: var(--accent-color); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; transition: transform 0.2s, opacity 0.2s; border: none; cursor: pointer;
+      }
+      .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
+      button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
+      button.ghost:hover { background: rgba(255,255,255,0.1); }
       @media (max-width: 600px) {
+        .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
+        .card { border-radius: 0 !important; box-shadow: none !important; }
+        .body { padding: 0 !important; }
+        .composer { padding: 0 0 4px 0 !important; }
+        .sugs { padding: 0 2vw 8px !important; }
+        .composer-inner { max-width: 100vw; margin: 0 2vw; padding: 6px 6px; }
         .bubble { max-width: 90vw; }
+        .row.user .bubble { margin-right: 8px; margin-left: 18vw; }
+        /* 🔥🔥 FIXED: Bot bubbles now have only a small left margin and are left-aligned */
         .row.bot .bubble { margin-left: 8px; margin-right: auto; }
-        .row.user .bubble { margin-left: auto; margin-right: 8px; }
       }
       `}</style>
     </div>
