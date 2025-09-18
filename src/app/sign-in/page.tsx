@@ -41,7 +41,7 @@ export default function SignInPage() {
         if (error) {
             setError(error.message);
         } else {
-            router.push('/dashboard');
+            router.push('/'); // Redirect to home
         }
         setLoading(false);
     };
@@ -50,11 +50,10 @@ export default function SignInPage() {
         setLoading(true);
         setError('');
 
+        // Option 1: Let Supabase use the default redirect (home page)
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/dashboard`
-            }
+            // options: { redirectTo: `${window.location.origin}/` }, // Uncomment to force home redirect
         });
 
         if (error) {
