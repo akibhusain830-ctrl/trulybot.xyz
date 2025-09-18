@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 type Role = 'bot' | 'user';
@@ -33,51 +34,55 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
+
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const composerRef = useRef<HTMLFormElement | null>(null);
 
-  // Keep a CSS var with composer height for perfect bottom padding in messages
+  // Measure composer height and expose to CSS so message list can pad-bottom correctly on mobile
   const updateComposerHeight = useCallback(() => {
     const h = composerRef.current?.offsetHeight ?? 72;
-    // Set on the root element so CSS can use it
     document.documentElement.style.setProperty('--anemo-composer-h', `${h}px`);
   }, []);
 
   useEffect(() => {
-    // Autogrow textarea + recompute composer height
+    // Autogrow textarea and recompute composer height
     const adjustHeight = () => {
       if (!textareaRef.current) return;
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       updateComposerHeight();
     };
+
     textareaRef.current?.addEventListener('input', adjustHeight);
     window.addEventListener('resize', updateComposerHeight);
     window.addEventListener('orientationchange', updateComposerHeight);
-    // Support mobile viewport changes (keyboard open/close)
-    const vv = (window as any).visualViewport as VisualViewport | undefined;
-    vv?.addEventListener('resize', updateComposerHeight);
-    vv?.addEventListener('scroll', updateComposerHeight);
 
-    // Initial measure
-    setTimeout(updateComposerHeight, 0);
+    // Support mobile visual viewport changes (keyboard open/close)
+    const vv = window.visualViewport;
+    const onVV = () => updateComposerHeight();
+    vv?.addEventListener('resize', onVV);
+    vv?.addEventListener('scroll', onVV);
+
+    // Initial measure once DOM paints
+    requestAnimationFrame(updateComposerHeight);
 
     return () => {
       textareaRef.current?.removeEventListener('input', adjustHeight);
       window.removeEventListener('resize', updateComposerHeight);
       window.removeEventListener('orientationchange', updateComposerHeight);
-      vv?.removeEventListener('resize', updateComposerHeight);
-      vv?.removeEventListener('scroll', updateComposerHeight);
+      vv?.removeEventListener('resize', onVV);
+      vv?.removeEventListener('scroll', onVV);
     };
   }, [updateComposerHeight]);
 
   const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
     setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
-    // Composer height may affect bottom padding; ensure it’s up to date
-    setTimeout(updateComposerHeight, 0);
+    // Ensure bottom padding stays accurate after new message
+    requestAnimationFrame(updateComposerHeight);
   }, [updateComposerHeight]);
 
+  // Load persisted messages
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -85,17 +90,23 @@ export default function ChatWidget() {
         const parsed = JSON.parse(raw) as Message[];
         if (Array.isArray(parsed) && parsed.length) setMessages(parsed);
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
+  // Persist messages (limit history)
   useEffect(() => {
     try {
       if (messages.length) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80)));
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, [messages]);
 
+  // Intro message once
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
@@ -104,24 +115,21 @@ export default function ChatWidget() {
     }
   }, [messages.length, push]);
 
-  // Auto-scroll to bottom when messages update or while typing
+  // Auto-scroll to bottom on new messages or when typing state changes
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTo({
-        top: listRef.current.scrollHeight,
-        behavior: messages.length > 0 ? 'smooth' : 'auto'
-      });
-    }
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: messages.length ? 'smooth' : 'auto' });
   }, [messages, typing]);
 
-  // Focus textarea on key press anywhere
+  // Focus textarea if user starts typing anywhere
   useEffect(() => {
     textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (
         document.activeElement !== textareaRef.current &&
-        !['INPUT', 'TEXTAREA'].includes(target.tagName) &&
+        !['INPUT', 'TEXTAREA'].includes(target?.tagName) &&
         e.key.length === 1
       ) {
         textareaRef.current?.focus();
@@ -163,11 +171,9 @@ export default function ChatWidget() {
           return;
         }
         push('bot', reply);
-      } catch (err: unknown) {
+      } catch (err) {
         const isAbort = (err as Error)?.name === 'AbortError';
-        const msg = isAbort
-          ? 'Request timed out. Try again.'
-          : (err as Error)?.message || 'Network error';
+        const msg = isAbort ? 'Request timed out. Try again.' : (err as Error)?.message || 'Network error';
         push('bot', msg, { error: true });
       } finally {
         setLoading(false);
@@ -205,10 +211,7 @@ export default function ChatWidget() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(INTRO_KEY);
     setTimeout(() => {
-      push(
-        'bot',
-        "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding."
-      );
+      push('bot', "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding.");
       localStorage.setItem(INTRO_KEY, '1');
       setSuggestions(SUGGESTIONS);
     }, 100);
@@ -225,17 +228,29 @@ export default function ChatWidget() {
           </div>
           <div className="anemo-v4-header-actions">
             <button className="anemo-v4-clear-btn" onClick={clearConversation} title="Clear conversation">
-              <svg width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <svg width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
             </button>
           </div>
         </header>
-        <main className="anemo-v4-messages" ref={listRef}>
+
+        <main
+          className="anemo-v4-messages"
+          ref={listRef}
+          role="log"
+          aria-live="polite"
+          aria-label="Chat messages"
+        >
           {messages.map((m) => (
             <div key={m.id} className={`anemo-v4-msg-row ${m.role}`}>
               <div className={`anemo-v4-bubble ${m.role} ${m.error ? 'err' : ''}`}>
                 <div className="bubble-inner">
                   <div className="bubble-text">{m.text}</div>
-                  <div className="bubble-meta">{new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div className="bubble-meta">
+                    {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -250,6 +265,7 @@ export default function ChatWidget() {
             </div>
           )}
         </main>
+
         {suggestions && !messages.find(m => m.role === 'user') && (
           <div className="anemo-v4-suggestions">
             {suggestions.map((s) => (
@@ -259,16 +275,18 @@ export default function ChatWidget() {
             ))}
           </div>
         )}
-        <form 
+
+        <form
           ref={composerRef}
-          className="anemo-v4-composer" 
-          onSubmit={e => { e.preventDefault(); if (!loading) submit(); }}
+          className="anemo-v4-composer"
+          onSubmit={(e) => { e.preventDefault(); if (!loading) submit(); }}
+          aria-label="Message composer"
         >
           <div className="anemo-v4-composer-inner">
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Message Anemo..."
               rows={1}
@@ -282,11 +300,15 @@ export default function ChatWidget() {
               title="Send message"
               aria-label="Send"
             >
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
           </div>
         </form>
       </div>
+
       <style jsx global>{`
         :root {
           --anemo-accent: #2563eb;
@@ -299,9 +321,10 @@ export default function ChatWidget() {
           --anemo-text: #e6edf3;
           --anemo-radius: 18px;
 
-          /* dynamic height of composer set from JS for mobile padding */
+          /* Updated dynamically from JS to keep messages above composer on mobile */
           --anemo-composer-h: 76px;
         }
+
         html, body {
           background: var(--anemo-bg);
           color: var(--anemo-text);
@@ -310,8 +333,10 @@ export default function ChatWidget() {
           width: 100%;
           margin: 0;
           padding: 0;
-          overflow: hidden; /* avoid outer scrollbars */
+          /* Prevent outer page scroll bars */
+          overflow: hidden;
         }
+
         .anemo-v4-root {
           min-height: 100dvh;
           width: 100vw;
@@ -320,6 +345,8 @@ export default function ChatWidget() {
           justify-content: center;
           background: var(--anemo-bg);
         }
+
+        /* Desktop card */
         .anemo-v4-chat-container {
           background: var(--anemo-surface);
           border-radius: 18px;
@@ -334,6 +361,7 @@ export default function ChatWidget() {
           overflow: hidden;
           border: 1.5px solid var(--anemo-border);
         }
+
         .anemo-v4-header {
           display: flex;
           align-items: center;
@@ -344,6 +372,7 @@ export default function ChatWidget() {
           z-index: 1;
           flex-shrink: 0;
         }
+
         .anemo-v4-brand {
           display: flex;
           align-items: center;
@@ -362,6 +391,7 @@ export default function ChatWidget() {
           margin-left: 0.3em;
           font-weight: 700;
         }
+
         .anemo-v4-header-actions { display: flex; align-items: center; gap: 8px; }
         .anemo-v4-clear-btn {
           background: none; border: none; color: var(--anemo-gray); cursor: pointer;
@@ -373,9 +403,8 @@ export default function ChatWidget() {
         .anemo-v4-messages {
           flex: 1 1 0;
           overflow-y: auto;
-          /* Hide scrollbar for desktop while preserving scroll */
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE 10+ */
+          scrollbar-width: none;       /* Firefox: hide scrollbar UI */
+          -ms-overflow-style: none;    /* IE/Edge legacy */
           display: flex;
           flex-direction: column;
           gap: 12px;
@@ -384,7 +413,7 @@ export default function ChatWidget() {
           scroll-behavior: smooth;
           overscroll-behavior: contain;
         }
-        .anemo-v4-messages::-webkit-scrollbar { display: none; }
+        .anemo-v4-messages::-webkit-scrollbar { display: none; } /* WebKit */
 
         .anemo-v4-msg-row { display: flex; width: 100%; }
         .anemo-v4-msg-row.user { justify-content: flex-end; }
@@ -442,10 +471,10 @@ export default function ChatWidget() {
         .anemo-v4-suggestion:hover, .anemo-v4-suggestion:focus { background: var(--anemo-accent); color: #fff; }
 
         .anemo-v4-composer {
-          padding: 0 16px 20px 16px;
+          padding: 0 16px 20px 16px;          /* desktop spacing */
           background: var(--anemo-surface);
           border-top: 1.5px solid var(--anemo-border);
-          position: relative; /* desktop normal flow */
+          position: relative;                 /* desktop: normal flow */
           z-index: 2;
           flex-shrink: 0;
         }
@@ -468,13 +497,12 @@ export default function ChatWidget() {
         .anemo-v4-send:disabled { opacity: 0.53; cursor: not-allowed; }
         .anemo-v4-send:not(:disabled):hover { background: #1744ad; transform: scale(1.07); }
 
-        /* MOBILE-ONLY: edge-to-edge with perfect bottom padding and no gaps */
+        /* MOBILE ONLY: edge-to-edge without changing desktop UI */
         @media (max-width: 768px) {
-          html, body { overflow: hidden; } /* prevent outer scroll */
-          .anemo-v4-root {
-            width: 100%;
-            min-height: 100dvh;
-          }
+          /* Avoid outer page scroll; content scrolls inside messages only */
+          html, body { overflow: hidden; }
+
+          /* Full-bleed container; no radius/shadow lines that cause visible edges */
           .anemo-v4-chat-container {
             width: 100%;
             max-width: 100%;
@@ -485,22 +513,24 @@ export default function ChatWidget() {
             border: 0;
             box-shadow: none;
           }
+
           .anemo-v4-header {
-            padding: 14px 12px;
+            padding: max(12px, env(safe-area-inset-top, 0px)) 12px 10px 12px;
             border-radius: 0;
           }
+
+          /* Messages: edge-to-edge with correct bottom padding so last message never hides under composer */
           .anemo-v4-messages {
-            padding-left: 12px;
-            padding-right: 12px;
-            /* Ensure last message never hides behind fixed composer */
-            padding-bottom: calc(var(--anemo-composer-h, 76px) + max(12px, env(safe-area-inset-bottom, 0px)));
-            padding-top: 8px;
+            padding: 8px 12px calc(var(--anemo-composer-h, 76px) + max(10px, env(safe-area-inset-bottom, 0px))) 12px;
             width: 100%;
           }
+
           .anemo-v4-suggestions {
             padding-left: 12px;
             padding-right: 12px;
           }
+
+          /* Fixed composer spanning full device width with safe areas */
           .anemo-v4-composer {
             position: fixed;
             left: env(safe-area-inset-left, 0px);
@@ -509,15 +539,15 @@ export default function ChatWidget() {
             border-top: 1px solid var(--anemo-border);
             background: var(--anemo-surface);
             padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px;
-            /* span full width without gaps */
-            width: auto;
+            width: auto; /* computed by left/right */
           }
           .anemo-v4-composer-inner {
             border-radius: 16px;
             padding-left: 14px;
             padding-right: 8px;
           }
-          /* Keep bubbles similar but allow a bit wider on mobile while keeping inner gutters */
+
+          /* Slightly wider bubbles feels better on phones while respecting gutters */
           .anemo-v4-bubble { max-width: 92%; }
         }
       `}</style>
