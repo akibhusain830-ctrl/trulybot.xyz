@@ -1,23 +1,23 @@
-import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+'use client'
 
-export const metadata = {
-  title: 'Anemo.ai',
-  description: 'Smartest AI Chatbot for E-Commerce',
-};
+import { useEffect } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        window.location.reload()
+      }
+    })
+    return () => {
+      listener?.subscription.unsubscribe()
+    }
+  }, [])
+
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
