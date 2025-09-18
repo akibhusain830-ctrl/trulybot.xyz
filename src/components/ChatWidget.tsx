@@ -211,15 +211,21 @@ export default function ChatWidget() {
         </form>
       </div>
       <style>{`
-      html, body {
+      /* General resets */
+      html, body, .anemo-chat-root, .card {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+        width: 100vw;
+        min-height: 100vh;
+        overflow-x: hidden !important;
         overscroll-behavior: none;
-        overflow: hidden !important;
+        background: #111;
       }
       .anemo-chat-root {
         --bg-color: #000; --card-bg: #111; --border-color: #30363d; --text-primary: #e6edf3;
         --text-secondary: #7d8590; --accent-color: #2563eb; --bot-bubble-bg: #1c1c1c;
         --user-bubble-bg: #2563eb; --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; --border-radius: 24px;
-        width: 100vw; min-height: 100vh; margin: 0; padding: 0; box-sizing: border-box;
         display: flex; flex-direction: column; justify-content: stretch;
       }
       .card {
@@ -227,18 +233,17 @@ export default function ChatWidget() {
         border: none; border-radius: 0; box-shadow: none;
         display: flex; flex-direction: column; overflow: hidden;
       }
-      .head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+      .head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
       .brand { font-size: 1.1rem; font-weight: 600; }
       .sub { font-size: 0.8rem; color: var(--text-secondary); }
       .body {
         flex-grow: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        /* Add side padding for mobile! */
-        padding: 28px 0 28px 0;
+        padding: 20px 0 20px 0;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 18px;
         scrollbar-width: thin;
         scrollbar-color: rgba(125,125,125,0.2) transparent;
         width: 100vw;
@@ -253,12 +258,12 @@ export default function ChatWidget() {
       .row.user { justify-content: flex-end; }
       .row.bot { justify-content: flex-start; }
       .bubble {
-        padding: 12px 18px;
+        padding: 12px 16px;
         border-radius: 16px;
-        max-width: 97vw;
         background: var(--bot-bubble-bg);
-        margin-left: auto;
-        margin-right: auto;
+        max-width: 82vw;
+        margin-left: 2vw;
+        margin-right: 2vw;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -270,14 +275,16 @@ export default function ChatWidget() {
         color: white;
         border-bottom-right-radius: 6px;
         margin-right: 2vw;
-        margin-left: 25vw;
+        margin-left: 16vw;
+        align-items: flex-end;
       }
       .row.bot .bubble {
         background: var(--bot-bubble-bg);
         color: var(--text-primary);
         border-bottom-left-radius: 6px;
         margin-left: 2vw;
-        margin-right: 25vw;
+        margin-right: 16vw;
+        align-items: flex-start;
       }
       .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
       .bubble .meta { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
@@ -287,13 +294,14 @@ export default function ChatWidget() {
       .bubble.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
       .bubble.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
       @keyframes bounce { 0%, 80%, 100% { transform: scale(0.5); opacity: 0.5; } 40% { transform: scale(1.0); opacity: 1; } }
-      .sugs { display: flex; gap: 8px; padding: 0 24px 12px; overflow-x: auto; flex-shrink: 0; }
+      .sugs { display: flex; gap: 8px; padding: 0 12px 12px; overflow-x: auto; flex-shrink: 0; }
       .chip { flex-shrink: 0; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
       .chip:hover { background: #30363d; border-color: #444; color: var(--text-primary); }
-      /* --- Composer --- */
+
+      /* Composer bar styles */
       .composer {
         display: flex; align-items: end; justify-content: center;
-        padding: 0 0 20px 0;
+        padding: 0 0 16px 0;
         border: none;
         flex-shrink: 0;
         background: transparent;
@@ -303,15 +311,15 @@ export default function ChatWidget() {
         z-index: 10;
       }
       .composer-inner {
-        display: flex; align-items: center; gap: 12px;
+        display: flex; align-items: center; gap: 10px;
         width: 100%;
-        max-width: 660px;
+        max-width: 600px;
+        margin: 0 10px;
         background: var(--bot-bubble-bg);
         border-radius: 18px;
         border: 1px solid var(--border-color);
-        padding: 8px 18px 8px 18px;
+        padding: 6px 14px 6px 14px;
         box-shadow: 0 2px 18px 0 rgba(0,0,0,0.10);
-        margin: 0 8px; /* mobile horizontal margin */
       }
       .composer textarea {
         flex-grow: 1;
@@ -337,21 +345,16 @@ export default function ChatWidget() {
       .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
       button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
       button.ghost:hover { background: rgba(255,255,255,0.1); }
-
       @media (max-width: 600px) {
         .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
         .card { border-radius: 0 !important; box-shadow: none !important; }
-        .body { padding: 12px 0 12px 0 !important; }
-        .composer { padding: 0 0 12px 0 !important; }
-        .sugs { padding: 0 8px 8px !important; }
-        .composer-inner { max-width: 98vw; padding: 6px 8px 6px 8px; margin: 0 4px; }
-        .bubble { max-width: 94vw; }
-        .row.user .bubble { margin-right: 2vw; margin-left: 20vw; }
-        .row.bot .bubble { margin-left: 2vw; margin-right: 20vw; }
-      }
-      html, body, .anemo-chat-root, .card {
-        box-sizing: border-box;
-        overflow-x: hidden !important;
+        .body { padding: 8px 0 8px 0 !important; }
+        .composer { padding: 0 0 8px 0 !important; }
+        .sugs { padding: 0 4px 8px !important; }
+        .composer-inner { max-width: 100vw; margin: 0 5px; padding: 6px 6px; }
+        .bubble { max-width: 82vw; padding: 11px 12px; }
+        .row.user .bubble { margin-right: 2vw; margin-left: 15vw; }
+        .row.bot .bubble { margin-left: 2vw; margin-right: 15vw; }
       }
       `}</style>
     </div>
