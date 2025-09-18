@@ -4,7 +4,7 @@ import { motion, easeOut } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabaseClient';
 
 // --- Google Icon Component ---
 const GoogleIcon = () => (
