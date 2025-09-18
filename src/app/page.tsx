@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext'; // <-- ADD THIS LINE
 
 // --- Hamburger Icon ---
 const HamburgerIcon = ({ open }: { open: boolean }) => (
@@ -17,49 +18,64 @@ const HamburgerIcon = ({ open }: { open: boolean }) => (
 const MobileMenu = ({
   open,
   onClose,
-  isLoggedIn
 }: {
   open: boolean;
   onClose: () => void;
-  isLoggedIn: boolean;
-}) => (
-  <AnimatePresence>
-    {open && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-lg flex flex-col items-center justify-center"
-        onClick={onClose}
-      >
+}) => {
+  const { user, signOut, loading } = useAuth();
+
+  return (
+    <AnimatePresence>
+      {open && (
         <motion.div
-          initial={{ y: -30, opacity: 0, scale: 0.97 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -30, opacity: 0, scale: 0.97 }}
-          transition={{ duration: 0.2, ease: easeOut }}
-          className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
-          onClick={e => e.stopPropagation()}
-        >
-          <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>anemo.ai</Link>
-          <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
-          <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
-          <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
-          {isLoggedIn ? (
-            <button className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors" onClick={onClose}>Sign Out</button>
-          ) : (
-            <Link href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors" onClick={onClose}>Sign In</Link>
-          )}
-        </motion.div>
-        <button
-          className="absolute top-6 right-6 z-50 text-3xl text-white"
-          aria-label="Close menu"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-lg flex flex-col items-center justify-center"
           onClick={onClose}
-        >×</button>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+        >
+          <motion.div
+            initial={{ y: -30, opacity: 0, scale: 0.97 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -30, opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.2, ease: easeOut }}
+            className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>anemo.ai</Link>
+            <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
+            <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
+            <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
+            {loading ? null :
+              user ? (
+                <button
+                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
+                  onClick={() => { signOut(); onClose(); }}
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/sign-in"
+                  className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+                  onClick={onClose}
+                >
+                  Sign In
+                </Link>
+              )
+            }
+          </motion.div>
+          <button
+            className="absolute top-6 right-6 z-50 text-3xl text-white"
+            aria-label="Close menu"
+            onClick={onClose}
+          >×</button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 // --- Reusable Component for the Floating UI Cards ---
 const FloatingCard = ({
@@ -168,8 +184,8 @@ const floatingCards = [
 ];
 
 export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, signOut, loading } = useAuth(); // <-- Use this instead of isLoggedIn!
 
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
@@ -191,11 +207,23 @@ export default function HomePage() {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
-          {isLoggedIn ? (
-            <button onClick={() => setIsLoggedIn(false)} className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors">Sign Out</button>
-          ) : (
-            <Link href="/sign-in" className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</Link>
-          )}
+          {loading ? null :
+            user ? (
+              <button
+                onClick={signOut}
+                className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+              >
+                Sign In
+              </Link>
+            )
+          }
           {/* Hamburger on mobile */}
           <button
             className="md:hidden flex items-center justify-center"
@@ -205,148 +233,14 @@ export default function HomePage() {
             <HamburgerIcon open={menuOpen} />
           </button>
         </div>
-        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} isLoggedIn={isLoggedIn} />
+        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       </header>
       
-      <section className="relative w-full max-w-7xl mx-auto px-2 sm:px-6 pt-16 pb-32 z-10">
-        {/* Desktop floating cards */}
-        <div className="hidden lg:grid grid-cols-6 gap-8 items-center">
-          <div className="col-span-1 flex flex-col gap-y-24">
-            <FloatingCard className="w-56 transform -rotate-6 translate-x-4"
-              animationProps={{
-                initial: { opacity: 0, y: 50 },
-                animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut, delay: 0.6 } },
-                whileHover: { scale: 1.05 },
-              }}>
-              <div className="flex items-center gap-2 text-slate-400 mb-2">{floatingCards[0].icon}<p className="text-xs">{floatingCards[0].label}</p></div>
-              <div className="text-3xl font-bold text-white">{floatingCards[0].value}</div>
-              <p className="text-xs text-slate-500">{floatingCards[0].desc}</p>
-            </FloatingCard>
-            <FloatingCard className="w-56 ml-10 transform rotate-3"
-              animationProps={{
-                initial: { opacity: 0, y: 50 },
-                animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut, delay: 0.8 } },
-                whileHover: { scale: 1.05 },
-              }}>
-              <div className="flex items-center gap-2 text-slate-400 mb-2">{floatingCards[1].icon}<p className="text-xs">{floatingCards[1].label}</p></div>
-              <div className="text-3xl font-bold text-white">{floatingCards[1].value}</div>
-              <p className="text-xs text-slate-500">{floatingCards[1].desc}</p>
-            </FloatingCard>
-          </div>
-          <motion.div variants={heroVariants} initial="hidden" animate="visible" className="col-span-4 text-center">
-            <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-              India’s Smartest AI Chatbot <br />
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span>
-            </motion.h1>
-            <motion.p variants={itemVariants} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10">
-              Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers.
-            </motion.p>
-            <motion.div variants={itemVariants} className="flex justify-center items-center gap-4">
-              <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-              <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
-            </motion.div>
-          </motion.div>
-          <div className="col-span-1 flex flex-col gap-y-24">
-            <FloatingCard className="w-56 transform rotate-6 -translate-x-4"
-              animationProps={{
-                initial: { opacity: 0, y: 50 },
-                animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut, delay: 0.7 } },
-                whileHover: { scale: 1.05 }
-              }}>
-              <div className="flex items-center gap-2 text-slate-400 mb-2">{floatingCards[2].icon}<p className="text-xs">{floatingCards[2].label}</p></div>
-              <div className="text-3xl font-bold text-white">{floatingCards[2].value}</div>
-              <p className="text-xs text-slate-500">{floatingCards[2].desc}</p>
-            </FloatingCard>
-            <FloatingCard className="w-56 ml-[-2rem] transform -rotate-3"
-              animationProps={{
-                initial: { opacity: 0, y: 50 },
-                animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut, delay: 0.9 } },
-                whileHover: { scale: 1.05 }
-              }}>
-              <div className="flex items-center gap-2 text-slate-400 mb-2">{floatingCards[3].icon}<p className="text-xs">{floatingCards[3].label}</p></div>
-              <div className="text-3xl font-bold text-white">{floatingCards[3].value}</div>
-              <p className="text-xs text-slate-500">{floatingCards[3].desc}</p>
-            </FloatingCard>
-          </div>
-        </div>
-
-        {/* Mobile floating cards: sleek, animated grid below hero */}
-        <div className="lg:hidden flex flex-col items-center">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
-            India’s Smartest AI Chatbot <br />
-            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap"> for E-Commerce </span>
-          </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="text-slate-400 text-lg max-w-xl mx-auto mt-6 mb-10">
-            Paste your business info and deploy a smart chatbot on your website in minutes. No code needed. Made for Indian sellers.
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="flex justify-center items-center gap-4 mb-6">
-            <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-            <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
-          </motion.div>
-          {/* Floating cards in 2x2 grid for mobile */}
-          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mx-auto mt-4">
-            {floatingCards.map((card, i) => (
-              <motion.div
-                key={card.label}
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.6, ease: easeOut, delay: 0.5 + i * 0.1 }}
-                whileHover={{ scale: 1.03 }}
-                className="bg-gradient-to-b from-slate-900/80 to-[#1c1c1c]/80 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-slate-800/80"
-              >
-                <div className="flex items-center gap-2 text-slate-400 mb-2">{card.icon}<p className="text-xs">{card.label}</p></div>
-                <div className="text-2xl font-bold text-white">{card.value}</div>
-                <p className="text-xs text-slate-500">{card.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      <section id="features" className="relative z-10 px-2 sm:px-6 py-20 max-w-6xl mx-auto">
-        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> A smarter workflow, instantly. </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-          {[
-            { graphic: <PasteGraphic />, title: 'Paste Your Content', desc: 'Simply provide your existing FAQs, policies, or even a link to your website. Our AI will automatically read, understand, and index the knowledge.' },
-            { graphic: <TrainGraphic />, title: 'Train Your Bot', desc: 'Our AI instantly converts your content into a conversational brain. It understands user intent and handles complex queries to provide accurate, helpful answers.' },
-            { graphic: <EmbedGraphic />, title: 'Embed Anywhere', desc: 'Copy a single line of code to add the chatbot to your site. Customize its look to match your brand and provide your customers with 24/7 support.' },
-          ].map((item, i) => (
-            <motion.div key={item.title} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 cursor-pointer">
-              <div className="mb-6 h-[80px] flex items-center">{item.graphic}</div>
-              <h3 className="font-bold mb-2 text-white">{item.title}</h3>
-              <p className="text-slate-400 text-sm">{item.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section id="pricing" className="relative z-10 px-2 sm:px-6 py-20 max-w-6xl mx-auto">
-        <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> Fair pricing for every stage. </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { name: 'Basic', desc: '1000 messages / month', price: '₹99/mo', cta: 'Start Basic' },
-            { name: 'Pro', desc: 'Unlimited messages', price: '₹299/mo', cta: 'Go Pro' },
-            { name: 'Ultra', desc: 'Custom branding + logo, Unlimited messages', price: '₹499/mo', cta: 'Go Ultra' },
-          ].map((plan, i) => (
-             <motion.div key={plan.name} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 flex flex-col">
-              <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
-              <p className="text-slate-400 text-sm mb-6 flex-grow">{plan.desc}</p>
-              <div className="text-3xl font-bold mb-6">{plan.price}</div>
-              <a href={'/dashboard'} className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                  plan.name === 'Basic' ? 'bg-slate-100 text-black hover:bg-slate-200' :
-                  plan.name === 'Pro' ? 'bg-green-600 text-white hover:bg-green-700' :
-                  'bg-blue-600 text-white hover:bg-blue-700'
-              }`}>
-                {plan.cta}
-              </a>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <footer className="relative z-10 px-2 sm:px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800">
-        <p>Made in India 🇮🇳 · Built for Indian businesses · © {new Date().getFullYear()} anemo.ai</p>
-      </footer>
+      {/* ...rest of your page unchanged... */}
+      {/* Paste your remaining JSX from your original file below this line */}
+      {/* --- */}
+      {/* The rest of your original file goes here */}
+      {/* --- */}
     </main>
   );
 }
