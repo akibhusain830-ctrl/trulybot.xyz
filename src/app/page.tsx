@@ -1,8 +1,65 @@
 'use client'
 
 import { useState } from 'react';
-import { motion, easeOut, type MotionProps } from 'framer-motion';
+import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+
+// --- Hamburger Icon ---
+const HamburgerIcon = ({ open }: { open: boolean }) => (
+  <div className="w-8 h-8 flex flex-col justify-center items-center relative z-50">
+    <span className={`block h-0.5 w-6 bg-white transition-transform duration-300 ${open ? "rotate-45 translate-y-1.5" : ""}`}></span>
+    <span className={`block h-0.5 w-6 bg-white my-1 transition-all duration-300 ${open ? "opacity-0" : ""}`}></span>
+    <span className={`block h-0.5 w-6 bg-white transition-transform duration-300 ${open ? "-rotate-45 -translate-y-1.5" : ""}`}></span>
+  </div>
+);
+
+// --- Mobile Menu Overlay ---
+const MobileMenu = ({
+  open,
+  onClose,
+  isLoggedIn
+}: {
+  open: boolean;
+  onClose: () => void;
+  isLoggedIn: boolean;
+}) => (
+  <AnimatePresence>
+    {open && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-lg flex flex-col items-center justify-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: -30, opacity: 0, scale: 0.97 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: -30, opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.2, ease: easeOut }}
+          className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
+          onClick={e => e.stopPropagation()}
+        >
+          <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>anemo.ai</Link>
+          <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
+          <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
+          <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
+          {isLoggedIn ? (
+            <button className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors" onClick={onClose}>Sign Out</button>
+          ) : (
+            <Link href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors" onClick={onClose}>Sign In</Link>
+          )}
+        </motion.div>
+        <button
+          className="absolute top-6 right-6 z-50 text-3xl text-white"
+          aria-label="Close menu"
+          onClick={onClose}
+        >×</button>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 // --- Reusable Component for the Floating UI Cards ---
 const FloatingCard = ({
@@ -112,6 +169,7 @@ const floatingCards = [
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
@@ -121,25 +179,36 @@ export default function HomePage() {
     <main className="min-h-screen font-sans text-white bg-black overflow-x-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[60vh] bg-blue-900/40 rounded-full blur-[150px] pointer-events-none z-0" />
 
+      {/* Mobile Hamburger and Menu */}
       <header className="relative z-20 flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center gap-12">
           <Link href="/" className="text-xl font-bold tracking-tight">anemo.ai</Link>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm text-slate-400">
             <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
-        </div>
-        <div className="flex items-center gap-4">
           {isLoggedIn ? (
-            <button onClick={() => setIsLoggedIn(false)} className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors">Sign Out</button>
+            <button onClick={() => setIsLoggedIn(false)} className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors">Sign Out</button>
           ) : (
-            <Link href="/sign-in" className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</Link>
+            <Link href="/sign-in" className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors">Sign In</Link>
           )}
+          {/* Hamburger on mobile */}
+          <button
+            className="md:hidden flex items-center justify-center"
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(v => !v)}
+          >
+            <HamburgerIcon open={menuOpen} />
+          </button>
         </div>
+        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} isLoggedIn={isLoggedIn} />
       </header>
       
-      <section className="relative w-full max-w-7xl mx-auto px-6 pt-16 pb-32 z-10">
+      <section className="relative w-full max-w-7xl mx-auto px-2 sm:px-6 pt-16 pb-32 z-10">
         {/* Desktop floating cards */}
         <div className="hidden lg:grid grid-cols-6 gap-8 items-center">
           <div className="col-span-1 flex flex-col gap-y-24">
@@ -234,7 +303,7 @@ export default function HomePage() {
         </div>
       </section>
       
-      <section id="features" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+      <section id="features" className="relative z-10 px-2 sm:px-6 py-20 max-w-6xl mx-auto">
         <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> A smarter workflow, instantly. </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
           {[
@@ -251,7 +320,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="pricing" className="relative z-10 px-6 py-20 max-w-6xl mx-auto">
+      <section id="pricing" className="relative z-10 px-2 sm:px-6 py-20 max-w-6xl mx-auto">
         <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> Fair pricing for every stage. </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
@@ -275,7 +344,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="relative z-10 px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800">
+      <footer className="relative z-10 px-2 sm:px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800">
         <p>Made in India 🇮🇳 · Built for Indian businesses · © {new Date().getFullYear()} anemo.ai</p>
       </footer>
     </main>
