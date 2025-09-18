@@ -12,12 +12,10 @@ const SUGGESTIONS = [
   'Can you answer product FAQs?'
 ];
 
-// Generate unique id for each message
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-// Fetch with timeout utility
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -39,7 +37,6 @@ export default function ChatWidget() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 800);
     checkMobile();
@@ -47,7 +44,6 @@ export default function ChatWidget() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Autogrow textarea
   useEffect(() => {
     if (textareaRef.current) {
       const adjustHeight = () => {
@@ -63,12 +59,10 @@ export default function ChatWidget() {
     }
   }, []);
 
-  // Push new message
   const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
     setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
   }, []);
 
-  // Load chat history
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -79,7 +73,6 @@ export default function ChatWidget() {
     } catch {}
   }, []);
 
-  // Persist chat history
   useEffect(() => {
     try {
       if (messages.length) {
@@ -88,7 +81,6 @@ export default function ChatWidget() {
     } catch {}
   }, [messages]);
 
-  // Show intro
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
@@ -97,7 +89,6 @@ export default function ChatWidget() {
     }
   }, [messages.length, push]);
 
-  // Scroll to bottom
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTo({
@@ -107,7 +98,6 @@ export default function ChatWidget() {
     }
   }, [messages, typing]);
 
-  // Focus textarea on load and keyboard typing
   useEffect(() => {
     textareaRef.current?.focus();
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -124,7 +114,6 @@ export default function ChatWidget() {
     return () => window.removeEventListener('keydown', handleGlobalKeyPress);
   }, []);
 
-  // Chat API call
   const callApi = useCallback(
     async (prompt: string) => {
       setLoading(true);
@@ -172,7 +161,6 @@ export default function ChatWidget() {
     [messages, push]
   );
 
-  // Submit
   const submit = useCallback(
     (raw?: string) => {
       const prompt = (raw ?? input).trim();
@@ -194,7 +182,6 @@ export default function ChatWidget() {
     [loading, submit]
   );
 
-  // Clear conversation
   const clearConversation = useCallback(() => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
@@ -310,6 +297,9 @@ export default function ChatWidget() {
           align-items: center;
           justify-content: center;
           background: var(--anemo-bg);
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
         }
         .anemo-v4-chat-container {
           background: var(--anemo-surface);
@@ -317,13 +307,16 @@ export default function ChatWidget() {
           box-shadow: 0 4px 32px 0 #0007;
           display: flex;
           flex-direction: column;
-          width: 100%;
+          width: 100vw;
           max-width: 480px;
-          height: 90dvh;
-          min-height: 420px;
+          height: 100dvh;
           max-height: 700px;
+          min-height: 420px;
           overflow: hidden;
           border: 1.5px solid var(--anemo-border);
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
         .anemo-v4-header {
           display: flex;
@@ -384,18 +377,22 @@ export default function ChatWidget() {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          padding: 22px 12px 16px 12px;
+          padding: 22px 0 16px 0;
           background: var(--anemo-surface);
           scroll-behavior: smooth;
+          width: 100vw;
+          margin: 0;
+          box-sizing: border-box;
         }
         .anemo-v4-msg-row {
           display: flex;
           width: 100%;
+          margin: 0;
         }
         .anemo-v4-msg-row.user { justify-content: flex-end; }
         .anemo-v4-msg-row.bot { justify-content: flex-start; }
         .anemo-v4-bubble {
-          max-width: 78%;
+          max-width: 100vw;
           border-radius: var(--anemo-radius);
           padding: 0;
           background: var(--anemo-bubble-bot);
@@ -464,10 +461,11 @@ export default function ChatWidget() {
           display: flex;
           flex-wrap: wrap;
           gap: 9px;
-          padding: 8px 16px 10px 16px;
+          padding: 8px 0 10px 0;
           justify-content: center;
           background: var(--anemo-surface);
           border-top: 1px solid var(--anemo-border);
+          margin: 0;
         }
         .anemo-v4-suggestion {
           background: #23263e;
@@ -484,11 +482,14 @@ export default function ChatWidget() {
           color: #fff;
         }
         .anemo-v4-composer {
-          padding: 0 16px 20px 16px;
+          padding: 0 0 20px 0;
           background: var(--anemo-surface);
           border-top: 1.5px solid var(--anemo-border);
           position: relative;
           z-index: 2;
+          width: 100vw;
+          margin: 0;
+          box-sizing: border-box;
         }
         .anemo-v4-composer-inner {
           display: flex;
@@ -499,6 +500,7 @@ export default function ChatWidget() {
           border: 1.5px solid var(--anemo-border);
           padding: 7px 9px 7px 20px;
           transition: border-color 0.21s;
+          margin: 0 12px;
         }
         .anemo-v4-composer-inner:focus-within {
           border-color: var(--anemo-accent);
@@ -539,49 +541,73 @@ export default function ChatWidget() {
           transform: scale(1.07);
         }
 
-        /* Responsive mobile styling */
+        /* Responsive mobile styling: EDGE-TO-EDGE, no gaps */
         @media (max-width: 600px) {
-          .anemo-v4-root, .anemo-v4-chat-container {
+          .anemo-v4-root,
+          .anemo-v4-chat-container,
+          .anemo-v4-messages,
+          .anemo-v4-header,
+          .anemo-v4-composer {
             border-radius: 0 !important;
             width: 100vw !important;
-            max-width: 100vw !important;
             min-width: 100vw !important;
+            max-width: 100vw !important;
             height: 100dvh !important;
             max-height: 100dvh !important;
             min-height: 100dvh !important;
-          }
-          .anemo-v4-chat-container {
-            box-shadow: none !important;
-            border: none;
-            min-height: 100dvh;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
           }
           .anemo-v4-header {
-            padding: 14px 10px 7px 10px;
+            padding: 14px 10px 7px 10px !important;
           }
           .anemo-v4-messages {
-            padding: 13px 3vw 12vw 3vw;
+            padding: 12px 0 18vw 0 !important;
             gap: 10px;
+            width: 100vw !important;
           }
           .anemo-v4-bubble {
-            max-width: 96vw;
+            max-width: 100vw !important;
             font-size: 1.01rem;
+          }
+          .anemo-v4-msg-row {
+            margin: 0 !important;
+          }
+          .anemo-v4-suggestions {
+            padding: 8px 0 10px 0 !important;
           }
           .anemo-v4-composer {
             position: fixed !important;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            border-radius: 0;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            z-index: 10000 !important;
+            padding: 0 0 calc(16px + env(safe-area-inset-bottom, 0)) 0 !important;
+            background: var(--anemo-surface) !important;
+            border-radius: 0 !important;
             border-top: 1.5px solid var(--anemo-border);
-            padding: 0 5vw 6vw 5vw;
-            background: var(--anemo-surface);
-            z-index: 10;
+            width: 100vw !important;
+            margin: 0 !important;
           }
           .anemo-v4-composer-inner {
-            border-radius: 16px;
-            padding-left: 12px;
-            padding-right: 6px;
+            border-radius: 16px !important;
+            padding-left: 10px !important;
+            padding-right: 6px !important;
+            margin: 0 6px !important;
+          }
+        }
+
+        @media (max-width: 400px) {
+          .anemo-v4-header {
+            font-size: 0.98em !important;
+            padding: 9px 2vw 6px 2vw !important;
+          }
+          .bubble-inner {
+            padding: 10px 4vw 7px 4vw !important;
+          }
+          .anemo-v4-composer-inner {
+            margin: 0 1vw !important;
           }
         }
       `}</style>
