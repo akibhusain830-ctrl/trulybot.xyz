@@ -33,6 +33,7 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
+  const [showDelete, setShowDelete] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -75,6 +76,18 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener('keydown', handleGlobalKeyPress);
     };
+  }, []);
+
+  // Show floating delete button on scroll (mobile)
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const checkShowDelete = () => {
+      // If scrolled down more than 80px, show delete button (on mobile)
+      setShowDelete(el.scrollTop > 80 && window.innerWidth < 700);
+    };
+    el.addEventListener('scroll', checkShowDelete);
+    return () => el.removeEventListener('scroll', checkShowDelete);
   }, []);
 
   // Mobile keyboard fix: scroll into view when keyboard shown
@@ -177,7 +190,12 @@ export default function ChatWidget() {
             <div className="brand">Anemo</div>
             <div className="sub">Smart assistant</div>
           </div>
-          <button className="mini ghost" onClick={clearConversation} title="Clear conversation">
+          {/* Hide delete on mobile, show on desktop */}
+          <button
+            className="mini ghost desktop-delete"
+            onClick={clearConversation}
+            title="Clear conversation"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
         </header>
@@ -205,6 +223,12 @@ export default function ChatWidget() {
             </button>
           </div>
         </form>
+        {/* Floating delete button on mobile (when user scrolls) */}
+        {showDelete && (
+          <button className="mini floating-delete" onClick={clearConversation} title="Clear conversation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        )}
       </div>
       <style>{`
       html, body {
@@ -252,8 +276,8 @@ export default function ChatWidget() {
         border-radius: 16px;
         max-width: 540px;
         background: var(--bot-bubble-bg);
-        margin-left: 18px;
-        margin-right: 18px;
+        margin-left: auto;
+        margin-right: auto;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -264,11 +288,15 @@ export default function ChatWidget() {
         background: var(--user-bubble-bg);
         color: white;
         border-bottom-right-radius: 6px;
+        margin-right: 16px;
+        margin-left: 48px;
       }
       .row.bot .bubble {
         background: var(--bot-bubble-bg);
         color: var(--text-primary);
         border-bottom-left-radius: 6px;
+        margin-left: 16px;
+        margin-right: 48px;
       }
       .bubble .text { font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
       .bubble .meta { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
@@ -327,8 +355,37 @@ export default function ChatWidget() {
       .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
       button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
       button.ghost:hover { background: rgba(255,255,255,0.1); }
+      .desktop-delete { display: inline-flex; }
+      .floating-delete {
+        display: none;
+      }
       @media (max-width: 900px) {
         .composer-inner, .bubble { max-width: 98vw; }
+      }
+      @media (max-width: 700px) {
+        .row.user .bubble { margin-right: 8px; margin-left: 32px; }
+        .row.bot .bubble { margin-left: 8px; margin-right: 32px; }
+        .composer-inner, .bubble { max-width: 97vw; }
+        .composer-inner { padding: 6px 8px; }
+        .desktop-delete { display: none; }
+        .floating-delete {
+          display: flex;
+          position: fixed;
+          left: 12px;
+          bottom: 84px;
+          z-index: 99;
+          background: var(--bot-bubble-bg);
+          box-shadow: 0 2px 20px 0 rgba(0,0,0,0.21);
+          border-radius: 50%;
+          border: 1.5px solid var(--border-color);
+          width: 48px;
+          height: 48px;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          transition: opacity 0.2s;
+        }
+        .floating-delete:active, .floating-delete:focus { opacity: 0.7; }
       }
       @media (max-width: 600px) {
         .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
@@ -336,8 +393,10 @@ export default function ChatWidget() {
         .body { padding: 12px 0 12px 0 !important; }
         .composer { padding: 0 0 16px 0 !important; }
         .sugs { padding: 0 8px 8px !important; }
-        .composer-inner, .bubble { max-width: 98vw; }
-        .composer-inner { padding: 6px 10px 6px 10px; }
+        .composer-inner, .bubble { max-width: 97vw; }
+        .composer-inner { padding: 6px 8px 6px 8px; }
+        .row.user .bubble { margin-right: 4px; margin-left: 16px; }
+        .row.bot .bubble { margin-left: 4px; margin-right: 16px; }
       }
       html, body, .anemo-chat-root, .card {
         box-sizing: border-box;
