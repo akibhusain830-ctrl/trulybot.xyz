@@ -36,8 +36,8 @@ export default function ChatWidget() {
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // THIS is important for keyboard-aware chat height on mobile
-  const [composerHeight, setComposerHeight] = useState(62); // default px
+  // Keyboard-aware chat height on mobile
+  const [composerHeight, setComposerHeight] = useState(62);
 
   useEffect(() => {
     // Dynamically set composer height for chat area sizing (fixes keyboard issue)
@@ -282,8 +282,7 @@ export default function ChatWidget() {
         border-radius: 16px;
         background: var(--bot-bubble-bg);
         max-width: 90vw;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 0;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -294,8 +293,8 @@ export default function ChatWidget() {
         background: var(--user-bubble-bg);
         color: white;
         border-bottom-right-radius: 6px;
-        margin-right: 10px;
-        margin-left: 18vw;
+        margin-left: auto;
+        margin-right: 8px;
         align-items: flex-end;
       }
       .row.bot .bubble {
@@ -370,7 +369,7 @@ export default function ChatWidget() {
         .sugs { padding: 0 2vw 8px !important; }
         .composer-inner { max-width: 100vw; margin: 0 2vw; padding: 6px 6px; }
         .bubble { max-width: 90vw; }
-        .row.user .bubble { margin-right: 8px; margin-left: 18vw; }
+        .row.user .bubble { margin-left: auto; margin-right: 8px; }
         .row.bot .bubble { margin-left: 8px; margin-right: auto; }
       }
       `}</style>
