@@ -266,7 +266,7 @@ export default function ChatWidget() {
           padding: 0;
           height: 100%;
           width: 100%;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segui UI', Roboto, sans-serif;
           background: #0f1117;
           color: #e6edf3;
           overflow: hidden;
@@ -394,7 +394,7 @@ export default function ChatWidget() {
 
         @media (max-width: 768px) {
           .anemo-messages {
-            padding: 16px 12px 100px 12px;
+            padding: 16px 12px 120px 12px;
             gap: 16px;
           }
         }
@@ -535,7 +535,7 @@ export default function ChatWidget() {
             left: 0;
             right: 0;
             bottom: 0;
-            padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
+            padding: 16px 16px calc(max(320px, 40vh) + env(safe-area-inset-bottom)) 16px;
             background: #1a1d23;
             border-top: 1px solid #23272f;
           }
