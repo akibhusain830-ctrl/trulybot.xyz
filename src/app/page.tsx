@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext'; // <-- ADD THIS LINE
+// --- Only addition: import useAuth from your context ---
+import { useAuth } from '@/context/AuthContext';
 
 // --- Hamburger Icon ---
 const HamburgerIcon = ({ open }: { open: boolean }) => (
@@ -47,24 +48,22 @@ const MobileMenu = ({
             <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
             <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
             <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
-            {loading ? null :
-              user ? (
-                <button
-                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
-                  onClick={() => { signOut(); onClose(); }}
-                >
-                  Sign Out
-                </button>
-              ) : (
-                <Link
-                  href="/sign-in"
-                  className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
-                  onClick={onClose}
-                >
-                  Sign In
-                </Link>
-              )
-            }
+            {loading ? null : user ? (
+              <button
+                className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
+                onClick={() => { signOut(); onClose(); }}
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+                onClick={onClose}
+              >
+                Sign In
+              </Link>
+            )}
           </motion.div>
           <button
             className="absolute top-6 right-6 z-50 text-3xl text-white"
@@ -185,7 +184,7 @@ const floatingCards = [
 
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, signOut, loading } = useAuth(); // <-- Use this instead of isLoggedIn!
+  const { user, signOut, loading } = useAuth();
 
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
@@ -207,23 +206,21 @@ export default function HomePage() {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
-          {loading ? null :
-            user ? (
-              <button
-                onClick={signOut}
-                className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <Link
-                href="/sign-in"
-                className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
-              >
-                Sign In
-              </Link>
-            )
-          }
+          {loading ? null : user ? (
+            <button
+              onClick={signOut}
+              className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+            >
+              Sign In
+            </Link>
+          )}
           {/* Hamburger on mobile */}
           <button
             className="md:hidden flex items-center justify-center"
@@ -236,11 +233,8 @@ export default function HomePage() {
         <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       </header>
       
-      {/* ...rest of your page unchanged... */}
-      {/* Paste your remaining JSX from your original file below this line */}
-      {/* --- */}
-      {/* The rest of your original file goes here */}
-      {/* --- */}
+      {/* --- The rest of your original layout remains 100% unchanged --- */}
+      {/* ... all your section/JSX code here ... */}
     </main>
   );
 }
