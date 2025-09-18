@@ -43,7 +43,6 @@ export default function ChatWidget() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -60,10 +59,8 @@ export default function ChatWidget() {
           setComposerHeight(textarea.offsetHeight + 30);
         }
       };
-      
       textareaRef.current.addEventListener('input', adjustHeight);
       window.addEventListener('resize', adjustHeight);
-      
       return () => {
         textareaRef.current?.removeEventListener('input', adjustHeight);
         window.removeEventListener('resize', adjustHeight);
@@ -307,6 +304,7 @@ export default function ChatWidget() {
           background: #111;
         }
 
+        /* Use dynamic viewport units for all screen heights */
         .anemo-chat-root {
           --bg-color: #000;
           --card-bg: #111;
@@ -319,8 +317,8 @@ export default function ChatWidget() {
           --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
           
           display: flex;
-          height: 100vh;
-          width: 100%;
+          height: 100dvh;
+          width: 100vw;
           color: var(--text-primary);
           font-family: var(--font-family);
           background: var(--bg-color);
@@ -328,7 +326,7 @@ export default function ChatWidget() {
 
         .sidebar {
           width: 60px;
-          height: 100vh;
+          height: 100dvh;
           background: #0a0a0a;
           display: flex;
           flex-direction: column;
@@ -360,14 +358,15 @@ export default function ChatWidget() {
           flex: 1;
           display: flex;
           justify-content: center;
-          height: 100vh;
+          height: 100dvh;
+          width: 100vw;
           overflow: hidden;
         }
 
         .card {
           display: flex;
           flex-direction: column;
-          height: 100vh;
+          height: 100dvh;
           width: 100%;
           max-width: 800px;
           background: var(--card-bg);
@@ -528,6 +527,8 @@ export default function ChatWidget() {
         .composer {
           padding: 12px 16px 16px;
           border-top: 1px solid var(--border-color);
+          /* Use safe area inset for bottom, so input never goes under taskbar/notch */
+          padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
         }
 
         .composer-inner {
@@ -602,37 +603,48 @@ export default function ChatWidget() {
           color: var(--text-primary);
         }
 
+        /* MOBILE OPTIMIZATION */
         @media (max-width: 768px) {
           .anemo-chat-root {
             flex-direction: column;
+            height: 100dvh;
+            width: 100vw;
+            min-height: 100dvh;
           }
-          
-          .card {
-            border-radius: 0;
-            max-width: 100%;
+          .main-container, .card {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            min-width: 100vw !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            min-height: 100dvh !important;
+            border-radius: 0 !important;
           }
 
           .row {
-            padding: 0 12px;
+            padding: 0 0 !important;
           }
-          
+          .body {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
           .bubble {
-            max-width: 80%;
+            max-width: 95vw;
           }
-          
           .row.user .bubble {
-            margin-right: 12px;
+            margin-right: 8px;
           }
-          
           .row.bot .bubble {
-            margin-left: 12px;
+            margin-left: 8px;
           }
-          
           .composer {
-            padding: 12px;
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
+            padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
+            padding-top: 12px;
+            padding-right: 8px;
+            padding-left: 8px;
           }
-          
           .head {
             padding: 12px;
           }
