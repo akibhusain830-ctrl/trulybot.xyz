@@ -365,12 +365,18 @@ export default function ChatWidget() {
         .anemo-v4-messages {
           flex: 1 1 0;
           overflow-y: auto;
+          /* Hide scrollbar for desktop */
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE 10+ */
           display: flex;
           flex-direction: column;
           gap: 12px;
           padding: 22px 12px 16px 12px;
           background: var(--anemo-surface);
           scroll-behavior: smooth;
+        }
+        .anemo-v4-messages::-webkit-scrollbar {
+          display: none; /* Chrome/Safari/Webkit */
         }
         .anemo-v4-msg-row {
           display: flex;
