@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -17,19 +17,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session (works for both SSR and after OAuth redirect)
+    let mounted = true;
+
+    // 1. Get initial session (crucial for OAuth redirects)
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        setUser(data.session?.user ?? null);
+        setLoading(false);
+      }
     });
 
-    // Listen for changes (crucial for Google OAuth)
+    // 2. Subscribe to auth state changes (works for OAuth and password)
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => {
+      mounted = false;
       listener?.subscription?.unsubscribe();
     };
   }, []);
