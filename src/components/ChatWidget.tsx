@@ -209,19 +209,17 @@ export default function ChatWidget() {
       <style>{`
       html, body {
         overscroll-behavior: none;
+        overflow: hidden !important;
       }
       .anemo-chat-root {
         --bg-color: #000; --card-bg: #111; --border-color: #30363d; --text-primary: #e6edf3;
         --text-secondary: #7d8590; --accent-color: #2563eb; --bot-bubble-bg: #1c1c1c;
         --user-bubble-bg: #2563eb; --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; --border-radius: 24px;
-      }
-      .anemo-chat-root {
-        display: flex; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--card-bg);
-        margin: 0; padding: 0; width: 100vw; min-height: 100vh; box-sizing: border-box;
-        overflow: hidden;
+        width: 100vw; min-height: 100vh; margin: 0; padding: 0; box-sizing: border-box;
+        display: flex; flex-direction: column; justify-content: stretch;
       }
       .card {
-        width: 100%; height: 100%; max-height: 100%; background: var(--card-bg);
+        width: 100vw; height: 100vh; max-height: 100vh; background: var(--card-bg);
         border: none; border-radius: 0; box-shadow: none;
         display: flex; flex-direction: column; overflow: hidden;
       }
@@ -238,8 +236,10 @@ export default function ChatWidget() {
         gap: 16px;
         scrollbar-width: thin;
         scrollbar-color: rgba(125,125,125,0.2) transparent;
+        width: 100vw;
+        max-width: 100vw;
       }
-      .body::-webkit-scrollbar { width: 8px; }
+      .body::-webkit-scrollbar { width: 8px; background: transparent; }
       .body::-webkit-scrollbar-thumb { background-color: rgba(125, 125, 125, 0.2); border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
       .body::-webkit-scrollbar-track { background: transparent; }
       .body::-webkit-scrollbar-thumb:hover { background-color: rgba(125, 125, 125, 0.4); }
@@ -247,7 +247,7 @@ export default function ChatWidget() {
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .row.user { justify-content: flex-end; }
       .row.bot { justify-content: flex-start; }
-      .bubble { padding: 12px 18px; border-radius: 20px; max-width: 80%; display: flex; flex-direction: column; gap: 8px; }
+      .bubble { padding: 12px 18px; border-radius: 20px; max-width: 420px; display: flex; flex-direction: column; gap: 8px; word-break: break-word; }
       .bubble.bot { background: var(--bot-bubble-bg); border-bottom-left-radius: 6px; }
       .bubble.user { background: var(--user-bubble-bg); color: white; border-bottom-right-radius: 6px; }
       .bubble .text { font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
@@ -264,11 +264,15 @@ export default function ChatWidget() {
       /* --- Composer --- */
       .composer {
         display: flex; align-items: center; justify-content: center;
-        padding: 16px 0 16px 0; border-top: 1px solid var(--border-color); flex-shrink: 0; background: var(--card-bg); width: 100%;
+        padding: 18px 0 14px 0;
+        border-top: 1px solid var(--border-color);
+        flex-shrink: 0;
+        background: var(--card-bg);
+        width: 100vw;
       }
       .composer-inner {
         display: flex; align-items: center; gap: 12px;
-        width: 60%; max-width: 600px; min-width: 240px;
+        width: 420px; max-width: 98vw; min-width: 0;
         background: var(--bot-bubble-bg); border-radius: 20px; border: 1px solid var(--border-color);
         padding: 2px 8px 2px 16px;
       }
@@ -298,6 +302,7 @@ export default function ChatWidget() {
       button.ghost:hover { background: rgba(255,255,255,0.1); }
       @media (max-width: 800px) {
         .composer-inner { width: 98vw; min-width: 0; max-width: 100vw; }
+        .bubble { max-width: 98vw; }
       }
       @media (max-width: 600px) {
         .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
@@ -307,12 +312,15 @@ export default function ChatWidget() {
         .sugs { padding: 0 8px 8px !important; }
         .composer-inner { width: 98vw; min-width: 0; max-width: 100vw; }
         .composer textarea { min-height: 20px; max-height: 40px; }
+        .bubble { max-width: 98vw; }
       }
-      /* Remove double scrollbars and body horizontal scrollbar */
+      /* Remove double scrollbars and prevent overflow */
       html, body { overflow-x: hidden !important; }
       .anemo-chat-root, .card, .body {
         box-sizing: border-box;
       }
+      /* Remove React/Angular footer bar if any (should not exist, but just in case) */
+      .MuiPaper-root, .mat-bottom-sheet-container { display: none !important; }
       `}</style>
     </div>
   );
