@@ -34,16 +34,37 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
-  const [isMobile, setIsMobile] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Track keyboard state using Visual Viewport API
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const handleViewportChange = () => {
+      if (window.visualViewport) {
+        const windowHeight = window.innerHeight;
+        const viewportHeight = window.visualViewport.height;
+        const heightDiff = windowHeight - viewportHeight;
+        
+        // Keyboard is open if viewport height is significantly smaller
+        const isKeyboardOpen = heightDiff > 150;
+        setKeyboardHeight(isKeyboardOpen ? heightDiff : 0);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+      
+      // Initial check
+      handleViewportChange();
+      
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleViewportChange);
+        window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+      };
+    }
   }, []);
 
   useEffect(() => {
@@ -394,7 +415,7 @@ export default function ChatWidget() {
 
         @media (max-width: 768px) {
           .anemo-messages {
-            padding: 16px 12px 140px 12px;
+            padding: 16px 12px ${keyboardHeight > 0 ? `${keyboardHeight + 20}px` : '100px'} 12px;
             gap: 16px;
           }
         }
@@ -521,6 +542,7 @@ export default function ChatWidget() {
           position: relative;
           z-index: 10;
           flex-shrink: 0;
+          transition: transform 0.3s ease;
         }
 
         @media (min-width: 769px) {
@@ -531,15 +553,13 @@ export default function ChatWidget() {
 
         @media (max-width: 768px) {
           .anemo-composer {
-            position: absolute;
+            position: fixed;
             left: 0;
             right: 0;
-            bottom: 280px;
-            padding: 16px;
+            bottom: ${keyboardHeight > 0 ? `${keyboardHeight}px` : '0px'};
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
             background: #1a1d23;
             border-top: 1px solid #23272f;
-            transform: translateY(0);
-            border-radius: 0;
           }
         }
 
