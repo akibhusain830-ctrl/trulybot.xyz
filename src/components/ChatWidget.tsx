@@ -65,6 +65,17 @@ export default function ChatWidget() {
     return () => { window.removeEventListener('keydown', handleGlobalKeyPress); };
   }, []);
 
+  // Mobile keyboard fix: scroll into view when keyboard shown
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 700 && textareaRef.current) {
+        textareaRef.current.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const callApi = useCallback(async (prompt: string) => {
     setLoading(true);
     setTyping(true);
@@ -136,7 +147,6 @@ export default function ChatWidget() {
       }
       .anemo-chat-root {
         display: flex; font-family: var(--font-family); color: var(--text-primary); height: 100vh; background-color: var(--card-bg);
-        /* NEW: Make it edge-to-edge on mobile */
         margin: 0; padding: 0; width: 100vw; min-height: 100vh; box-sizing: border-box;
       }
       .card {
@@ -147,10 +157,10 @@ export default function ChatWidget() {
       .head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
       .brand { font-size: 1.1rem; font-weight: 600; }
       .sub { font-size: 0.8rem; color: var(--text-secondary); }
-      .body { flex-grow: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-      .body::-webkit-scrollbar { width: 8px; }
-      .body::-webkit-scrollbar-track { background: transparent; }
+      .body { flex-grow: 1; overflow-y: auto; padding: 24px 0 24px 0; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; scrollbar-color: rgba(125,125,125,0.2) transparent; }
+      .body::-webkit-scrollbar { width: 8px; height: 0; }
       .body::-webkit-scrollbar-thumb { background-color: rgba(125, 125, 125, 0.2); border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
+      .body::-webkit-scrollbar-track { background: transparent; }
       .body::-webkit-scrollbar-thumb:hover { background-color: rgba(125, 125, 125, 0.4); }
       .row { display: flex; animation: slideIn 0.3s ease-out forwards; }
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -170,19 +180,24 @@ export default function ChatWidget() {
       .sugs { display: flex; gap: 8px; padding: 0 24px 12px; overflow-x: auto; flex-shrink: 0; }
       .chip { flex-shrink: 0; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
       .chip:hover { background: #30363d; border-color: #444; color: var(--text-primary); }
-      .composer { display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--border-color); flex-shrink: 0; }
-      .composer textarea { flex-grow: 1; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 10px 16px; outline: none; resize: none; color: var(--text-primary); font-size: 0.95rem; font-family: inherit; line-height: 1.5; transition: border-color 0.2s, box-shadow 0.2s; }
+      .composer { display: flex; align-items: center; gap: 12px; padding: 16px 0 16px 0; border-top: 1px solid var(--border-color); flex-shrink: 0; background: var(--card-bg); }
+      .composer textarea { flex-grow: 1; background: var(--bot-bubble-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 10px 16px; outline: none; resize: none; color: var(--text-primary); font-size: 0.95rem; font-family: inherit; line-height: 1.5; transition: border-color 0.2s, box-shadow 0.2s; min-height: 36px; max-height: 120px; }
       .composer textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3); }
       .composer .send { background: var(--accent-color); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; transition: transform 0.2s, opacity 0.2s; border: none; cursor: pointer; }
       .composer .send:disabled { opacity: 0.5; cursor: not-allowed; transform: scale(0.9); }
       button.ghost { color: var(--text-secondary); padding: 6px; border-radius: 50%; transition: background-color 0.2s; background: none; border: none; cursor: pointer; }
       button.ghost:hover { background: rgba(255,255,255,0.1); }
+      /* Only vertical scrollbar for .body */
+      .body { overflow-y: auto; overflow-x: hidden; }
+      /* Composer box half height */
+      .composer textarea { min-height: 24px; max-height: 48px; }
       @media (max-width: 600px) {
         .anemo-chat-root { padding: 0 !important; width: 100vw !important; min-height: 100vh !important; }
         .card { border-radius: 0 !important; box-shadow: none !important; }
-        .body { padding: 12px !important; }
-        .composer { padding: 10px 8px !important; }
+        .body { padding: 12px 0 12px 0 !important; }
+        .composer { padding: 10px 0 10px 0 !important; }
         .sugs { padding: 0 8px 8px !important; }
+        .composer textarea { min-height: 20px; max-height: 40px; }
       }
     `}</style>
     </div>
