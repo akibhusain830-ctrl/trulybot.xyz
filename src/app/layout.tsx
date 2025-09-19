@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { AuthProvider } from '@/context/AuthContext' // Make sure this path is correct
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -18,11 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
