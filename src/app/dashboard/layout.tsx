@@ -73,11 +73,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* --- Mobile Sidebar --- */}
-      <div className={`fixed inset-0 z-40 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-40 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col">
           <SidebarContent />
         </aside>
-        <div className="fixed inset-0 bg-black/60 z-30" onClick={() => setSidebarOpen(false)}></div>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -96,3 +95,4 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
+
