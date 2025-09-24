@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!;
   const signature = req.headers.get('x-razorpay-signature') || '';
 
-  // Use raw body for signature verification
   const rawBody = await req.text();
 
   const expectedSignature = crypto
@@ -39,7 +39,6 @@ export async function POST(req: Request) {
         break;
       }
       default:
-        // Optionally log other events
         break;
     }
     return NextResponse.json({ ok: true });
