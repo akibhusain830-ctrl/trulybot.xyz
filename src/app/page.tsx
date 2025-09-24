@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import type { User } from '@supabase/supabase-js'; // Import User type from Supabase
+import type { User } from '@supabase/supabase-js';
+import RazorpayButton from '@/components/RazorpayButton';
 
 // --- Hamburger Icon ---
 const HamburgerIcon = ({ open }: { open: boolean }) => (
@@ -24,7 +25,7 @@ const MobileMenu = ({
 }: {
   open: boolean;
   onClose: () => void;
-  user: User | null; // Use proper typing
+  user: User | null;
   signOut?: () => void;
 }) => (
   <AnimatePresence>
@@ -155,30 +156,10 @@ const EmbedGraphic = () => (
 );
 
 const floatingCards = [
-  {
-    icon: <MessageIcon />,
-    label: "Chats Completed",
-    value: "4.5k+",
-    desc: "this month",
-  },
-  {
-    icon: <SmileIcon />,
-    label: "Increased Customer Satisfaction",
-    value: "92%",
-    desc: "CSAT Score",
-  },
-  {
-    icon: <ClockIcon />,
-    label: "100+ Hours of Time Saved",
-    value: "100+",
-    desc: "per month",
-  },
-  {
-    icon: <ArrowDownIcon />,
-    label: "Reduce Support Costs",
-    value: "Up to 80%",
-    desc: "in the first 3 months",
-  },
+  { icon: <MessageIcon />, label: "Chats Completed", value: "4.5k+", desc: "this month" },
+  { icon: <SmileIcon />, label: "Increased Customer Satisfaction", value: "92%", desc: "CSAT Score" },
+  { icon: <ClockIcon />, label: "100+ Hours of Time Saved", value: "100+", desc: "per month" },
+  { icon: <ArrowDownIcon />, label: "Reduce Support Costs", value: "Up to 80%", desc: "in the first 3 months" },
 ];
 
 export default function Page() {
@@ -301,7 +282,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Mobile floating cards: sleek, animated grid below hero */}
+        {/* Mobile floating cards */}
         <div className="lg:hidden flex flex-col items-center">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
             India&apos;s Smartest AI Chatbot <br />
@@ -355,21 +336,33 @@ export default function Page() {
         <motion.h2 variants={scrollAnimationVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.8 }} className="text-4xl font-bold mb-12 text-center tracking-tighter"> Fair pricing for every stage. </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { name: 'Basic', desc: '1000 messages / month', price: '₹99/mo', cta: 'Start Basic' },
-            { name: 'Pro', desc: 'Unlimited messages', price: '₹299/mo', cta: 'Go Pro' },
-            { name: 'Ultra', desc: 'Custom branding + logo, Unlimited messages', price: '₹499/mo', cta: 'Go Ultra' },
+            { name: 'Basic', desc: '1000 messages / month', price: '₹99/mo', cta: 'Start Basic', amount: 99 },
+            { name: 'Pro', desc: 'Unlimited messages', price: '₹299/mo', cta: 'Go Pro', amount: 299 },
+            { name: 'Ultra', desc: 'Custom branding + logo, Unlimited messages', price: '₹499/mo', cta: 'Go Ultra', amount: 499 },
           ].map((plan, i) => (
              <motion.div key={plan.name} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 flex flex-col">
                <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
                <p className="text-slate-400 text-sm mb-6 flex-grow">{plan.desc}</p>
                <div className="text-3xl font-bold mb-6">{plan.price}</div>
-               <a href={'/dashboard'} className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors text-center ${
+
+               <RazorpayButton
+                 amount={plan.amount}
+                 currency="INR"
+                 label={plan.cta}
+                 notes={{ plan: plan.name.toLowerCase() }}
+                 className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors text-center ${
                    plan.name === 'Basic' ? 'bg-slate-100 text-black hover:bg-slate-200' :
                    plan.name === 'Pro' ? 'bg-green-600 text-white hover:bg-green-700' :
                    'bg-blue-600 text-white hover:bg-blue-700'
-               }`}>
-                 {plan.cta}
-               </a>
+                 }`}
+                 onSuccess={() => {
+                   // Redirect after successful payment
+                   window.location.href = '/dashboard';
+                 }}
+                 onFailure={(e) => {
+                   alert(`Payment failed: ${e?.error?.description || e?.message || 'Unknown error'}`);
+                 }}
+               />
              </motion.div>
           ))}
         </div>
