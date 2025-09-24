@@ -9,7 +9,7 @@ const ChatWidget = dynamic(() => import('@/components/ChatWidget'), { ssr: false
 
 export default function EmbedPage() {
   const params = useSearchParams();
-  const botId = params.get('botId') || 'demo';
+  const botId = params?.get('botId') ?? 'demo';
 
   // ChatWidget expects a <script data-bot-id="..."> to detect botId.
   // We create a tiny data tag at runtime so we don't have to change ChatWidget at all.
@@ -18,23 +18,34 @@ export default function EmbedPage() {
     tag.setAttribute('data-bot-id', botId);
     document.body.appendChild(tag);
     return () => {
-      try { document.body.removeChild(tag); } catch {}
+      try {
+        document.body.removeChild(tag);
+      } catch {}
     };
   }, [botId]);
 
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      background: '#23272f',
-      display: 'flex',
-      alignItems: 'stretch',
-      justifyContent: 'stretch'
-    }}>
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        background: '#23272f',
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'stretch',
+      }}
+    >
       <ChatWidget />
       <style jsx global>{`
-        html, body, #__next { height: 100%; background: transparent; }
-        body { margin: 0; }
+        html,
+        body,
+        #__next {
+          height: 100%;
+          background: transparent;
+        }
+        body {
+          margin: 0;
+        }
       `}</style>
     </div>
   );
