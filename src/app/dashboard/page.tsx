@@ -244,11 +244,11 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
       <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
 
-      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+      <div className="mt-8 p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
         <h2 className="text-xl font-semibold">Embed Chatbot on Your Website</h2>
         <p className="text-sm text-slate-400 mt-1">
           Copy and paste this snippet into the `&lt;head&gt;` tag of your website&apos;s HTML.
@@ -269,7 +269,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+      <div className="mt-8 p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
         <h2 className="text-xl font-semibold">Add to Knowledge Base</h2>
         <p className="text-sm text-slate-400 mt-1">
           Paste your business information or FAQs into the text box below.
@@ -309,7 +309,7 @@ export default function DashboardPage() {
         {message && <p className="mt-4 text-sm text-slate-400">{message}</p>}
       </div>
 
-      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+      <div className="mt-8 p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
         <h2 className="text-xl font-semibold">Chatbot Customization</h2>
         <div className="mt-6 space-y-4">
           <div>
@@ -345,12 +345,12 @@ export default function DashboardPage() {
             />
           </div>
         </div>
-        <div className="mt-6 flex items-center justify-end gap-4">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-4">
           {saveMessage && <p className="text-sm text-green-400">{saveMessage}</p>}
           <button
             onClick={handleSaveSettings}
             disabled={saving}
-            className="px-6 py-2.5 rounded-full font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
@@ -366,7 +366,7 @@ export default function DashboardPage() {
         ) : (
           <div className="mt-4 space-y-3">
             {documents.map((doc) => (
-              <div key={doc.id} className="bg-slate-900 p-4 rounded-lg border border-slate-800 flex justify-between items-center">
+              <div key={doc.id} className="bg-slate-900 p-4 rounded-lg border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-start">
                 <div className="flex-grow min-w-0">
                   {editingDocId === doc.id ? (
                     <>
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                         style={{ minHeight: '120px', fontFamily: 'inherit', lineHeight: 1.6, marginBottom: '0.75rem' }}
                         autoFocus
                       />
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button
                           onClick={saveEdit}
                           disabled={uploading}
@@ -398,7 +398,7 @@ export default function DashboardPage() {
                     <>
                       <div className="flex items-center gap-3">
                         <StatusBadge status={doc.status} />
-                        <p className="text-white truncate font-semibold text-blue-400">{doc.filename || 'Untitled'}</p>
+                        <p className="text-white truncate font-semibold text-blue-400" title={doc.filename || 'Untitled'}>{doc.filename || 'Untitled'}</p>
                       </div>
                       <p className="text-xs text-slate-500 mt-1 pl-1">
                         Uploaded on: {new Date(doc.created_at).toLocaleDateString()}
@@ -406,7 +406,7 @@ export default function DashboardPage() {
                     </>
                   )}
                 </div>
-                <div className="flex-shrink-0 ml-4 flex gap-4">
+                <div className="flex-shrink-0 w-full sm:w-auto mt-4 sm:mt-0 sm:ml-4 flex gap-4 justify-end">
                   {editingDocId !== doc.id && (
                     <>
                       <button onClick={() => startEdit(doc)} className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
