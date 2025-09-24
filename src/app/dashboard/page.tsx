@@ -245,7 +245,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
+      <h1 className="text-3xl font-bold tracking-tighter">Dashboard</h1>
       <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
 
       <div className="mt-8 p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
