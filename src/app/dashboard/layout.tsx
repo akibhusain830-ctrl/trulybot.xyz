@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center gap-3">
            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center"><UserIcon /></div>
            <div>
-              <p className="text-sm font-semibold">{user?.email || 'User'}</p>
+              <p className="text-sm font-semibold truncate" title={user?.email || 'User'}>{user?.email || 'User'}</p>
               <button onClick={signOut} className="text-xs text-slate-400 hover:underline">Sign Out</button>
            </div>
         </div>
@@ -73,24 +73,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* --- Mobile Sidebar --- */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setSidebarOpen(false)}>
-          <div className="fixed inset-0 bg-black/60 z-30"></div>
-          <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col z-40">
-            <SidebarContent />
-          </aside>
-        </div>
-      )}
-      
-      <div className="flex-1 flex flex-col">
+      <div className={`fixed inset-0 z-40 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col">
+          <SidebarContent />
+        </aside>
+        <div className="fixed inset-0 bg-black/60 z-30" onClick={() => setSidebarOpen(false)}></div>
+      </div>
+
+      <div className="flex-1 flex flex-col min-w-0">
         {/* --- Mobile Header --- */}
-        <header className="lg:hidden h-20 flex items-center px-6 border-b border-slate-800">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2">
+        <header className="lg:hidden h-20 flex items-center justify-between px-4 sm:px-6 border-b border-slate-800 flex-shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-white">
             <MenuIcon />
+            <span className="sr-only">Open menu</span>
           </button>
-          <div className="flex-1 text-center">
-            <Link href="/" className="text-xl font-bold tracking-tight">{brandHost}</Link>
-          </div>
+          <Link href="/" className="text-xl font-bold tracking-tight">{brandHost}</Link>
+          <div className="w-8"></div> {/* Spacer to balance the header */}
         </header>
         
         <main className="flex-1 overflow-y-auto">{children}</main>
