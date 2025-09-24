@@ -2,13 +2,13 @@
 
 import React, { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import NextDynamic from 'next/dynamic';
 
 // Disable prerendering for this page since it depends on search params.
 export const dynamic = 'force-dynamic';
 
 // Import the existing ChatWidget without altering its UI
-const ChatWidget = dynamic(() => import('@/components/ChatWidget'), { ssr: false });
+const ChatWidget = NextDynamic(() => import('@/components/ChatWidget'), { ssr: false });
 
 export default function EmbedPage() {
   return (
