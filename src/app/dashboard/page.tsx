@@ -245,8 +245,8 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
-      <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
+      <h1 className="text-3xl font-bold tracking-tighter">Dashboard</h1>
+      <p className="text-slate-400 mt-1">Overview of your chatbot performance and quick actions.</p>
 
       <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
         <h2 className="text-xl font-semibold">Embed Chatbot on Your Website</h2>
