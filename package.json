@@ -1,36 +1,18 @@
 {
-  "name": "anemo-ai",
-  "version": "0.1.0",
+  "name": "your-app",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
-    "@supabase/ssr": "^0.2.0",
-    "@supabase/auth-helpers-nextjs": "^0.8.0",
-    "formidable": "^3.5.4",
-    "framer-motion": "^12.23.12",
-    "next": "15.5.3",
-    "openai": "^5.20.1",
-    "pdf-parse": "^1.1.1",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-tsparticles": "^2.12.2",
-    "tsparticles": "^3.9.1"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "15.5.3",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.0.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "csv-stringify": "^6.5.0",
+    "next": "14.2.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "^5.4.0"
   }
 }

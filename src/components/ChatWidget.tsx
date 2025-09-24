@@ -1,14 +1,31 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { BRAND } from '@/lib/branding';
 
 type Role = 'bot' | 'user';
-type Message = { id: string; role: Role; text: string; at: number; error?: boolean };
 
-const STORAGE_KEY = 'anemo_v4_conv';
-const INTRO_KEY = 'anemo_v4_seen_intro';
+type Source = {
+  title: string;
+  docId: string;
+  url?: string;
+  snippet: string;
+};
+
+type Message = {
+  id: string;
+  role: Role;
+  text: string;
+  at: number;
+  error?: boolean;
+  sources?: Source[];
+  usedDocs?: boolean;
+  fallback?: boolean;
+};
+
+const INTRO_KEY = 'trulybot_v4_seen_intro';
 const SUGGESTIONS = [
-  'How do I embed Anemo on my site?',
+  `How do I embed ${BRAND.name} on my site?`,
   'What plans do you offer?',
   'Can you answer product FAQs?'
 ];
@@ -17,259 +34,214 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 12000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
-export default function ChatWidget() {
+export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [typing, setTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [botId, setBotId] = useState<string>('demo');
 
   const listRef = useRef<HTMLDivElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null); // Ref for the textarea
+  const isMounted = useRef(true);
 
-  // Track keyboard state using Visual Viewport API
   useEffect(() => {
-    const handleViewportChange = () => {
-      if (window.visualViewport) {
-        const windowHeight = window.innerHeight;
-        const viewportHeight = window.visualViewport.height;
-        const heightDiff = windowHeight - viewportHeight;
-        
-        // Keyboard is open if viewport height is significantly smaller
-        const isKeyboardOpen = heightDiff > 150;
-        setKeyboardHeight(isKeyboardOpen ? heightDiff : 0);
-      }
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
     };
+  }, []);
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-      window.visualViewport.addEventListener('scroll', handleViewportChange);
-      
-      // Initial check
-      handleViewportChange();
-      
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleViewportChange);
-        window.visualViewport?.removeEventListener('scroll', handleViewportChange);
-      };
+  useEffect(() => {
+    const scriptTag = document.querySelector('script[data-bot-id]');
+    const idFromScript = scriptTag?.getAttribute('data-bot-id');
+    if (idFromScript) {
+      setBotId(idFromScript);
     }
   }, []);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      const adjustHeight = () => {
-        textareaRef.current!.style.height = 'auto';
-        textareaRef.current!.style.height = `${textareaRef.current!.scrollHeight}px`;
-      };
-      textareaRef.current.addEventListener('input', adjustHeight);
-      return () => textareaRef.current?.removeEventListener('input', adjustHeight);
-    }
-  }, []);
-
-  const push = useCallback((role: Role, text: string, opts?: { error?: boolean }) => {
-    setMessages((m) => [...m, { id: uid(), role, text, at: Date.now(), error: opts?.error }]);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Message[];
-        if (Array.isArray(parsed) && parsed.length) setMessages(parsed);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (messages.length) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-80)));
-      }
-    } catch {}
-  }, [messages]);
 
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
-      push('bot', "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding.");
+      setMessages([{
+        id: uid(),
+        role: 'bot',
+        text: `Hi! I'm ${BRAND.name}, your AI assistant. How can I help you today?`,
+        at: Date.now()
+      }]);
       localStorage.setItem(INTRO_KEY, '1');
     }
-  }, [messages.length, push]);
+  }, [messages.length]);
 
   useEffect(() => {
     if (listRef.current) {
-      listRef.current.scrollTo({
-        top: listRef.current.scrollHeight,
-        behavior: messages.length > 0 ? 'smooth' : 'auto'
-      });
+      listRef.current.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
     }
-  }, [messages, typing]);
+  }, [messages]);
 
+  // --- Global Keydown Listener for "Type-to-Focus" ---
   useEffect(() => {
-    textareaRef.current?.focus();
-    const handleGlobalKeyPress = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        document.activeElement !== textareaRef.current &&
-        !['INPUT', 'TEXTAREA'].includes(target?.tagName) &&
-        e.key.length === 1
-      ) {
-        textareaRef.current?.focus();
-      }
+    function isTextInputElement(el: Element | null) {
+      if (!el || !(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return true;
+      return el.isContentEditable;
+    }
+
+    function handleGlobalKey(e: KeyboardEvent) {
+      const activeEl = document.activeElement;
+      if (isTextInputElement(activeEl)) return; // Don't interfere if user is already typing somewhere
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Shift') return; // Ignore shortcuts
+      textareaRef.current?.focus();
+    }
+
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKey);
     };
-    window.addEventListener('keydown', handleGlobalKeyPress);
-    return () => window.removeEventListener('keydown', handleGlobalKeyPress);
   }, []);
 
-  const callApi = useCallback(
-    async (prompt: string) => {
-      setLoading(true);
-      setTyping(true);
-      const messageHistory = [
-        ...messages,
-        { role: 'user', text: prompt, id: 'temp', at: Date.now() },
-      ].slice(-8);
+  const handleSubmit = async (prompt: string) => {
+    if (!prompt || isLoading) return;
 
-      try {
-        const res = await fetchWithTimeout(
-          '/api/chat',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: messageHistory }),
-          },
-          12000
-        );
-        if (!res) throw new Error('No response');
-        const json = await res.json().catch(() => null);
-        if (!res.ok || json?.error) {
-          const msg = json?.error || `Server error ${res.status}`;
-          push('bot', msg, { error: true });
-          return;
-        }
-        const reply = json?.reply?.toString().trim();
-        if (!reply) {
-          push('bot', 'Assistant returned no content', { error: true });
-          return;
-        }
-        push('bot', reply);
-      } catch (err) {
-        const isAbort = (err as Error)?.name === 'AbortError';
-        const msg = isAbort ? 'Request timed out. Try again.' : (err as Error)?.message || 'Network error';
-        push('bot', msg, { error: true });
-      } finally {
-        setLoading(false);
-        setTyping(false);
-        textareaRef.current?.focus();
+    setIsLoading(true);
+    setInput('');
+    setSuggestions(null);
+
+    const userMessage: Message = { id: uid(), role: 'user', text: prompt, at: Date.now() };
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          botId,
+          messages: currentMessages.map(m => ({ role: m.role, content: m.text }))
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error((await res.json()).error || 'Server error');
       }
-    },
-    [messages, push]
-  );
 
-  const submit = useCallback(
-    (raw?: string) => {
-      const prompt = (raw ?? input).trim();
-      if (!prompt) return;
-      push('user', prompt);
-      setInput('');
-      if (suggestions) setSuggestions(null);
-      callApi(prompt);
-    },
-    [input, suggestions, callApi, push]
-  );
+      const json = await res.json();
+      const replyText = (json.reply || '').trim() || '(No reply text returned)';
 
-  const handleKey = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (!loading) submit();
+      if (isMounted.current) {
+        setMessages(prev => [...prev, {
+          id: uid(),
+          role: 'bot',
+          text: replyText,
+          at: Date.now(),
+          sources: json.sources,
+          usedDocs: json.usedDocs,
+          fallback: json.meta?.fallback
+        }]);
       }
-    },
-    [loading, submit]
-  );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error';
+      console.error('[widget:callApi:error]', msg, err);
+      if (isMounted.current) {
+        setMessages(prev => [...prev, { id: uid(), role: 'bot', text: msg, at: Date.now(), error: true }]);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  };
 
-  const clearConversation = useCallback(() => {
-    setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(INTRO_KEY);
-    setTimeout(() => {
-      push('bot', "Hi — I'm Anemo, your support assistant. 🌬️\nAsk about setup, pricing, or embedding.");
-      localStorage.setItem(INTRO_KEY, '1');
-      setSuggestions(SUGGESTIONS);
-    }, 100);
-  }, [push]);
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(input);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    handleSubmit(suggestion);
+  };
 
   return (
-    <>
-      <div className="anemo-chat-widget">
-        <div className="anemo-header">
-          <div className="anemo-brand">
-            <span className="anemo-logo">🌀</span>
-            <span className="anemo-title">Anemo</span>
-            <span className="anemo-badge">AI</span>
-          </div>
-          <button className="anemo-clear-btn" onClick={clearConversation} title="Clear conversation">
-            <svg width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-          </button>
+    <div className="anemo-card-widget">
+      <div className="anemo-card-header">
+        <div className="anemo-bot-avatar">
+          <span role="img" aria-label="Trulybot logo">🌀</span>
         </div>
-
-        <main className="anemo-messages" ref={listRef}>
-          {messages.map((m) => (
+        <div className="anemo-bot-titlebox">
+          <div className="anemo-bot-title">{BRAND.name}</div>
+          <div className="anemo-bot-desc">{botId === 'demo' ? 'Demo' : 'AI'}</div>
+        </div>
+        {onClose && (
+          <button className="anemo-card-header-close" onClick={onClose} aria-label="Close chat">×</button>
+        )}
+      </div>
+      <div className="anemo-card-body">
+        <div className="anemo-messages" ref={listRef}>
+          {messages.map(m => (
             <div key={m.id} className={`anemo-msg ${m.role}`}>
               <div className={`anemo-bubble ${m.role} ${m.error ? 'error' : ''}`}>
                 <div className="bubble-text">{m.text}</div>
+                {m.sources && m.sources.length > 0 && (
+                  <div className="anemo-sources">
+                    <div className="sources-label">Answer sourced from your documents:</div>
+                    <div className="sources-chips">
+                      {m.sources.map(s => (
+                        <div key={s.docId} className="source-chip" title={s.snippet}>
+                          <span className="source-dot" />
+                          {s.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {m.usedDocs === false && m.fallback && !m.error && botId !== 'demo' && (
+                  <div className="anemo-fallback-note">
+                    No direct document match. Provided a general answer.
+                  </div>
+                )}
                 <div className="bubble-time">
                   {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>
           ))}
-          {typing && (
+          {isLoading && (
             <div className="anemo-msg bot">
               <div className="anemo-bubble bot typing">
                 <div className="typing-dots"><span></span><span></span><span></span></div>
               </div>
             </div>
           )}
-        </main>
-
+        </div>
         {suggestions && !messages.find(m => m.role === 'user') && (
           <div className="anemo-suggestions">
-            {suggestions.map((s) => (
-              <button key={s} className="suggestion-btn" onClick={() => submit(s)} disabled={loading}>
+            {suggestions.map(s => (
+              <button key={s} className="suggestion-btn" onClick={() => handleSuggestionClick(s)} disabled={isLoading}>
                 {s}
               </button>
             ))}
           </div>
         )}
-
-        <form className="anemo-composer" onSubmit={(e) => { e.preventDefault(); if (!loading) submit(); }}>
+        <form className="anemo-composer" onSubmit={handleFormSubmit}>
           <div className="composer-inner">
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Message Anemo..."
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(input); } }}
+              placeholder={`Message ${BRAND.name}...`}
               rows={1}
-              disabled={loading}
+              disabled={isLoading}
+              aria-label="Chat message input"
+              style={{ height: 'auto', overflowY: 'hidden' }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${target.scrollHeight}px`;
+              }}
             />
-            <button type="submit" className="send-btn" disabled={loading || !input.trim()}>
+            <button type="submit" className="send-btn" disabled={isLoading || !input.trim()}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -277,350 +249,59 @@ export default function ChatWidget() {
             </button>
           </div>
         </form>
+        <div className="anemo-poweredby">
+          Powered by <a href={BRAND.url} target="_blank" rel="noopener noreferrer">{BRAND.url.replace(/^https?:\/\//, '')}</a>
+        </div>
       </div>
-
       <style jsx global>{`
-        * { box-sizing: border-box; }
-        
-        html, body {
-          margin: 0;
-          padding: 0;
-          height: 100%;
-          width: 100%;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: #0f1117;
-          color: #e6edf3;
-          overflow: hidden;
-        }
-
-        .anemo-chat-widget {
-          display: flex;
-          flex-direction: column;
-          height: 100dvh;
-          width: 100%;
-          background: #1a1d23;
-          position: relative;
-        }
-
-        /* DESKTOP STYLES */
-        @media (min-width: 769px) {
-          .anemo-chat-widget {
-            max-width: 480px;
-            height: 90dvh;
-            max-height: 700px;
-            min-height: 420px;
-            border-radius: 18px;
-            box-shadow: 0 4px 32px 0 #0007;
-            border: 1.5px solid #23272f;
-            margin: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-          }
-        }
-
-        /* MOBILE STYLES - FULL LAYOUT */
-        @media (max-width: 768px) {
-          html, body { 
-            overflow: hidden;
-          }
-          
-          .anemo-chat-widget {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100dvh;
-            border-radius: 0;
-            border: none;
-            box-shadow: none;
-            margin: 0;
-            transform: none;
-          }
-        }
-
-        .anemo-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 18px 22px 12px 22px;
-          border-bottom: 1px solid #23272f;
-          background: #1a1d23;
-          flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-          .anemo-header {
-            padding: max(12px, env(safe-area-inset-top)) 16px 12px 16px;
-          }
-        }
-
-        .anemo-brand {
-          display: flex;
-          align-items: center;
-          gap: 0.6em;
-          font-weight: 600;
-          font-size: 1.2rem;
-        }
-
-        .anemo-logo { font-size: 1.5em; }
-        .anemo-title { letter-spacing: 0.03em; }
-        .anemo-badge {
-          background: #2563eb;
-          color: #fff;
-          font-size: 0.8em;
-          border-radius: 7px;
-          padding: 0 0.4em;
-          margin-left: 0.3em;
-          font-weight: 700;
-        }
-
-        .anemo-clear-btn {
-          background: none;
-          border: none;
-          color: #7d8590;
-          cursor: pointer;
-          border-radius: 50%;
-          transition: all 0.15s;
-          width: 34px;
-          height: 34px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .anemo-clear-btn:hover {
-          background: #21232a;
-          color: #2563eb;
-        }
-
-        .anemo-messages {
-          flex: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          padding: 20px 12px 16px 12px;
-          background: #1a1d23;
-          scroll-behavior: smooth;
-          overscroll-behavior: contain;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
+        /* All of your original CSS is preserved here */
+        .anemo-card-widget { height: 100%; width: 100%; display: flex; flex-direction: column; background: #23272f; }
+        .anemo-card-header { background: #23272f; display: flex; align-items: center; padding: 18px 18px 10px 18px; border-radius: 16px 16px 0 0; position: relative; min-height: 54px; border-bottom: 1px solid #282c34; }
+        .anemo-bot-avatar { width: 38px; height: 38px; background: #2563eb1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 10px; }
+        .anemo-bot-titlebox { flex: 1; display: flex; align-items: center; gap: 7px; }
+        .anemo-bot-title { color: #fff; font-weight: 700; font-size: 1.16rem; letter-spacing: 0.01em; }
+        .anemo-bot-desc { color: #fff; background: #2563eb; font-size: 0.81rem; font-weight: 600; padding: 2px 9px; border-radius: 8px; margin-left: 5px; letter-spacing: 0.01em; }
+        .anemo-card-header-close { position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #a5aebf; font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0; border-radius: 50%; width: 30px; height: 30px; transition: background 0.16s; }
+        .anemo-card-header-close:hover { background: #292f35; color: #fff; }
+        .anemo-card-body { display: flex; flex-direction: column; flex: 1; min-height: 0; background: #23272f; position: relative; }
+        .anemo-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 22px 14px 14px 14px; background: #23272f; scroll-behavior: smooth; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
         .anemo-messages::-webkit-scrollbar { display: none; }
-
-        @media (max-width: 768px) {
-          .anemo-messages {
-            padding: 16px 12px ${keyboardHeight > 0 ? `${keyboardHeight + 20}px` : '100px'} 12px;
-            gap: 16px;
-          }
-        }
-
-        .anemo-msg {
-          display: flex;
-          width: 100%;
-        }
-
+        .anemo-msg { display: flex; width: 100%; }
         .anemo-msg.user { justify-content: flex-end; }
         .anemo-msg.bot { justify-content: flex-start; }
-
-        .anemo-bubble {
-          max-width: 78%;
-          border-radius: 18px;
-          background: #22242a;
-          color: #e6edf3;
-          font-size: 1rem;
-          box-shadow: 0 1px 4px #0002;
-          position: relative;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          padding: 12px 16px;
-          animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .anemo-bubble.user {
-          background: #2563eb;
-          color: #fff;
-          border-bottom-right-radius: 6px;
-        }
-
-        .anemo-bubble.bot {
-          background: #22242a;
-          color: #e6edf3;
-          border-bottom-left-radius: 6px;
-        }
-
-        .anemo-bubble.error {
-          background: #6e1b1b;
-          color: #fff;
-        }
-
-        @media (max-width: 768px) {
-          .anemo-bubble {
-            max-width: 85%;
-            font-size: 1.05rem;
-            padding: 14px 16px;
-          }
-        }
-
-        .bubble-text {
-          font-size: 1.04rem;
-          line-height: 1.65;
-          white-space: pre-wrap;
-          margin-bottom: 4px;
-        }
-
-        .bubble-time {
-          font-size: 0.8rem;
-          opacity: 0.6;
-          text-align: right;
-          margin-top: 2px;
-        }
-
-        .typing-dots {
-          display: flex;
-          gap: 4px;
-          align-items: center;
-          height: 12px;
-        }
-
-        .typing-dots span {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #7d8590;
-          animation: bounce 1.2s infinite;
-        }
-
+        .anemo-bubble { max-width: 76%; border-radius: 16px; background: #282c34; color: #fff; font-size: 1rem; box-shadow: 0 1px 4px #0002; position: relative; overflow-wrap: break-word; word-break: break-word; padding: 14px 18px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .anemo-bubble.user { background: #2563eb; color: #fff; border-bottom-right-radius: 6px; }
+        .anemo-bubble.bot { background: #282c34; color: #fff; border-bottom-left-radius: 6px; }
+        .anemo-bubble.error { background: #6e1b1b; color: #fff; }
+        .bubble-text { font-size: 1.06rem; line-height: 1.65; white-space: pre-wrap; margin-bottom: 4px; }
+        .bubble-time { font-size: 0.8rem; opacity: 0.6; text-align: right; margin-top: 2px; }
+        .typing-dots { display: flex; gap: 4px; align-items: center; height: 12px; }
+        .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: #7d8590; animation: bounce 1.2s infinite; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes bounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
-        }
-
-        .anemo-suggestions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          padding: 8px 16px 10px 16px;
-          justify-content: center;
-          background: #1a1d23;
-          border-top: 1px solid #23272f;
-        }
-
-        .suggestion-btn {
-          background: #23263e;
-          color: #7d8590;
-          border: 1px solid #23272f;
-          border-radius: 15px;
-          padding: 8px 16px;
-          font-size: 0.9em;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .suggestion-btn:hover {
-          background: #2563eb;
-          color: #fff;
-          border-color: #2563eb;
-        }
-
-        .anemo-composer {
-          background: #1a1d23;
-          border-top: 1px solid #23272f;
-          position: relative;
-          z-index: 10;
-          flex-shrink: 0;
-          transition: transform 0.3s ease;
-        }
-
-        @media (min-width: 769px) {
-          .anemo-composer {
-            padding: 0 16px 20px 16px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .anemo-composer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: ${keyboardHeight > 0 ? `${keyboardHeight}px` : '0px'};
-            padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
-            background: #1a1d23;
-            border-top: 1px solid #23272f;
-          }
-        }
-
-        .composer-inner {
-          display: flex;
-          align-items: flex-end;
-          gap: 12px;
-          background: #181a21;
-          border-radius: 24px;
-          border: 1px solid #23272f;
-          padding: 8px 8px 8px 20px;
-          transition: border-color 0.2s;
-        }
-
-        .composer-inner:focus-within {
-          border-color: #2563eb;
-        }
-
-        .composer-inner textarea {
-          flex: 1;
-          background: transparent;
-          border: none;
-          color: #e6edf3;
-          font-size: 1rem;
-          font-family: inherit;
-          padding: 8px 0;
-          min-height: 24px;
-          max-height: 100px;
-          resize: none;
-          outline: none;
-        }
-
-        .composer-inner textarea::placeholder {
-          color: #7d8590;
-        }
-
-        .send-btn {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #2563eb;
-          color: white;
-          border: none;
-          cursor: pointer;
-          flex-shrink: 0;
-          transition: all 0.2s;
-        }
-
-        .send-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .send-btn:not(:disabled):hover {
-          background: #1744ad;
-          transform: scale(1.05);
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+        .anemo-suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px 10px 16px; justify-content: center; background: #23272f; border-top: 1px solid #282c34; }
+        .suggestion-btn { background: #282c34; color: #a5aebf; border: 1px solid #23272f; border-radius: 15px; padding: 8px 16px; font-size: 0.9em; cursor: pointer; transition: all 0.2s; }
+        .suggestion-btn:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .anemo-composer { background: #23272f; border-top: 1px solid #282c34; position: relative; z-index: 10; }
+        .composer-inner { display: flex; align-items: flex-end; gap: 12px; background: #282c34; border-radius: 24px; border: 1px solid #23272f; padding: 8px 8px 8px 20px; margin: 10px 8px 8px 8px; transition: border-color 0.2s; }
+        .composer-inner:focus-within { border-color: #2563eb; }
+        .composer-inner textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 1rem; font-family: inherit; padding: 8px 0; min-height: 24px; max-height: 100px; resize: none; outline: none; }
+        .composer-inner textarea::placeholder { color: #a5aebf; }
+        .send-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #2563eb; color: white; border: none; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .send-btn:not(:disabled):hover { background: #1744ad; transform: scale(1.05); }
+        .anemo-poweredby { font-size: 0.93rem; color: #a5aebf; text-align: center; padding: 14px 0 7px 0; background: #23272f; letter-spacing: 0.02em; }
+        .anemo-poweredby a { color: #2563eb; text-decoration: none; font-weight: 600; }
+        .anemo-sources { margin-top: 10px; background: #23272f; border: 1px solid #2f353d; border-radius: 10px; padding: 8px 10px 10px 10px; }
+        .anemo-sources .sources-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8b95a4; margin-bottom: 6px; font-weight: 600; }
+        .anemo-sources .sources-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .anemo-sources .source-chip { background: #282c34; border: 1px solid #2563eb55; color: #d4d9e1; font-size: 0.68rem; padding: 4px 9px 4px 7px; border-radius: 14px; display: inline-flex; align-items: center; gap: 6px; cursor: help; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.18s, border-color 0.18s; }
+        .anemo-sources .source-chip:hover { background: #2563eb22; border-color: #2563ebaa; }
+        .anemo-sources .source-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 0 2px #2563eb22; flex-shrink: 0; }
+        .anemo-fallback-note { margin-top: 8px; font-size: 0.7rem; color: #9aa3b1; background: #23272f; padding: 6px 8px; border-radius: 8px; border: 1px solid #2d333b; }
       `}</style>
-    </>
+    </div>
   );
 }

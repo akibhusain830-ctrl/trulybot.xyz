@@ -1,5 +1,5 @@
 'use client'
-
+import Footer from '@/components/Footer';
 import { useState } from 'react';
 import { motion, easeOut, type MotionProps, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -45,13 +45,13 @@ const MobileMenu = ({
           className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
           onClick={e => e.stopPropagation()}
         >
-          <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>anemo.ai</Link>
+          <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>trulybot.xyz</Link>
           <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
           <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
           <a href="#pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</a>
           {user ? (
-            <button 
-              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors" 
+            <button
+              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
               onClick={() => {
                 if (signOut) signOut();
                 onClose();
@@ -106,7 +106,6 @@ const SmileIcon = () => (
 );
 
 // --- Graphics for Feature Cards ---
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PasteGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -125,7 +124,6 @@ const PasteGraphic = () => (
   </svg>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TrainGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -146,7 +144,6 @@ const TrainGraphic = () => (
   </svg>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EmbedGraphic = () => (
   <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M50 20L30 40L50 60" stroke="#60A5FA" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -185,13 +182,11 @@ const floatingCards = [
 ];
 
 export default function Page() {
-  // Use the auth context
   const { user, signOut, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const heroVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const scrollAnimationVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } } };
 
   return (
@@ -201,7 +196,7 @@ export default function Page() {
       {/* Mobile Hamburger and Menu */}
       <header className="relative z-20 flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center gap-12">
-          <Link href="/" className="text-xl font-bold tracking-tight">anemo.ai</Link>
+          <Link href="/" className="text-xl font-bold tracking-tight">trulybot.xyz</Link>
         </div>
         <div className="flex items-center gap-4">
           {/* Desktop nav */}
@@ -212,15 +207,15 @@ export default function Page() {
           </nav>
           {!loading && (
             user ? (
-              <button 
-                onClick={signOut} 
+              <button
+                onClick={signOut}
                 className="hidden md:inline bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-700 transition-colors"
               >
                 Sign Out
               </button>
             ) : (
-              <Link 
-                href="/sign-in" 
+              <Link
+                href="/sign-in"
                 className="hidden md:inline bg-slate-50 text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
               >
                 Sign In
@@ -236,10 +231,10 @@ export default function Page() {
             <HamburgerIcon open={menuOpen} />
           </button>
         </div>
-        <MobileMenu 
-          open={menuOpen} 
-          onClose={() => setMenuOpen(false)} 
-          user={user} 
+        <MobileMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          user={user}
           signOut={signOut}
         />
       </header>
@@ -279,7 +274,7 @@ export default function Page() {
             </motion.p>
             <motion.div variants={itemVariants} className="flex justify-center items-center gap-4">
               <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-              <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
+              <a href="/widget-demo" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
             </motion.div>
           </motion.div>
           <div className="col-span-1 flex flex-col gap-y-24">
@@ -317,7 +312,7 @@ export default function Page() {
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="flex justify-center items-center gap-4 mb-6">
             <a href="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"> Try it Free </a>
-            <a href="/widget" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
+            <a href="/widget-demo" className="bg-slate-800 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-700 transition-colors"> View Demo </a>
           </motion.div>
           {/* Floating cards in 2x2 grid for mobile */}
           <div className="grid grid-cols-2 gap-4 w-full max-w-xs mx-auto mt-4">
@@ -365,24 +360,22 @@ export default function Page() {
             { name: 'Ultra', desc: 'Custom branding + logo, Unlimited messages', price: '₹499/mo', cta: 'Go Ultra' },
           ].map((plan, i) => (
              <motion.div key={plan.name} variants={scrollAnimationVariants} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true, amount: 0.5 }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-8 rounded-3xl border border-slate-800 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/50 transition-all duration-300 flex flex-col">
-              <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
-              <p className="text-slate-400 text-sm mb-6 flex-grow">{plan.desc}</p>
-              <div className="text-3xl font-bold mb-6">{plan.price}</div>
-              <a href={'/dashboard'} className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                  plan.name === 'Basic' ? 'bg-slate-100 text-black hover:bg-slate-200' :
-                  plan.name === 'Pro' ? 'bg-green-600 text-white hover:bg-green-700' :
-                  'bg-blue-600 text-white hover:bg-blue-700'
-              }`}>
-                {plan.cta}
-              </a>
-            </motion.div>
+               <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
+               <p className="text-slate-400 text-sm mb-6 flex-grow">{plan.desc}</p>
+               <div className="text-3xl font-bold mb-6">{plan.price}</div>
+               <a href={'/dashboard'} className={`w-full px-4 py-2.5 rounded-full text-sm font-semibold transition-colors text-center ${
+                   plan.name === 'Basic' ? 'bg-slate-100 text-black hover:bg-slate-200' :
+                   plan.name === 'Pro' ? 'bg-green-600 text-white hover:bg-green-700' :
+                   'bg-blue-600 text-white hover:bg-blue-700'
+               }`}>
+                 {plan.cta}
+               </a>
+             </motion.div>
           ))}
         </div>
       </section>
 
-      <footer className="relative z-10 px-2 sm:px-6 py-10 text-center text-sm text-slate-500 border-t border-slate-800">
-        <p>Made in India 🇮🇳 · Built for Indian businesses · © {new Date().getFullYear()} anemo.ai</p>
-      </footer>
+      <Footer />
     </main>
   );
 }

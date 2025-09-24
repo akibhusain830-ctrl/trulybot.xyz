@@ -1,82 +1,427 @@
-'use client'
+'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/context/AuthContext';
+import { BRAND } from '@/lib/branding';
 
-// ================= ICONS =================
-const ConversationsIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> );
-const ResolutionIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> );
-const SpeedIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> );
-const CopyIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> );
-const CheckIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> );
+interface Document {
+  id: string;
+  content: string;
+  filename?: string | null;
+  created_at: string;
+  status?: 'PENDING' | 'INDEXED' | 'FAILED' | null;
+}
 
-// ================= TYPES =================
-interface KpiCardProps { title: string; value: string | number; subtitle?: string; icon?: ReactNode; delay?: number; }
-interface EmbedWidgetProps { delay?: number; }
-interface DashboardStats { totalConversations: number; resolutionRate: number; avgResponseTime: number; }
+function logSupabaseError(context: string, err: unknown) {
+  if (!err) {
+    console.error(`${context}: <empty error>`);
+    return;
+  }
+  if (err instanceof Error) {
+    console.error(`${context}:`, { message: err.message, stack: err.stack, name: err.name });
+    return;
+  }
+  try {
+    console.error(`${context}:`, JSON.parse(JSON.stringify(err)));
+  } catch {
+    console.error(`${context}:`, err);
+  }
+}
 
-// ================= COMPONENTS =================
-const KpiCard = ({ title, value, subtitle, icon, delay }: KpiCardProps) => (
-  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: delay }} className="bg-gradient-to-b from-slate-900 to-[#1c1c1c] p-6 rounded-2xl border border-slate-800">
-    <div className="flex justify-between items-center mb-2"><p className="text-sm text-slate-400">{title}</p><div className="text-slate-500">{icon}</div></div>
-    <p className="text-4xl font-bold mb-1">{value}</p>
-    {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
-  </motion.div>
-);
-
-const EmbedCodeWidget = ({ delay }: EmbedWidgetProps) => {
-  const codeSnippet = `<script src="https://cdn.anemo.ai/widget.js" data-bot-id="USER-UNIQUE-ID" async defer></script>`;
-  const [copyText, setCopyText] = useState('Copy');
-  const handleCopy = () => { navigator.clipboard.writeText(codeSnippet); setCopyText('Copied!'); setTimeout(() => setCopyText('Copy'), 2000); };
-  return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: delay }} className="md:col-span-2 lg:col-span-3 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-      <h3 className="text-lg font-bold">Embed Your Chatbot</h3>
-      <p className="text-sm text-slate-400 mt-1 mb-4">Paste this snippet into your website&apos;s HTML right before the closing <code>&lt;/body&gt;</code> tag.</p>
-      <div className="bg-black rounded-lg p-4 flex items-center justify-between">
-        <code className="text-sm text-slate-300 overflow-x-auto whitespace-nowrap">{codeSnippet}</code>
-        <button onClick={handleCopy} className="ml-4 flex-shrink-0 flex items-center gap-2 bg-slate-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-slate-600 transition-colors">{copyText === 'Copy' ? <CopyIcon /> : <CheckIcon />}{copyText}</button>
-      </div>
-    </motion.div>
-  );
+const StatusBadge = ({ status }: { status: Document['status'] }) => {
+  const baseClasses = 'px-2 py-0.5 text-xs font-semibold rounded-full';
+  switch (status) {
+    case 'INDEXED':
+      return <span className={`${baseClasses} bg-green-500/20 text-green-300`}>Ready</span>;
+    case 'PENDING':
+      return <span className={`${baseClasses} bg-yellow-500/20 text-yellow-300`}>Processing</span>;
+    case 'FAILED':
+      return <span className={`${baseClasses} bg-red-500/20 text-red-300`}>Failed</span>;
+    default:
+      return null;
+  }
 };
 
-// ================= PAGE =================
+// Build the embed snippet using the single source of truth BRAND
+function buildEmbedSnippet(botId: string) {
+  const base = (() => {
+    try {
+      const u = new URL(BRAND.url || 'https://trulybot.xyz');
+      // Strip trailing slash just in case
+      return `${u.origin}`;
+    } catch {
+      return 'https://trulybot.xyz';
+    }
+  })();
+  const src = `${base}/widget.js`;
+  const safeBotId = botId || 'demo';
+  return `<script src="${src}" data-bot-id="${safeBotId}" defer></script>`;
+}
+
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [pastedText, setPastedText] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [chatbotName, setChatbotName] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [accentColor, setAccentColor] = useState('#2563EB');
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const unmountedRef = useRef(false);
+
+  const fetchDocuments = useCallback(async () => {
+    if (!user) return;
+    setLoadingDocs(true);
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('id, content, filename, created_at, status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!unmountedRef.current) setDocuments(data || []);
+    } catch (error) {
+      logSupabaseError('Error fetching documents', error);
+      if (!unmountedRef.current) setMessage('Failed to fetch documents.');
+    } finally {
+      if (!unmountedRef.current) setLoadingDocs(false);
+    }
+  }, [user]);
+
+  const fetchProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('chatbot_name, welcome_message, accent_color')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data && !unmountedRef.current) {
+        setChatbotName(data.chatbot_name || '');
+        setWelcomeMessage(data.welcome_message || '');
+        setAccentColor(data.accent_color || '#2563EB');
+      }
+    } catch (error) {
+      logSupabaseError('Error fetching profile', error);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch('/api/dashboard-stats');
-        const data = await response.json();
-        setStats(data);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (user) {
+      fetchDocuments();
+      fetchProfile();
+    } else {
+      setDocuments([]);
+    }
+  }, [user, fetchDocuments, fetchProfile]);
+
+  useEffect(() => {
+    return () => {
+      unmountedRef.current = true;
     };
-    fetchDashboardData();
   }, []);
 
-  if (loading) {
-    return <div className="p-8 text-slate-400 animate-pulse">Loading dashboard data...</div>;
-  }
+  const handleUpload = async (textToUpload: string, nameOfFile: string) => {
+    if (!textToUpload || !user || !nameOfFile.trim()) {
+      setMessage('File name and content are required.');
+      return false;
+    }
+    setUploading(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/text-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textToUpload, filename: nameOfFile }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || `Upload failed (${res.status})`);
+      return true;
+    } catch (error) {
+      logSupabaseError('Upload error', error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred during upload.';
+      setMessage(`Error: ${errorMessage}`);
+      return false;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleNewUpload = async () => {
+    const success = await handleUpload(pastedText, fileName);
+    if (success) {
+      setMessage('Text uploaded and indexed successfully!');
+      setPastedText('');
+      setFileName('');
+      await fetchDocuments();
+    }
+  };
+
+  const handleDelete = async (docId: string) => {
+    if (!confirm("Are you sure you want to delete this document? This will remove it from your chatbot's knowledge base.")) return;
+    try {
+      const res = await fetch(`/api/documents/${docId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete the document.');
+      setMessage('Document deleted successfully.');
+      await fetchDocuments();
+    } catch (error) {
+      logSupabaseError('Error deleting document', error);
+      setMessage('Failed to delete document.');
+    }
+  };
+
+  const startEdit = (doc: Document) => {
+    setEditingDocId(doc.id);
+    setEditingContent(doc.content);
+  };
+
+  const saveEdit = async () => {
+    if (!user || editingDocId === null) return;
+    setUploading(true);
+    setMessage('Re-indexing document...');
+    try {
+      const deleteRes = await fetch(`/api/documents/${editingDocId}`, { method: 'DELETE' });
+      if (!deleteRes.ok) throw new Error('Failed to remove the old version of the document.');
+      const currentDoc = documents.find((d) => d.id === editingDocId);
+      const success = await handleUpload(editingContent, currentDoc?.filename || 'Untitled');
+      if (success) {
+        setMessage('Document updated and re-indexed successfully!');
+        setEditingDocId(null);
+        setEditingContent('');
+        await fetchDocuments();
+      } else {
+        throw new Error('Failed to re-index the new content.');
+      }
+    } catch (error) {
+      logSupabaseError('Error updating document', error);
+      setMessage('Failed to update document.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingDocId(null);
+    setEditingContent('');
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        chatbot_name: chatbotName,
+        welcome_message: welcomeMessage,
+        accent_color: accentColor,
+      });
+      if (error) throw error;
+      setSaveMessage('Settings saved successfully!');
+    } catch (error) {
+      logSupabaseError('Error saving settings', error);
+      setSaveMessage('Failed to save settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCopySnippet = () => {
+    if (!user) return;
+    const snippet = buildEmbedSnippet(user.id);
+    navigator.clipboard.writeText(snippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="p-8">
-      <header className="flex justify-between items-center pb-6 border-b border-slate-800">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tighter">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Welcome back, here&apos;s a summary of your bot&apos;s activity.</p>
+      <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
+      <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
+
+      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+        <h2 className="text-xl font-semibold">Embed Chatbot on Your Website</h2>
+        <p className="text-sm text-slate-400 mt-1">
+          Copy and paste this snippet into the `&lt;head&gt;` tag of your website&apos;s HTML.
+        </p>
+        <div className="mt-4 p-4 bg-slate-950 rounded-md relative">
+          <pre className="text-sm text-slate-300 overflow-x-auto">
+            <code>
+              {user ? buildEmbedSnippet(user.id) : 'Loading snippet...'}
+            </code>
+          </pre>
+          <button
+            onClick={handleCopySnippet}
+            disabled={!user}
+            className="absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-md bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
         </div>
-      </header>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        <KpiCard title="Total Conversations" value={stats?.totalConversations?.toLocaleString() || '0'} subtitle="Last 30 days" icon={<ConversationsIcon />} delay={0.1} />
-        <KpiCard title="Resolution Rate" value={`${stats?.resolutionRate || 0}%`} subtitle="Automated" icon={<ResolutionIcon />} delay={0.2} />
-        <KpiCard title="Avg. Response Time" value={`${stats?.avgResponseTime || 0}s`} subtitle="Instantaneous" icon={<SpeedIcon />} delay={0.3} />
-        <EmbedCodeWidget delay={0.4} />
+      </div>
+
+      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+        <h2 className="text-xl font-semibold">Add to Knowledge Base</h2>
+        <p className="text-sm text-slate-400 mt-1">
+          Paste your business information or FAQs into the text box below.
+        </p>
+        <div className="mt-4 space-y-4">
+          <input
+            type="text"
+            value={fileName}
+            onChange={(e) => setFileName(e.target.value)}
+            maxLength={100}
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            placeholder="File name (e.g., FAQs, Pricing, About Us)..."
+            autoComplete="off"
+          />
+          <textarea
+            value={pastedText}
+            onChange={(e) => setPastedText(e.target.value)}
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            rows={8}
+            placeholder="Paste your content here..."
+            style={{ minHeight: '150px', resize: 'vertical' }}
+          />
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleNewUpload}
+            disabled={!pastedText || uploading || !fileName.trim()}
+            className={`px-6 py-2.5 rounded-full font-semibold text-base ${
+              !pastedText || !fileName.trim() || uploading
+                ? 'bg-slate-400 text-slate-700 opacity-60 cursor-not-allowed'
+                : 'bg-slate-50 text-black hover:bg-slate-200'
+            } transition-colors`}
+          >
+            {uploading ? 'Processing...' : 'Upload Text'}
+          </button>
+        </div>
+        {message && <p className="mt-4 text-sm text-slate-400">{message}</p>}
+      </div>
+
+      <div className="mt-8 p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+        <h2 className="text-xl font-semibold">Chatbot Customization</h2>
+        <div className="mt-6 space-y-4">
+          <div>
+            <label htmlFor="chatbotName" className="text-sm font-medium text-slate-300">Chatbot Name</label>
+            <input
+              type="text"
+              id="chatbotName"
+              value={chatbotName}
+              onChange={(e) => setChatbotName(e.target.value)}
+              className="mt-1 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="e.g., Trulybot Support"
+            />
+          </div>
+          <div>
+            <label htmlFor="welcomeMessage" className="text-sm font-medium text-slate-300">Welcome Message</label>
+            <textarea
+              id="welcomeMessage"
+              value={welcomeMessage}
+              onChange={(e) => setWelcomeMessage(e.target.value)}
+              className="mt-1 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              rows={3}
+              placeholder="e.g., Hi there! How can I help you today?"
+            />
+          </div>
+          <div>
+            <label htmlFor="accentColor" className="text-sm font-medium text-slate-300">Accent Color</label>
+            <input
+              type="color"
+              id="accentColor"
+              value={accentColor}
+              onChange={(e) => setAccentColor(e.target.value)}
+              className="mt-1 w-24 h-10 p-1 bg-slate-800/50 border border-slate-700 rounded-lg cursor-pointer"
+            />
+          </div>
+        </div>
+        <div className="mt-6 flex items-center justify-end gap-4">
+          {saveMessage && <p className="text-sm text-green-400">{saveMessage}</p>}
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="px-6 py-2.5 rounded-full font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold">Your Documents</h2>
+        {loadingDocs ? (
+          <p className="text-slate-500 mt-2">Loading documents...</p>
+        ) : documents.length === 0 ? (
+          <p className="text-slate-500 mt-2">You haven't uploaded any documents yet.</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {documents.map((doc) => (
+              <div key={doc.id} className="bg-slate-900 p-4 rounded-lg border border-slate-800 flex justify-between items-center">
+                <div className="flex-grow min-w-0">
+                  {editingDocId === doc.id ? (
+                    <>
+                      <textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        className="w-full bg-[#161d29] border border-slate-700 rounded-lg px-4 py-3 text-base text-white shadow-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        rows={7}
+                        style={{ minHeight: '120px', fontFamily: 'inherit', lineHeight: 1.6, marginBottom: '0.75rem' }}
+                        autoFocus
+                      />
+                      <div className="flex gap-3">
+                        <button
+                          onClick={saveEdit}
+                          disabled={uploading}
+                          className="px-6 py-2 rounded-lg font-semibold text-base bg-blue-600 text-white hover:bg-blue-700 shadow transition-all disabled:opacity-50"
+                        >
+                          {uploading ? 'Re-indexing...' : 'Save & Re-index'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="px-6 py-2 rounded-lg font-semibold text-base bg-slate-600 text-white hover:bg-slate-500 shadow transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <StatusBadge status={doc.status} />
+                        <p className="text-white truncate font-semibold text-blue-400">{doc.filename || 'Untitled'}</p>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 pl-1">
+                        Uploaded on: {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="flex-shrink-0 ml-4 flex gap-4">
+                  {editingDocId !== doc.id && (
+                    <>
+                      <button onClick={() => startEdit(doc)} className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(doc.id)} className="text-sm font-medium text-red-500 hover:text-red-400 transition-colors">
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
