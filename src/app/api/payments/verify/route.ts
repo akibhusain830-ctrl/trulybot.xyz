@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
@@ -18,8 +19,6 @@ export async function POST(req: Request) {
       .digest('hex');
 
     const valid = expectedSignature === razorpay_signature;
-
-    // TODO: if valid, update your DB (mark order as paid / grant access)
     return NextResponse.json({ valid });
   } catch (err: any) {
     console.error('Razorpay verification error:', err);
