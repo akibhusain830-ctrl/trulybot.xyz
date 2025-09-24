@@ -1,13 +1,34 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+
+// Disable prerendering for this page since it depends on search params.
+export const dynamic = 'force-dynamic';
 
 // Import the existing ChatWidget without altering its UI
 const ChatWidget = dynamic(() => import('@/components/ChatWidget'), { ssr: false });
 
 export default function EmbedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            width: '100vw',
+            height: '100vh',
+            background: '#23272f',
+          }}
+        />
+      }
+    >
+      <EmbedContent />
+    </Suspense>
+  );
+}
+
+function EmbedContent() {
   const params = useSearchParams();
   const botId = params?.get('botId') ?? 'demo';
 
