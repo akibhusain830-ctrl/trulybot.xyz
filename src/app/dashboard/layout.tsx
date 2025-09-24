@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, 'useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BRAND } from '@/lib/branding';
@@ -16,8 +16,8 @@ const LockIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 
 
 const SubscriptionModal = () => (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-        <div className="bg-slate-900/80 backdrop-blur-lg border border-slate-700 rounded-2xl p-8 text-center max-w-sm mx-4 shadow-2xl">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div className="bg-slate-900/80 backdrop-blur-lg border border-slate-700 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl">
             <div className="mx-auto w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400">
                 <LockIcon />
             </div>
@@ -28,9 +28,6 @@ const SubscriptionModal = () => (
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link href="/pricing" className="w-full bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">
                     View Plans
-                </Link>
-                <Link href="/trial" className="w-full bg-slate-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-slate-600 transition-colors">
-                    Start Free Trial
                 </Link>
             </div>
         </div>
