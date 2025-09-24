@@ -7,7 +7,7 @@ const client = new OpenAI({
 interface Chunk {
   documentId: string;
   title: string;
-  url?: string;
+  url?: string | null; // Changed to allow null
   content: string;
   score: number;
 }
