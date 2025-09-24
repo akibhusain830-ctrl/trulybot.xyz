@@ -14,16 +14,15 @@ const UserIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 const MenuIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg> );
 const LockIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> );
 
-
 const SubscriptionModal = () => (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div className="bg-slate-900/80 backdrop-blur-lg border border-slate-700 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl">
             <div className="mx-auto w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400">
                 <LockIcon />
             </div>
             <h2 className="text-2xl font-bold mt-6">Upgrade to Unlock</h2>
             <p className="text-slate-400 mt-2">
-                Subscribe to a plan or start a free trial to access all dashboard features.
+                Subscribe to a plan to access all dashboard features.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link href="/pricing" className="w-full bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">
@@ -33,7 +32,6 @@ const SubscriptionModal = () => (
         </div>
     </div>
 );
-
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -54,10 +52,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const SidebarContent = () => (
     <>
-      <div className="h-20 flex items-center px-6 border-b border-slate-800">
+      <div className="h-20 flex items-center px-6 border-b border-slate-800 flex-shrink-0">
         <Link href="/" className="text-xl font-bold tracking-tight">{brandHost}</Link>
       </div>
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -77,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           );
         })}
       </nav>
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-3">
            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center"><UserIcon /></div>
            <div>
@@ -90,17 +88,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="min-h-screen w-full bg-black text-white flex font-sans">
+    <div className="h-screen w-full bg-black text-white flex font-sans overflow-hidden">
       {/* --- Desktop Sidebar --- */}
       <aside className="w-64 flex-shrink-0 bg-[#111] border-r border-slate-800 flex-col hidden lg:flex">
         <SidebarContent />
       </aside>
 
       {/* --- Mobile Sidebar --- */}
-      <div className={`fixed inset-y-0 left-0 z-40 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col">
-          <SidebarContent />
-        </aside>
+      <div className={`fixed inset-0 z-50 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setSidebarOpen(false)}></div>
+          <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col z-50">
+            <SidebarContent />
+          </aside>
       </div>
       
       <div className="flex-1 flex flex-col min-w-0 relative">
@@ -114,11 +113,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="w-8"></div> {/* Spacer to balance the header */}
         </header>
         
-        <main className={`flex-1 overflow-y-auto transition-filter duration-300 ${!isSubscribed && !loading ? 'blur-md' : ''}`}>
-          {children}
-        </main>
-
-        {!isSubscribed && !loading && <SubscriptionModal />}
+        <div className="flex-1 relative overflow-y-auto">
+            <main className={`transition-filter duration-300 ${!isSubscribed && !loading ? 'blur-md' : ''}`}>
+                {children}
+            </main>
+            {!isSubscribed && !loading && <SubscriptionModal />}
+        </div>
       </div>
     </div>
   );
