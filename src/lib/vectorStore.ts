@@ -46,15 +46,20 @@ export async function queryVectorStore(params: QueryVectorStoreParams): Promise<
 
   // 1. Call the secure database function to perform the vector similarity search.
   // This is the core of the retrieval process.
-  const { data: chunks, error: rpcError } = await supabaseAdmin.rpc<ChunkRow[]>(
-    'match_document_chunks',
+  const { data: chunks, error: rpcError } = await supabaseAdmin.rpc<
+    ChunkRow[],
     {
-      p_user_id: workspaceId,
-      p_query_embedding: embedding,
-      p_match_threshold: 0.7, // Only return results with a high similarity score
-      p_match_count: topK,
+      p_user_id: string;
+      p_query_embedding: number[];
+      p_match_threshold: number;
+      p_match_count: number;
     }
-  );
+  >('match_document_chunks', {
+    p_user_id: workspaceId,
+    p_query_embedding: embedding,
+    p_match_threshold: 0.7, // Only return results with a high similarity score
+    p_match_count: topK,
+  });
 
   if (rpcError) {
     console.error('Error calling match_document_chunks RPC:', rpcError);
