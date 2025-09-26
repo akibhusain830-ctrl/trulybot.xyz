@@ -33,6 +33,8 @@ type Props = {
   onFailure?: (err: any) => void;
   className?: string;
   label?: string;
+  user_id: string;      // NEW: Add user_id prop
+  plan_id: string;      // NEW: Add plan_id prop
 };
 
 export default function RazorpayButton({
@@ -47,6 +49,8 @@ export default function RazorpayButton({
   onFailure,
   className = 'inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white disabled:opacity-50',
   label,
+  user_id,                // NEW: Destructure user_id
+  plan_id,                // NEW: Destructure plan_id
 }: Props) {
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +64,7 @@ export default function RazorpayButton({
       const orderRes = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, currency, notes, receipt }),
+        body: JSON.stringify({ amount, currency, notes, receipt, user_id, plan_id }), // UPDATED
       });
 
       const { order, error } = await orderRes.json();
@@ -112,7 +116,7 @@ export default function RazorpayButton({
       setLoading(false);
       onFailure?.(e);
     }
-  }, [amount, currency, description, name, notes, onFailure, onSuccess, prefill, receipt]);
+  }, [amount, currency, description, name, notes, onFailure, onSuccess, prefill, receipt, user_id, plan_id]);
 
   return (
     <button onClick={onClick} disabled={loading} className={className}>
