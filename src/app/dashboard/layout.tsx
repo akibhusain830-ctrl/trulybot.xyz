@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BRAND } from '@/lib/branding';
 import { useAuth } from '@/context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion'; // <-- Added motion imports
 
 // --- Icons ---
 const HomeIcon = () => (
@@ -76,17 +77,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
 
-  // Only check on user/page change (NEVER on every render)
   useEffect(() => {
     if (user && !loading) {
       setCheckingSubscription(true);
       refreshSubscriptionStatus().finally(() => setCheckingSubscription(false));
     }
-    // Only depend on user id and pathname (not the function itself)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, user?.id]);
 
-  // Only lock if user is logged in and definitely not active
   const shouldLock = !!user && !loading && !checkingSubscription && subscriptionStatus !== 'active';
   const shouldSignIn = !user && !loading && !checkingSubscription;
 
@@ -143,13 +141,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="w-64 flex-shrink-0 bg-[#111] border-r border-slate-800 flex-col hidden lg:flex">
         <SidebarContent />
       </aside>
-      {/* --- Mobile Sidebar --- */}
-      <div className={`fixed inset-0 z-50 lg:hidden transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setSidebarOpen(false)}></div>
-          <aside className="w-64 h-full bg-[#111] border-r border-slate-800 flex flex-col z-50">
-            <SidebarContent />
-          </aside>
-      </div>
+
+      {/* --- Mobile Sidebar & Overlay (REVISED STRUCTURE) --- */}
+      <AnimatePresence>
+        {sidebarOpen && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+                aria-hidden="true"
+            />
+        )}
+      </AnimatePresence>
+
+      <aside 
+          className={`fixed top-0 left-0 h-full w-64 bg-[#111] border-r border-slate-800 flex flex-col z-50 lg:hidden transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          aria-hidden={!sidebarOpen}
+      >
+          <SidebarContent />
+      </aside>
+
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* --- Mobile Header --- */}
         <header className="lg:hidden h-20 flex items-center justify-between px-4 sm:px-6 border-b border-slate-800 flex-shrink-0">
