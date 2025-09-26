@@ -2,9 +2,13 @@
 
 import RazorpayButton from '@/components/RazorpayButton';
 import { useAuth } from '@/context/AuthContext';
+import { useMemo } from 'react';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
+
+  // Generate a unique receipt ID for each transaction
+  const receiptId = useMemo(() => `rcpt_${Date.now()}`, []);
 
   return (
     <div className="min-h-screen bg-[#0f1220] text-white flex items-center justify-center p-6">
@@ -18,15 +22,15 @@ export default function CheckoutPage() {
           name="TrulyBot Pro"
           description="One-time demo payment"
           prefill={{
-            name: user?.name || 'Test User',
+            // Use the part of the email before the "@" as a fallback name
+            name: user?.email?.split('@')[0] || 'Test User',
             email: user?.email || 'test@example.com',
-            contact: user?.phone || '9999999999',
           }}
           notes={{ plan: 'pro' }}
-          receipt="rcpt_001"
+          receipt={receiptId}
           label="Buy Pro — ₹499"
-          user_id={user?.id || ''}     // required prop
-          plan_id="pro"                // required prop
+          user_id={user?.id || ''}
+          plan_id="pro"
           onSuccess={() => alert('Payment successful!')}
           onFailure={(e) =>
             alert(`Payment failed: ${e?.error?.description || e?.message || 'Unknown error'}`)
