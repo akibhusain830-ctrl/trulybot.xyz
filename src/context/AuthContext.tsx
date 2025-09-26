@@ -11,6 +11,7 @@ interface AuthContextType {
   subscriptionStatus: SubscriptionStatus;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshSubscriptionStatus: () => Promise<void>; // <-- NEW
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +20,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(null);
   const [loading, setLoading] = useState(true);
+
+  // --- This function fetches and updates subscriptionStatus in real time
+  const refreshSubscriptionStatus = async () => {
+    if (!user) {
+      setSubscriptionStatus(null);
+      return;
+    }
+    setLoading(true);
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('subscription_status')
+      .eq('id', user.id)
+      .single();
+    if (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+    setSubscriptionStatus(profile?.subscription_status || null);
+    setLoading(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -39,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select('subscription_status')
         .eq('id', sessionUser.id)
         .single();
-      
+
       if (error) {
         console.error('Error fetching subscription status:', error);
       }
@@ -76,7 +96,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, subscriptionStatus, loading, signOut }}>
+    <AuthContext.Provider value={{
+      user,
+      subscriptionStatus,
+      loading,
+      signOut,
+      refreshSubscriptionStatus // <--- Pass it here
+    }}>
       {children}
     </AuthContext.Provider>
   );

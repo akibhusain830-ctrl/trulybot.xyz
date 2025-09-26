@@ -1,22 +1,29 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// Setup Supabase admin client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role key for server-side operations
+);
+
 export async function POST(req: Request) {
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!;
   const signature = req.headers.get('x-razorpay-signature') || '';
-
   const rawBody = await req.text();
 
+  // 1. Verify webhook signature
   const expectedSignature = crypto
     .createHmac('sha256', webhookSecret)
     .update(rawBody)
     .digest('hex');
 
   if (expectedSignature !== signature) {
-    return NextResponse.json({ ok: false }, { status: 401 });
+    return NextResponse.json({ ok: false, error: 'Invalid signature' }, { status: 401 });
   }
 
   const event = JSON.parse(rawBody);
@@ -25,17 +32,56 @@ export async function POST(req: Request) {
     switch (event.event) {
       case 'payment.captured': {
         const payment = event.payload.payment.entity;
-        // TODO: persist payment, mark order paid, grant access
+        // Extract details from payment object
+        const razorpay_payment_id = payment.id;
+        const razorpay_order_id = payment.order_id;
+        const amount_paid = payment.amount / 100; // Razorpay sends in paise
+        const currency = payment.currency;
+        const upi = payment.vpa || null; // UPI ID if present
+        const payment_status = payment.status;
+        const created_at = new Date(payment.created_at * 1000).toISOString();
+
+        // Fetch your order mapping from Supabase using razorpay_order_id
+        // Assumption: you have a table `orders` with order_id, user_id, plan_id, etc.
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('user_id, plan_id')
+          .eq('razorpay_order_id', razorpay_order_id)
+          .single();
+
+        if (orderError || !order) {
+          console.error('Order not found for razorpay_order_id:', razorpay_order_id);
+          return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
+        }
+
+        // Insert into billing_history
+        const { error: bhError } = await supabase.from('billing_history').insert([{
+          user_id: order.user_id,
+          plan_id: order.plan_id,
+          amount_paid,
+          upi,
+          payment_status,
+          razorpay_payment_id,
+          razorpay_order_id,
+          currency,
+          created_at,
+        }]);
+
+        if (bhError) {
+          console.error('Failed to insert billing_history:', bhError);
+          return NextResponse.json({ ok: false, error: 'Billing history insert failed' }, { status: 500 });
+        }
+
+        // Optionally: grant access to plan, send email, etc.
+
         break;
       }
       case 'order.paid': {
-        const order = event.payload.order.entity;
-        // TODO: mark order paid
+        // You may want to update your order status here
         break;
       }
       case 'payment.failed': {
-        const payment = event.payload.payment.entity;
-        // TODO: mark as failed / notify
+        // Optionally log or notify about failed payment
         break;
       }
       default:
@@ -44,6 +90,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('Webhook handling error:', e);
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
 }
