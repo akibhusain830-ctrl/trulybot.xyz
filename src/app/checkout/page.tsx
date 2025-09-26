@@ -1,8 +1,11 @@
 'use client';
 
 import RazorpayButton from '@/components/RazorpayButton';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CheckoutPage() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-[#0f1220] text-white flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-[#15192c] rounded-xl p-6 shadow-lg">
@@ -14,10 +17,16 @@ export default function CheckoutPage() {
           currency="INR"
           name="TrulyBot Pro"
           description="One-time demo payment"
-          prefill={{ name: 'Test User', email: 'test@example.com', contact: '9999999999' }}
+          prefill={{
+            name: user?.name || 'Test User',
+            email: user?.email || 'test@example.com',
+            contact: user?.phone || '9999999999',
+          }}
           notes={{ plan: 'pro' }}
           receipt="rcpt_001"
           label="Buy Pro — ₹499"
+          user_id={user?.id || ''}     // required prop
+          plan_id="pro"                // required prop
           onSuccess={() => alert('Payment successful!')}
           onFailure={(e) =>
             alert(`Payment failed: ${e?.error?.description || e?.message || 'Unknown error'}`)
