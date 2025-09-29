@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { BRAND } from '@/lib/branding';
 
 declare const window: any;
 
@@ -55,7 +56,7 @@ export default function RazorpayButton({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: 'TrulyBot',
+        name: BRAND.name,
         description: 'Test Transaction',
         order_id: order.id,
         handler: async function (response: any) {
