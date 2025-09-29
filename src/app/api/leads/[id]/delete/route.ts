@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function POST(
@@ -11,8 +11,7 @@ export async function POST(
     return NextResponse.json({ error: 'Lead ID is required' }, { status: 400 });
   }
 
-  const supabase = createAdminClient();
-  const { error } = await supabase.from('leads').delete().eq('id', leadId);
+  const { error } = await supabaseAdmin.from('leads').delete().eq('id', leadId);
 
   if (error) {
     console.error('Error deleting lead:', error);

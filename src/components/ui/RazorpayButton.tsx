@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 
-// ... existing code
+declare const window: any;
 
 interface Props {
   amount: number;
@@ -11,7 +11,7 @@ interface Props {
   user_id: string;
   plan_id: string;
   className?: string;
-  disabled?: boolean; // Add disabled prop
+  disabled?: boolean;
   onSuccess: () => void;
   onFailure: (e: any) => void;
 }
@@ -24,7 +24,7 @@ export default function RazorpayButton({
   user_id,
   plan_id,
   className,
-  disabled, // Destructure disabled prop
+  disabled,
   onSuccess,
   onFailure,
 }: Props) {
@@ -39,7 +39,7 @@ export default function RazorpayButton({
     <button
       className={className}
       onClick={createOrder}
-      disabled={loading || disabled} // Use disabled prop here
+      disabled={loading || disabled}
     >
       {loading ? 'Processing...' : label}
     </button>
