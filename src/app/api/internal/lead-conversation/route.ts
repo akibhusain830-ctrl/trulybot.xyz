@@ -40,10 +40,11 @@ export async function GET(req: NextRequest) {
     // Extract conversation from meta or return mock data
     const conversation = lead.meta?.conversation || [
       { role: 'user', text: 'Hello, I need help with your service.' },
-      { role: 'assistant', text: 'Hi! I'd be happy to help you. What specific information are you looking for?' }
+      { role: 'assistant', text: "Hi! I'd be happy to help you. What specific information are you looking for?" }
     ];
 
     return NextResponse.json({
+      id: lead.id,
       conversation,
       notes: lead.notes || null
     });
