@@ -12,6 +12,11 @@ interface Props {
   plan_id: string;
   className?: string;
   disabled?: boolean;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
   onSuccess: () => void;
   onFailure: (e: any) => void;
 }
@@ -25,6 +30,7 @@ export default function RazorpayButton({
   plan_id,
   className,
   disabled,
+  prefill,
   onSuccess,
   onFailure,
 }: Props) {
@@ -72,7 +78,7 @@ export default function RazorpayButton({
             onFailure(new Error('Payment verification failed'));
           }
         },
-        prefill: {
+        prefill: prefill || {
           name: 'Test User',
           email: 'test.user@example.com',
           contact: '9999999999',
