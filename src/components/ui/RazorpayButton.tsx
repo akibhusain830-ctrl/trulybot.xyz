@@ -12,8 +12,10 @@ interface Props {
   notes: Record<string, any>;
   user_id: string;
   plan_id: string;
+  userName?: string; // IMPROVEMENT: Added optional user name prop
+  userEmail?: string; // IMPROVEMENT: Added optional user email prop
   className?: string;
-  disabled?: boolean; // The optional 'disabled' prop is correctly defined here.
+  disabled?: boolean;
   onSuccess: () => void;
   onFailure: (e: any) => void;
 }
@@ -25,8 +27,10 @@ export default function RazorpayButton({
   notes,
   user_id,
   plan_id,
+  userName,
+  userEmail,
   className,
-  disabled, // The prop is received here.
+  disabled,
   onSuccess,
   onFailure,
 }: Props) {
@@ -55,7 +59,7 @@ export default function RazorpayButton({
         amount: order.amount,
         currency: order.currency,
         name: 'TrulyBot',
-        description: 'Test Transaction',
+        description: `Payment for ${notes.plan || 'plan'}`, // IMPROVEMENT: Dynamic description
         order_id: order.id,
         // Handler function for successful payment.
         handler: async function (response: any) {
@@ -79,10 +83,10 @@ export default function RazorpayButton({
             onFailure(new Error('Payment verification failed'));
           }
         },
+        // IMPROVEMENT: Use props for user details instead of hardcoded values.
         prefill: {
-          name: 'Test User',
-          email: 'test.user@example.com',
-          contact: '9999999999',
+          name: userName || 'Test User',
+          email: userEmail || 'test.user@example.com',
         },
         notes: {
           address: 'Razorpay Corporate Office',
