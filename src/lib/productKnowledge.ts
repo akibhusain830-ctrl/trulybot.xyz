@@ -42,16 +42,16 @@ function uniq<T>(arr: readonly T[]): T[] {
 
 const KNOWLEDGE_BASE: readonly KnowledgeEntry[] = [
   {
-    id: 'what-is-anemo',
+    id: 'what-is-trulybot',
     category: 'overview',
     tags: ['overview', 'about'],
     questionPatterns: [
-      '^(what\\s+is\\s+anemo\\??),
-      '^(tell\\s+me\\s+about\\s+anemo),
-      '^(anemo\\s*\\?)
+      '^(what\\s+is\\s+trulybot\\??)',
+      '^(tell\\s+me\\s+about\\s+trulybot)',
+      '^(trulybot\\s*\\?)'
     ],
-    keywords: ['what', 'anemo', 'platform', 'ai', 'support', 'ecommerce', 'india'],
-    answer: `Anemo is a focused AI customer support & pre-sales assistant for Indian e-commerce and scaling digital brands. It helps answer FAQs, reduce repetitive agent load, capture soft leads (without spamming), and deliver accurate, context-grounded responses from your own knowledge.
+    keywords: ['what', 'trulybot', 'platform', 'ai', 'support', 'ecommerce', 'india'],
+    answer: `Trulybot is a focused AI customer support & pre-sales assistant for Indian e-commerce and scaling digital brands. It helps answer FAQs, reduce repetitive agent load, capture soft leads (without spamming), and deliver accurate, context-grounded responses from your own knowledge.
 
 Key pillars:
 - Rapid setup (minutes, not weeks)
@@ -145,7 +145,7 @@ You can re-trigger refresh after editing source content. Goal: minimize hallucin
 6. After deploy, hard-refresh page to load the widget.
 
 Example (illustrative):
-<script async src="https://cdn.anemo.ai/widget.js"
+<script async src="https://cdn.trulybot.xyz/widget.js"
   data-project="YOUR_PROJECT_ID"
   data-color="#2C4AF7"
   data-position="right"
@@ -239,7 +239,7 @@ We store conversation transcripts and (if voluntarily provided) email addresses 
     id: 'privacy',
     category: 'policy',
     keywords: ['privacy', 'pii', 'personal', 'data'],
-    questionPatterns: ['privacy\\s+policy', '^privacy],
+    questionPatterns: ['privacy\\s+policy', '^privacy'],
     answer: `Privacy Approach:
 Minimal collection (conversation text + optional user-provided email). No selling of conversation data. Only user-supplied PII is stored. Improvements will layer more granular consent and automated deletion support.`
   },
