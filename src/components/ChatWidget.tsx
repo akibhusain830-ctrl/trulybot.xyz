@@ -112,39 +112,92 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     const currentMessages = [...messages, userMessage];
     setMessages(currentMessages);
 
+    // --- Start of changes ---
+
+    // Add a placeholder for the bot's response
+    const botMessageId = uid();
+    const botMessagePlaceholder: Message = {
+      id: botMessageId,
+      role: 'bot',
+      text: '', // Start with empty text
+      at: Date.now(),
+      sources: [],
+    };
+    setMessages(prev => [...prev, botMessagePlaceholder]);
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           botId,
-          messages: currentMessages.map(m => ({ role: m.role, content: m.text }))
+          messages: currentMessages.map(m => ({ role: m.role, content: m.text })),
+          stream: true // IMPORTANT: We need to tell the backend we want a stream
         })
       });
 
-      if (!res.ok) {
-        throw new Error((await res.json()).error || 'Server error');
+      if (!res.ok || !res.body) {
+        const errorPayload = await res.json().catch(() => ({ error: 'Server error with no body' }));
+        throw new Error(errorPayload.error || 'Server error');
       }
 
-      const json = await res.json();
-      const replyText = (json.reply || '').trim() || '(No reply text returned)';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let fullReply = '';
+      let metadata: any = null;
 
-      if (isMounted.current) {
-        setMessages(prev => [...prev, {
-          id: uid(),
-          role: 'bot',
-          text: replyText,
-          at: Date.now(),
-          sources: json.sources,
-          usedDocs: json.usedDocs,
-          fallback: json.meta?.fallback
-        }]);
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: true });
+
+        // The backend will send metadata as a special prefixed line
+        if (chunk.startsWith('___meta:')) {
+          try {
+            metadata = JSON.parse(chunk.substring(8));
+          } catch (e) {
+            console.error('Failed to parse metadata chunk:', chunk);
+          }
+          continue; // Don't append metadata to the visible reply
+        }
+
+        fullReply += chunk;
+
+        if (isMounted.current) {
+          setMessages(prev => prev.map(m =>
+            m.id === botMessageId
+              ? { ...m, text: fullReply }
+              : m
+          ));
+        }
       }
+
+      // After the stream is complete, update the message with final metadata
+      if (isMounted.current && metadata) {
+        setMessages(prev => prev.map(m =>
+          m.id === botMessageId
+            ? {
+                ...m,
+                text: fullReply.trim() || '(No reply text returned)',
+                sources: metadata.sources,
+                usedDocs: metadata.usedDocs,
+                fallback: metadata.meta?.fallback,
+              }
+            : m
+        ));
+      }
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error';
       console.error('[widget:callApi:error]', msg, err);
       if (isMounted.current) {
-        setMessages(prev => [...prev, { id: uid(), role: 'bot', text: msg, at: Date.now(), error: true }]);
+        // Update the placeholder with an error message
+        setMessages(prev => prev.map(m =>
+          m.id === botMessageId
+            ? { ...m, text: msg, error: true }
+            : m
+        ));
       }
     } finally {
       if (isMounted.current) {

@@ -1,7 +1,15 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Message as VercelChatMessage, StreamingTextResponse } from 'ai';
+import { ChatOpenAI } from '@langchain/openai';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { Document } from 'langchain/document';
+import { RunnableSequence } from '@langchain/core/runnables';
+import { BytesOutputParser } from '@langchain/core/output_parsers';
+import { getVectorStore } from '@/lib/vector-store';
+import { getPineconeClient } from '@/lib/pinecone';
+import { supabase } from '@/lib/supabaseClient';
 
 // All imports from your lib directory
 import { findKnowledgeAnswer } from '@/lib/productKnowledge';
@@ -213,5 +221,137 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     // This global catch ensures that any unexpected error still returns a valid JSON response
     return jsonError(err.message || 'An internal server error occurred.', 500);
+  }
+}
+
+const combineDocumentsFn = (docs: Document[], separator = '\n\n') => {
+  const serializedDocs = docs.map((doc) => doc.pageContent);
+  return serializedDocs.join(separator);
+};
+
+const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
+  const formattedDialogueTurns = chatHistory.map((message) => {
+    if (message.role === 'user') {
+      return `Human: ${message.content}`;
+    } else if (message.role === 'assistant') {
+      return `Assistant: ${message.content}`;
+    } else {
+      return `${message.role}: ${message.content}`;
+    }
+  });
+  return formattedDialogueTurns.join('\n');
+};
+
+const CONDENSE_QUESTION_TEMPLATE = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+
+<chat_history>
+  {chat_history}
+</chat_history>
+
+Follow Up Input: {question}
+Standalone question:`;
+const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
+
+const ANSWER_TEMPLATE = `You are a helpful and enthusiastic support bot who can answer a given question based on the context provided. Try to find the answer in the context. If you really don't know the answer, say "I'm sorry, I don't know the answer to that." And direct the user to a human agent. Don't try to make up an answer. Always speak as if you were chatting to a friend.
+
+<context>
+  {context}
+</context>
+
+Question: {question}
+`;
+const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const messages = body.messages ?? [];
+    const streamed = body.stream;
+    const botId = body.botId ?? 'demo';
+
+    if (!messages || messages.length === 0) {
+      return new NextResponse('No messages in the request', { status: 400 });
+    }
+
+    const pinecone = await getPineconeClient();
+    const vectorStore = await getVectorStore(pinecone, botId);
+
+    const llm = new ChatOpenAI({
+      modelName: 'gpt-3.5-turbo',
+      temperature: 0.2,
+    });
+
+    const standaloneQuestionChain = RunnableSequence.from([
+      {
+        question: (input: { question: string; chat_history: string }) => input.question,
+        chat_history: (input: { question: string; chat_history: string }) =>
+          formatVercelMessages(messages.slice(0, -1)),
+      },
+      condenseQuestionPrompt,
+      llm,
+      new BytesOutputParser(),
+    ]);
+
+    const retriever = vectorStore.asRetriever();
+    const lastMessage = messages[messages.length - 1].content;
+
+    const sourceDocuments = await retriever.getRelevantDocuments(lastMessage);
+    const docs = combineDocumentsFn(sourceDocuments);
+
+    const metadata = {
+      usedDocs: sourceDocuments && sourceDocuments.length > 0,
+      sources: sourceDocuments,
+    };
+
+    const answerChain = RunnableSequence.from([
+      {
+        context: (input: { context: string, question: string }) => input.context,
+        question: (input: { context: string, question: string }) => input.question,
+      },
+      answerPrompt,
+      llm,
+    ]);
+
+    const conversationalRetrievalQAChain = RunnableSequence.from([
+      {
+        question: standaloneQuestionChain,
+        context: () => docs,
+      },
+      answerChain,
+      new BytesOutputParser(),
+    ]);
+
+    if (!streamed) {
+      const result = await conversationalRetrievalQAChain.invoke({
+        question: lastMessage,
+        chat_history: formatVercelMessages(messages.slice(0, -1)),
+      });
+      return NextResponse.json({
+        text: new TextDecoder().decode(result),
+        ...metadata,
+      });
+    }
+
+    const stream = await conversationalRetrievalQAChain.stream({
+      question: lastMessage,
+      chat_history: formatVercelMessages(messages.slice(0, -1)),
+    });
+
+    const transformStream = new TransformStream({
+      start(controller) {
+        const metaChunk = JSON.stringify(metadata);
+        const endOfMetaMarker = '___END_OF_META___';
+        controller.enqueue(new TextEncoder().encode(metaChunk + endOfMetaMarker));
+      },
+      transform(chunk, controller) {
+        controller.enqueue(chunk);
+      },
+    });
+
+    return new StreamingTextResponse(stream.pipeThrough(transformStream));
+
+  } catch (e: any) {
+    console.error(e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

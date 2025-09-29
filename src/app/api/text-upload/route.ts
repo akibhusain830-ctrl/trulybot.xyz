@@ -1,25 +1,24 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { simpleTextSplitter } from '@/lib/textSplitter';
 import { embed } from '@/lib/embedding';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
+import { simpleTextSplitter } from '@/lib/textSplitter';
+import { NextRequest, NextResponse } from 'next/server';
 
-// --- Environment Variable Check ---
+// Add this admin client
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+);
+
+// --- Environment Variable Check --- 
 // A fast check to ensure all required server-side variables are present.
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.error('🔴 Missing Supabase environment variables');
   // We don't throw an error here to allow the build process to complete,
   // but the endpoint will fail if these are not set at runtime.
 }
-
-// --- Supabase Admin Client ---
-// Use the Service Role Key for backend operations to bypass Row Level Security.
-// This is secure because we verify user ownership of the document first.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,25 +42,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File name and text content are required.' }, { status: 400 });
     }
 
+    // Convert user.id to string to match your database schema
+    const userId = user.id; // Remove .toString() since database expects UUID
+
     // 1. Create the main document record to get an ID and set status to PENDING
     const { data: docData, error: docError } = await supabaseAdmin
       .from('documents')
       .insert({
-        user_id: user.id,
+        user_id: userId, // Now this is UUID to UUID
         filename,
-        content: text, // Store the original full content for reference
+        content: text,
         status: 'PENDING',
       })
       .select('id')
       .single();
 
-    if (docError) throw docError;
+    if (docError) {
+      console.error('Document insert error:', docError);
+      throw docError;
+    }
+    
     const documentId = docData.id;
 
     // 2. Split the text into chunks
     const chunks = simpleTextSplitter(text);
 
-    // 3. Embed and store each chunk in the new table
+    // 3. Embed and store each chunk
     for (const chunk of chunks) {
       const embedding = await embed(chunk);
 
@@ -69,23 +75,30 @@ export async function POST(req: NextRequest) {
         .from('document_chunks')
         .insert({
           document_id: documentId,
-          user_id: user.id,
+          user_id: userId, // Now this is UUID to UUID
           content: chunk,
           embedding,
         });
 
       if (chunkError) {
+        console.error('Chunk insert error:', chunkError);
         // If any chunk fails, mark the document as FAILED and stop
-        await supabaseAdmin.from('documents').update({ status: 'FAILED' }).eq('id', documentId);
+        await supabaseAdmin
+          .from('documents')
+          .update({ status: 'FAILED' })
+          .eq('id', documentId);
         throw chunkError;
       }
     }
 
     // 4. If all chunks are successful, mark the document as INDEXED
-    await supabaseAdmin.from('documents').update({ status: 'INDEXED' }).eq('id', documentId);
+    await supabaseAdmin
+      .from('documents')
+      .update({ status: 'INDEXED' })
+      .eq('id', documentId);
 
-    // Fetch the final document to return to the UI for an immediate update
-    const { data: finalDocument } = await supabase
+    // Fetch the final document to return to the UI
+    const { data: finalDocument } = await supabaseAdmin
       .from('documents')
       .select('id, content, filename, created_at, status')
       .eq('id', documentId)
@@ -97,7 +110,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    // --- Improved Error Logging ---
+    // --- Improved Error Logging --- 
     // Log the full error for server-side debugging
     console.error('[text-upload API Error]', {
         message: error.message,

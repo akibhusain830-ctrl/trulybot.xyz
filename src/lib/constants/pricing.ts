@@ -2,6 +2,8 @@ export interface PricingTier {
   readonly id: string;
   readonly name: string;
   readonly monthlyInr: number;
+  readonly monthlyUsd: number;
+  readonly description: string;
   readonly messageAllowance: string;
   readonly features: readonly string[];
   readonly notes?: readonly string[];
@@ -15,45 +17,51 @@ export const PRICING_TIERS: readonly PricingTier[] = [
   {
     id: 'basic',
     name: 'Basic',
-    monthlyInr: 99,
-    messageAllowance: '1,000 messages',
+    description: 'For emerging businesses and startups.',
+    monthlyUsd: 5,
+    monthlyInr: 399,
+    messageAllowance: '1,000 conversations/month',
+    highlight: false,
     features: [
-      'Core chat widget',
-      'Basic knowledge ingestion (FAQs, policies, site URL)',
-      'Email capture (soft / optional)',
-      'Starter analytics (basic counts)'
-    ]
+      'Core AI Chatbot',
+      '1,000 Conversations / Month',
+      'Standard Knowledge Base',
+    ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    monthlyInr: 299,
-    messageAllowance: 'Unlimited*',
-    fairUse: true,
+    description: 'The most popular choice for growing e-commerce brands.',
+    monthlyUsd: 15,
+    monthlyInr: 1199,
+    messageAllowance: 'Unlimited conversations',
+    highlight: true,
     features: [
-      'Everything in Basic',
-      'Priority knowledge refresh',
-      'Customization controls (styling, prompts)',
-      'Early access to roadmap features'
+      'Core AI Chatbot',
+      'Unlimited Conversations',
+      'Expanded Knowledge Base',
+      'Chatbot Personalization (Name & Welcome Message)',
+      'Automated Lead Capture',
+      'Priority Content Sync',
     ],
-    notes: ['Unlimited within fair use (soft caps, scaling dialogue)'],
-    highlight: true
   },
   {
     id: 'ultra',
     name: 'Ultra',
-    monthlyInr: 499,
-    messageAllowance: 'Unlimited* + Branding Options',
-    fairUse: true,
+    description: 'The ultimate toolkit for established businesses ready to maximize their growth.',
+    monthlyUsd: 30,
+    monthlyInr: 2399,
+    messageAllowance: 'Unlimited conversations',
+    highlight: false,
     features: [
-      'Everything in Pro',
-      'Advanced branding / white-label accents',
-      'Deeper customization hooks',
-      'Priority support response',
-      'Roadmap beta invitations'
+      'Core AI Chatbot',
+      'Unlimited Conversations',
+      'Maximum Knowledge Base',
+      'Full Brand Customization (Color, Theme, Logo, Name & Welcome Message)',
+      'Enhanced Lead Capture',
+      'Priority Support Queue',
     ],
-    notes: ['Best for scaling teams needing rapid iteration']
-  }
+  },
 ];
 
 export function getPricingTier(id: string): PricingTier | undefined {

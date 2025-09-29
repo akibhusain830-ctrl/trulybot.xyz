@@ -1,115 +1,140 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
 
-type SubscriptionStatus = 'active' | 'trialing' | 'incomplete' | 'past_due' | null;
+export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'none';
 
-interface AuthContextType {
-  user: User | null;
-  subscriptionStatus: SubscriptionStatus;
-  loading: boolean;
-  signOut: () => Promise<void>;
-  refreshSubscriptionStatus: () => Promise<void>; // <-- NEW
+interface UserProfile extends User {
+  trial_ends_at?: string | null;
+  subscription_status?: SubscriptionStatus;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  subscriptionStatus: SubscriptionStatus;
+  trialInfo: TrialInfo | null;
+  signOut: () => Promise<void>;
+  refreshSubscriptionStatus: () => Promise<void>;
+}
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(null);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  subscriptionStatus: 'none',
+  trialInfo: null,
+  signOut: async () => {},
+  refreshSubscriptionStatus: async () => {},
+});
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
+  const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
 
-  // --- This function fetches and updates subscriptionStatus in real time
   const refreshSubscriptionStatus = async () => {
-    if (!user) {
-      setSubscriptionStatus(null);
-      return;
-    }
-    setLoading(true);
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('subscription_status')
-      .eq('id', user.id)
-      .single();
-    if (error) {
-      console.error('Error fetching subscription status:', error);
-    }
-    setSubscriptionStatus(profile?.subscription_status || null);
-    setLoading(false);
-  };
+    if (!user?.id) return;
 
-  useEffect(() => {
-    let mounted = true;
+    try {
+      // Check for active subscription first
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
 
-    const fetchSessionAndSubscription = async (sessionUser: User | null) => {
-      if (!sessionUser) {
-        if (mounted) {
-          setUser(null);
-          setSubscriptionStatus(null);
-          setLoading(false);
-        }
+      if (subscription) {
+        setSubscriptionStatus('active');
+        setTrialInfo(null);
         return;
       }
 
-      // Fetch subscription status from the 'profiles' table
-      const { data: profile, error } = await supabase
+      // Check profile for trial info
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_status')
-        .eq('id', sessionUser.id)
-        .single();
+        .select('trial_ends_at, subscription_status')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching subscription status:', error);
+      if (profile?.trial_ends_at) {
+        const trial = calculateTrialInfo(profile.trial_ends_at);
+        setTrialInfo(trial);
+        setSubscriptionStatus(trial.isActive ? 'trialing' : 'expired');
+      } else {
+        setSubscriptionStatus('none');
+        setTrialInfo(null);
       }
 
-      if (mounted) {
-        setUser(sessionUser);
-        setSubscriptionStatus(profile?.subscription_status || null);
+    } catch (error) {
+      console.error('Error refreshing subscription status:', error);
+      setSubscriptionStatus('none');
+      setTrialInfo(null);
+    }
+  };
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user as UserProfile);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user as UserProfile);
+        } else {
+          setUser(null);
+          setSubscriptionStatus('none');
+          setTrialInfo(null);
+        }
         setLoading(false);
       }
-    };
+    );
 
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      fetchSessionAndSubscription(session?.user ?? null);
-    });
-
-    // 2. Subscribe to auth state changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      fetchSessionAndSubscription(session?.user ?? null);
-    });
-
-    return () => {
-      mounted = false;
-      listener?.subscription?.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Refresh subscription status when user changes
+  useEffect(() => {
+    if (user && !loading) {
+      refreshSubscriptionStatus();
+    }
+  }, [user?.id, loading]);
+
   const signOut = async () => {
-    setLoading(true);
     await supabase.auth.signOut();
     setUser(null);
-    setSubscriptionStatus(null);
-    setLoading(false);
+    setSubscriptionStatus('none');
+    setTrialInfo(null);
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      subscriptionStatus,
-      loading,
-      signOut,
-      refreshSubscriptionStatus // <--- Pass it here
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      subscriptionStatus, 
+      trialInfo,
+      signOut, 
+      refreshSubscriptionStatus 
     }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };

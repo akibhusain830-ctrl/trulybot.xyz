@@ -2,6 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { ConversationModal } from './ConversationModal';
+import { deleteLead } from '@/lib/api/dashboard';
+import { supabase } from '@/lib/supabaseClient'; // Fixed import path
 
 export interface Lead {
   id: string;
@@ -24,6 +26,18 @@ interface Props {
 
 type ConversationCache = Record<string, Array<{ role: string; text: string }> | null>;
 
+// Add this helper function at the top of your component:
+const getAuthHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('No authentication token');
+  }
+  return {
+    'Authorization': `Bearer ${session.access_token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
 export default function LeadsTable({ workspaceId }: Props) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [page, setPage] = useState(1);
@@ -36,6 +50,7 @@ export default function LeadsTable({ workspaceId }: Props) {
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
   const [conversationCache, setConversationCache] = useState<ConversationCache>({});
   const [notesCache, setNotesCache] = useState<Record<string, string | null>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -46,13 +61,19 @@ export default function LeadsTable({ workspaceId }: Props) {
       });
       if (workspaceId) params.set('workspaceId', workspaceId);
       if (statusFilter) params.set('status', statusFilter);
-      const res = await fetch(`/api/leads?${params.toString()}`);
+      
+      const res = await fetch(`/api/leads?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${await (await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to fetch leads');
       setLeads(json.data || []);
       setTotal(json.total || 0);
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching leads:', e);
     } finally {
       setLoading(false);
     }
@@ -60,13 +81,15 @@ export default function LeadsTable({ workspaceId }: Props) {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
+  // Update your updateStatus function:
   const updateStatus = async (id: string, newStatus: string) => {
     const snapshot = leads;
     setLeads(ls => ls.map(l => l.id === id ? { ...l, status: newStatus } : l));
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`/api/leads/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: newStatus })
       });
       if (!res.ok) throw new Error('Failed');
@@ -86,33 +109,47 @@ export default function LeadsTable({ workspaceId }: Props) {
     }
   };
 
+  // Update your fetchConversation function:
   async function fetchConversation(id: string) {
-    const res = await fetch(`/api/internal/lead-conversation?id=${id}`);
-    if (!res.ok) return { conversation: null, notes: null };
-    return res.json();
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/internal/lead-conversation?id=${id}`, { headers });
+      if (!res.ok) return { conversation: null, notes: null };
+      return res.json();
+    } catch (e) {
+      console.error('Error fetching conversation:', e);
+      return { conversation: null, notes: null };
+    }
   }
 
+  // Update your saveNotes function:
   const saveNotes = async (notes: string) => {
     if (!activeLeadId) return;
-    const res = await fetch(`/api/leads/${activeLeadId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes })
-    });
-    if (res.ok) {
-      setNotesCache(n => ({ ...n, [activeLeadId]: notes }));
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/leads/${activeLeadId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ notes })
+      });
+      if (res.ok) {
+        setNotesCache(n => ({ ...n, [activeLeadId]: notes }));
+      }
+    } catch (e) {
+      console.error('Error saving notes:', e);
     }
   };
 
   const exportCsv = async () => {
     setExporting(true);
     try {
+      const headers = await getAuthHeaders();
       const body: any = {};
       if (workspaceId) body.workspaceId = workspaceId;
       if (statusFilter) body.status = statusFilter;
       const res = await fetch('/api/leads/export', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error('Export failed');
@@ -127,6 +164,22 @@ export default function LeadsTable({ workspaceId }: Props) {
       console.error(e);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleDelete = async (leadId: string) => {
+    if (window.confirm('Are you sure you want to delete this lead? This action cannot be undone.')) {
+      setDeletingId(leadId);
+      try {
+        await deleteLead(leadId);
+        setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+        setTotal(prevTotal => prevTotal - 1); // Decrement total count
+      } catch (error: any) {
+        console.error('Failed to delete lead:', error);
+        // Optionally, show an error message to the user
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -234,9 +287,16 @@ export default function LeadsTable({ workspaceId }: Props) {
                   </select>
                   <button
                     onClick={() => openConversation(l)}
-                    className="w-full text-xs bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-slate-200 hover:bg-slate-700"
+                    className="w-full text-center px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs"
                   >
                     View
+                  </button>
+                  <button
+                    onClick={() => handleDelete(l.id)}
+                    disabled={deletingId === l.id}
+                    className="w-full text-center px-2 py-1 rounded-md bg-red-900/40 hover:bg-red-900/60 text-xs text-red-300 disabled:opacity-50"
+                  >
+                    {deletingId === l.id ? 'Deleting...' : 'Delete'}
                   </button>
                 </td>
               </tr>

@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!key_id || !key_secret) {
+      console.error('Server misconfigured: missing Razorpay keys');
       return NextResponse.json(
         { error: 'Server misconfigured: missing Razorpay keys' },
         { status: 500 }
@@ -25,29 +26,32 @@ export async function POST(req: Request) {
 
     const razorpay = new Razorpay({ key_id, key_secret });
 
-    // You should include user_id and plan_id in the request body
     const { amount, currency = 'INR', receipt, notes, user_id, plan_id } = await req.json();
 
     if (!amount || typeof amount !== 'number' || !user_id || !plan_id) {
       return NextResponse.json({ error: 'amount (number), user_id, and plan_id are required' }, { status: 400 });
     }
 
-    // Razorpay expects smallest unit (paise for INR)
     const order = await razorpay.orders.create({
       amount: Math.round(amount * 100),
       currency,
       receipt,
       notes,
-      payment_capture: 1,
-    } as any);
-
-    // Insert into Supabase orders table
-    const { error: supabaseError } = await supabase.from('orders').insert([{
+    });
+    
+    // This payload now correctly includes the 'amount' and matches your database schema
+    const insertPayload = {
       razorpay_order_id: order.id,
       user_id,
       plan_id,
+      amount,
+      currency,
+      notes,
+      status: order.status,
       created_at: new Date().toISOString(),
-    }]);
+    };
+
+    const { error: supabaseError } = await supabase.from('orders').insert([insertPayload]);
 
     if (supabaseError) {
       console.error('Supabase orders insert error:', supabaseError);

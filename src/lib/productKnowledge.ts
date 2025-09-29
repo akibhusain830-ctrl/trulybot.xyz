@@ -46,9 +46,9 @@ const KNOWLEDGE_BASE: readonly KnowledgeEntry[] = [
     category: 'overview',
     tags: ['overview', 'about'],
     questionPatterns: [
-      '^(what\\s+is\\s+anemo\\??)$',
-      '^(tell\\s+me\\s+about\\s+anemo)$',
-      '^(anemo\\s*\\?)$'
+      '^(what\\s+is\\s+anemo\\??),
+      '^(tell\\s+me\\s+about\\s+anemo),
+      '^(anemo\\s*\\?)
     ],
     keywords: ['what', 'anemo', 'platform', 'ai', 'support', 'ecommerce', 'india'],
     answer: `Anemo is a focused AI customer support & pre-sales assistant for Indian e-commerce and scaling digital brands. It helps answer FAQs, reduce repetitive agent load, capture soft leads (without spamming), and deliver accurate, context-grounded responses from your own knowledge.
@@ -239,7 +239,7 @@ We store conversation transcripts and (if voluntarily provided) email addresses 
     id: 'privacy',
     category: 'policy',
     keywords: ['privacy', 'pii', 'personal', 'data'],
-    questionPatterns: ['privacy\\s+policy', '^privacy$'],
+    questionPatterns: ['privacy\\s+policy', '^privacy],
     answer: `Privacy Approach:
 Minimal collection (conversation text + optional user-provided email). No selling of conversation data. Only user-supplied PII is stored. Improvements will layer more granular consent and automated deletion support.`
   },

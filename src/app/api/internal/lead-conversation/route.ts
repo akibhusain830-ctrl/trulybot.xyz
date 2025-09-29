@@ -7,26 +7,49 @@ const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: fa
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-
-    const { data, error } = await admin
-      .from('leads')
-      .select('conversation_json, notes')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[GET /api/internal/lead-conversation] error', error);
-      return NextResponse.json({ error: 'Fetch failed' }, { status: 500 });
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await admin.auth.getUser(token);
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const leadId = searchParams.get('id');
+
+    if (!leadId) {
+      return NextResponse.json({ error: 'Lead ID is required' }, { status: 400 });
+    }
+
+    // Fetch the lead and its conversation
+    const { data: lead, error: leadError } = await admin
+      .from('leads')
+      .select('id, notes, meta')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+
+    // Extract conversation from meta or return mock data
+    const conversation = lead.meta?.conversation || [
+      { role: 'user', text: 'Hello, I need help with your service.' },
+      { role: 'assistant', text: 'Hi! I'd be happy to help you. What specific information are you looking for?' }
+    ];
+
     return NextResponse.json({
-      conversation: data?.conversation_json || null,
-      notes: data?.notes || null
+      conversation,
+      notes: lead.notes || null
     });
+
   } catch (e: any) {
+    console.error('[GET /api/internal/lead-conversation] error', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
