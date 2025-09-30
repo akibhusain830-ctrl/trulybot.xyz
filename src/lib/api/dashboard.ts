@@ -1,3 +1,9 @@
+// Profile settings type for chatbot settings management
+export type ProfileSettings = {
+  chatbot_name?: string;
+  welcome_message?: string;
+  accent_color?: string;
+};
 
 import { supabase } from '@/lib/supabaseClient';
 
