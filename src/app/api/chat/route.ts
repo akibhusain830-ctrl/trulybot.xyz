@@ -1,16 +1,11 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { CoreMessage as VercelChatMessage, LangChainAdapter } from 'ai';
-import { ChatOpenAI } from '@langchain/openai';
+import { CoreMessage as VercelChatMessage } from 'ai';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { Document } from 'langchain/document';
 import { RunnableSequence, RunnablePassthrough } from '@langchain/core/runnables';
 import { BytesOutputParser } from '@langchain/core/output_parsers';
-import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
-import { CoreMessage } from '@langchain/core/messages';
 
 // All imports from your lib directory
 import { findKnowledgeAnswer } from '@/lib/productKnowledge';
@@ -181,15 +176,17 @@ export async function POST(req: NextRequest) {
     const finalSources = sources.map(s => ({ ...s, snippet: safeSlice(s.snippet) }));
 
     // 6. Lead persistence (if any)
-    if (leadDetection.isLead) {
+    if (leadDetection) {
       await persistLeadIfAny({
+        origin: mode,
         workspaceId: botId,
+        sourceBotId: botId,
         email: leadDetection.email,
-        name: leadDetection.name,
-        intent: intentKeywords,
-        message: userText,
-        timestamp: new Date().toISOString(),
-        sources: finalSources
+        firstMessage: userText,
+        lastMessage: userText,
+        intentKeywords,
+        intentPrompt: leadDetection.intentPrompt,
+        conversation: [] // Optionally pass recent messages here
       });
     }
 
