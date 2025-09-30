@@ -1,3 +1,9 @@
+export class RateLimitError extends Error {
+  constructor(message = 'Too many requests') {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
 export class AuthenticationError extends Error {
   constructor(message = 'Authentication failed') {
     super(message);
