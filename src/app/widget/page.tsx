@@ -6,10 +6,12 @@ import ChatWidget from '@/components/ChatWidget';
 
 function WidgetContent() {
   const searchParams = useSearchParams();
-  const chatbotId = searchParams.get('id');
-  const chatbotName = searchParams.get('name') || 'Assistant';
-  const welcomeMessage = searchParams.get('message') || 'Hello! How can I help?';
-  const accentColor = searchParams.get('color') || '#2563EB';
+
+  const chatbotId = searchParams?.get('id') || '';
+  const chatbotName = searchParams?.get('name') || 'Assistant';
+  const welcomeMessage = searchParams?.get('message') || 'Hello! How can I help?';
+  const accentColor = searchParams?.get('color') || '#2563EB';
+
 
   if (!chatbotId) {
     return <div>Invalid widget configuration</div>;
@@ -17,12 +19,7 @@ function WidgetContent() {
 
   return (
     <div style={{ height: '100vh', background: '#f8fafc' }}>
-      <ChatWidget 
-        chatbotId={chatbotId}
-        chatbotName={chatbotName}
-        welcomeMessage={welcomeMessage}
-        accentColor={accentColor}
-      />
+      <ChatWidget />
     </div>
   );
 }
