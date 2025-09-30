@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Message as VercelChatMessage, StreamingTextResponse, LangChainAdapter } from 'ai';
+import { CoreMessage as VercelChatMessage, StreamingTextResponse, LangChainAdapter } from 'ai';
 import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Document } from 'langchain/document';
@@ -171,98 +171,58 @@ export async function POST(req: NextRequest) {
           conversationWindow
         });
       } catch (e) {
-        console.error('[chat:general-error]', e);
+        console.error('[chat:error]', e);
         reply = deterministicFallback();
       }
     }
 
-    // Brandify final reply (swap legacy brand text -> Trulybot + your domain)
-    reply = brandify(reply);
+    // 5. Finalize
+    const finalReply = brandify(reply);
+    const finalSources = sources.map(s => ({ ...s, snippet: safeSlice(s.snippet) }));
 
-    // -------- Phase D: Lead Persistence --------
-    const shouldPersistLead = !!leadDetection?.email || intentKeywords.length > 0 || leadDetection?.intentPrompt;
-    let leadPersistResult: { created: boolean; id?: string } | null = null;
-
-    // Prevent lead capture for demo bot
-    if (shouldPersistLead && mode === 'subscriber') {
-      const normalizedConv = messages.map(m => ({ role: m.role, text: m.content }));
-      leadPersistResult = await persistLeadIfAny({
-        origin: mode,
+    // 6. Lead persistence (if any)
+    if (leadDetection.isLead) {
+      await persistLeadIfAny({
         workspaceId: botId,
-        sourceBotId: botId,
-        email: leadDetection?.email,
-        firstMessage: normalizedConv[0]?.text || userText,
-        lastMessage: userText,
-        intentKeywords,
-        intentPrompt: leadDetection?.intentPrompt,
-        conversation: normalizedConv,
+        email: leadDetection.email,
+        name: leadDetection.name,
+        intent: intentKeywords,
+        message: userText,
+        timestamp: new Date().toISOString(),
+        sources: finalSources
       });
-      log('lead-persist', leadPersistResult);
     }
-    const leadPrompt = !leadDetection?.email && leadDetection?.intentPrompt;
 
-    // 5. Build response
-    const payload = {
-      reply,
-      sources,
+    // 7. Response
+    const response = new StreamingTextResponse(
+      new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+          controller.enqueue(encoder.encode(finalReply));
+          controller.close();
+        }
+      }),
+      {
+        headers: {
+          'x-knowledge-source': knowledgeSource || 'none',
+          'x-used-docs': usedDocs.toString(),
+          'x-fallback': fallback.toString(),
+          'x-response-time': `${Date.now() - started}ms`
+        }
+      }
+    );
+
+    log('end', {
+      source: knowledgeSource,
+      fallback,
       usedDocs,
-      leadPrompt,
-      meta: {
-        fallback,
-        knowledgeSource,
-      },
-      debug: {
-        tookMs: Date.now() - started,
-      },
-    };
+      responseTime: `${Date.now() - started}ms`,
+      msgLen: finalReply.length
+    });
 
-    log('done', { ms: payload.debug.tookMs, knowledgeSource });
-    return NextResponse.json(payload);
-
-  } catch (err: any) {
-    // This global catch ensures that any unexpected error still returns a valid JSON response
-    return jsonError(err.message || 'An internal server error occurred.', 500);
+    return response;
+  } catch (error) {
+    console.error('[chat:unhandled]', error);
+    return jsonError('Internal server error', 500);
   }
 }
-
-const combineDocumentsFn = (docs: Document[], separator = '\n\n') => {
-  const serializedDocs = docs.map((doc) => doc.pageContent);
-  return serializedDocs.join(separator);
-};
-
-const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
-  const formattedDialogueTurns = chatHistory.map((message) => {
-    if (message.role === 'user') {
-      return `Human: ${message.content}`;
-    } else if (message.role === 'assistant') {
-      return `Assistant: ${message.content}`;
-    } else {
-      return `${message.role}: ${message.content}`;
-    }
-  });
-  return formattedDialogueTurns.join('\n');
-};
-
-const CONDENSE_QUESTION_TEMPLATE = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
-
-<chat_history>
-  {chat_history}
-</chat_history>
-
-Follow Up Input: {question}
-Standalone question:`;
-const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
-
-const ANSWER_TEMPLATE = `You are a helpful and enthusiastic support bot who can answer a given question based on the context provided. Try to find the answer in the context. If you really don't know the answer, say "I'm sorry, I don't know the answer to that." And direct the user to a human agent. Don't try to make up an answer. Always speak as if you were chatting to a friend.
-
-<context>
-  {context}
-</context>
-
-<chat_history>
-  {chat_history}
-</chat_history>
-
-Question: {question}
-`;
-const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
