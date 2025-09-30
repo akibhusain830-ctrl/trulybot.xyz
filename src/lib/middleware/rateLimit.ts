@@ -39,7 +39,7 @@ export function createRateLimiter(config: RateLimitConfig) {
   } = config;
 
   return {
-    check: (request: NextRequest): { allowed: boolean; remaining: number; resetTime: number } => {
+    check(request: NextRequest): { allowed: boolean; remaining: number; resetTime: number } {
       const key = keyGenerator(request);
       const now = Date.now();
       const resetTime = now + windowMs;
@@ -77,9 +77,8 @@ export function createRateLimiter(config: RateLimitConfig) {
       };
     },
 
-    consume: (request: NextRequest): void => {
+    consume(request: NextRequest): void {
       const result = this.check(request);
-      
       if (!result.allowed) {
         throw new RateLimitError(`Rate limit exceeded. Try again in ${Math.ceil((result.resetTime - Date.now()) / 1000)} seconds.`);
       }
