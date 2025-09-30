@@ -19,15 +19,12 @@ export default function CheckoutPage() {
         <RazorpayButton
           amount={499} // ₹499.00
           currency="INR"
-          name="TrulyBot Pro"
-          description="One-time demo payment"
           prefill={{
             // Use the part of the email before the "@" as a fallback name
             name: user?.email?.split('@')[0] || 'Test User',
             email: user?.email || 'test@example.com',
           }}
           notes={{ plan: 'pro' }}
-          receipt={receiptId}
           label="Buy Pro — ₹499"
           user_id={user?.id || ''}
           plan_id="pro"
