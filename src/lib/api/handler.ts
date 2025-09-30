@@ -56,4 +56,3 @@ export function createErrorResponseHandler(
   return NextResponse.json(response, { status: statusCode });
 }
 
-export type ApiHandler<T = any>
