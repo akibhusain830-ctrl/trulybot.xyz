@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, cubicBezier } from 'framer-motion';
 
 interface HeroProps {
   user?: any;
@@ -24,7 +24,7 @@ export default function Hero({ user }: HeroProps) {
       y: 0, 
       transition: { 
         duration: 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94]
+        ease: cubicBezier(0.25, 0.46, 0.45, 0.94)
       } 
     }
   };
