@@ -1,9 +1,9 @@
 
-import { getAdminClient } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export async function ensureUserWorkspace(userId: string, email: string): Promise<string> {
-  const supabase = getAdminClient();
+  const supabase = supabaseAdmin;
   
   try {
     // Check if user already has a profile with workspace
@@ -62,7 +62,7 @@ export async function ensureUserWorkspace(userId: string, email: string): Promis
 }
 
 export async function getUserWorkspace(userId: string): Promise<{ workspaceId: string; profile: any } | null> {
-  const supabase = getAdminClient();
+  const supabase = supabaseAdmin;
   
   try {
     const { data: profile, error } = await supabase
@@ -94,7 +94,7 @@ export async function getUserWorkspace(userId: string): Promise<{ workspaceId: s
 }
 
 export async function validateWorkspaceAccess(userId: string, workspaceId: string): Promise<boolean> {
-  const supabase = getAdminClient();
+  const supabase = supabaseAdmin;
   
   try {
     const { data, error } = await supabase
