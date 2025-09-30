@@ -56,7 +56,7 @@ export default function PricingClientPage() {
             <div className="mx-auto grid max-w-md grid-cols-1 gap-8 lg:max-w-4xl lg:grid-cols-3">
               {PRICING_TIERS.map((tier) => {
                 const price = currency === 'INR' ? tier.monthlyInr : tier.monthlyUsd;
-                const symbol = currency === 'INR' ? '₹' : ';
+                const symbol = currency === 'INR' ? '₹' : '$';
                 
                 return (
                   <div
