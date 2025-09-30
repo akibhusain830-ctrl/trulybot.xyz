@@ -13,13 +13,18 @@ interface Props {
   notes: Record<string, any>;
   user_id: string;
   plan_id: string;
+  userName?: string; // IMPROVEMENT: Added optional user name prop
+  userEmail?: string; // IMPROVEMENT: Added optional user email prop
   className?: string;
   disabled?: boolean;
+<<<<<<< HEAD
   prefill?: {
     name?: string;
     email?: string;
     contact?: string;
   };
+=======
+>>>>>>> f2d427e4a9a9145ffea0bce27db8f65671e85896
   onSuccess: () => void;
   onFailure: (e: any) => void;
 }
@@ -31,9 +36,14 @@ export default function RazorpayButton({
   notes,
   user_id,
   plan_id,
+  userName,
+  userEmail,
   className,
   disabled,
+<<<<<<< HEAD
   prefill,
+=======
+>>>>>>> f2d427e4a9a9145ffea0bce27db8f65671e85896
   onSuccess,
   onFailure,
 }: Props) {
@@ -61,8 +71,13 @@ export default function RazorpayButton({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
+<<<<<<< HEAD
         name: BRAND.name,
         description: 'Test Transaction',
+=======
+        name: 'TrulyBot',
+        description: `Payment for ${notes.plan || 'plan'}`, // IMPROVEMENT: Dynamic description
+>>>>>>> f2d427e4a9a9145ffea0bce27db8f65671e85896
         order_id: order.id,
         // Handler function for successful payment.
         handler: async function (response: any) {
@@ -86,10 +101,17 @@ export default function RazorpayButton({
             onFailure(new Error('Payment verification failed'));
           }
         },
+<<<<<<< HEAD
         prefill: prefill || {
           name: 'Test User',
           email: 'test.user@example.com',
           contact: '9999999999',
+=======
+        // IMPROVEMENT: Use props for user details instead of hardcoded values.
+        prefill: {
+          name: userName || 'Test User',
+          email: userEmail || 'test.user@example.com',
+>>>>>>> f2d427e4a9a9145ffea0bce27db8f65671e85896
         },
         notes: {
           address: 'Razorpay Corporate Office',
