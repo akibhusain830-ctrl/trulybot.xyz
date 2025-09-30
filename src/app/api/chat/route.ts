@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { CoreMessage as VercelChatMessage, StreamingTextResponse, LangChainAdapter } from 'ai';
+import { CoreMessage as VercelChatMessage, LangChainAdapter } from 'ai';
 import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Document } from 'langchain/document';
@@ -193,24 +193,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 7. Response
-    const response = new StreamingTextResponse(
-      new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          controller.enqueue(encoder.encode(finalReply));
-          controller.close();
-        }
-      }),
-      {
-        headers: {
-          'x-knowledge-source': knowledgeSource || 'none',
-          'x-used-docs': usedDocs.toString(),
-          'x-fallback': fallback.toString(),
-          'x-response-time': `${Date.now() - started}ms`
-        }
+    // 7. Response (streaming-like using native Response)
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(finalReply));
+        controller.close();
       }
-    );
+    });
+
+    const response = new Response(stream, {
+      headers: {
+        'x-knowledge-source': knowledgeSource || 'none',
+        'x-used-docs': usedDocs.toString(),
+        'x-fallback': fallback.toString(),
+        'x-response-time': `${Date.now() - started}ms`
+      }
+    });
 
     log('end', {
       source: knowledgeSource,
