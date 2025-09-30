@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { BRAND } from '@/lib/branding';
 
+// This declares that a 'window' object with any properties can exist, which is needed for third-party scripts like Razorpay.
 declare const window: any;
 
+// Defines the properties (props) the component accepts.
 interface Props {
   amount: number;
   currency: 'INR' | 'USD';
@@ -35,11 +37,13 @@ export default function RazorpayButton({
   onSuccess,
   onFailure,
 }: Props) {
+  // Internal loading state for when the payment process is active.
   const [loading, setLoading] = useState(false);
 
   const createOrder = async () => {
     setLoading(true);
     try {
+      // Create a payment order by calling a server-side API endpoint.
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,6 +56,7 @@ export default function RazorpayButton({
 
       const order = await res.json();
 
+      // Razorpay payment options configuration.
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -59,7 +64,9 @@ export default function RazorpayButton({
         name: BRAND.name,
         description: 'Test Transaction',
         order_id: order.id,
+        // Handler function for successful payment.
         handler: async function (response: any) {
+          // Verify the payment signature on the server.
           const verificationRes = await fetch('/api/verify-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -92,6 +99,7 @@ export default function RazorpayButton({
         },
       };
 
+      // Create a new Razorpay instance and open the payment dialog.
       const rzp1 = new window.Razorpay(options);
       rzp1.on('payment.failed', function (response: any) {
         onFailure(response.error);
@@ -109,6 +117,7 @@ export default function RazorpayButton({
     <button
       className={className}
       onClick={createOrder}
+      // The button is disabled if the internal loading is true OR the external disabled prop is true.
       disabled={loading || disabled}
     >
       {loading ? 'Processing...' : label}
