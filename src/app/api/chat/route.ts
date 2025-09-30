@@ -1,15 +1,16 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Message as VercelChatMessage, StreamingTextResponse } from 'ai';
+import { Message as VercelChatMessage, StreamingTextResponse, LangChainAdapter } from 'ai';
 import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Document } from 'langchain/document';
-import { RunnableSequence } from '@langchain/core/runnables';
+import { RunnableSequence, RunnablePassthrough } from '@langchain/core/runnables';
 import { BytesOutputParser } from '@langchain/core/output_parsers';
-import { getVectorStore } from '@/lib/vector-store';
-import { getPineconeClient } from '@/lib/pinecone';
-import { supabase } from '@/lib/supabaseClient';
+import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { createClient } from '@supabase/supabase-js';
+import { CoreMessage } from '@langchain/core/messages';
 
 // All imports from your lib directory
 import { findKnowledgeAnswer } from '@/lib/productKnowledge';
@@ -257,6 +258,10 @@ const ANSWER_TEMPLATE = `You are a helpful and enthusiastic support bot who can 
 <context>
   {context}
 </context>
+
+<chat_history>
+  {chat_history}
+</chat_history>
 
 Question: {question}
 `;
