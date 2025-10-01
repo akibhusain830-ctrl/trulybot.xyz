@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { ProfileManager } from '@/lib/profile-manager';
 
-export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 interface VerifyBody {

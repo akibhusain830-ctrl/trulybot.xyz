@@ -5,7 +5,7 @@ import { getPricingTier } from '@/lib/constants/pricing';
 import { logger } from '@/lib/logger';
 import { createRequestId } from '../../../../lib/requestContext';
 
-export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 // Setup Supabase admin client

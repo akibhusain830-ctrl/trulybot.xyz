@@ -8,7 +8,7 @@ import { withApi } from '@/lib/middleware/apiHandler';
 import { limitIp } from '@/lib/middleware/rateLimiter';
 import { AuthError } from '@/lib/errors';
 
-export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 export const GET = withApi(async function GET(req: NextRequest) {

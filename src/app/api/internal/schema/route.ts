@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { config } from '@/lib/config/secrets';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 // Provides a minimal snapshot of expected vs actual columns for critical tables.

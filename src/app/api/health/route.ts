@@ -3,8 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import { cache } from '@/lib/cache/manager'
 import { memoryMonitor } from '@/lib/performance/optimization'
 
-export const runtime = 'edge'
-
 interface HealthCheckResult {
   status: 'healthy' | 'unhealthy'
   timestamp: string

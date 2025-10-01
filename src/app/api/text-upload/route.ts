@@ -23,7 +23,6 @@ const supabaseAdmin = createClient(
 // A fast check to ensure all required server-side variables are present.
 // Config validation happens at import; if we reach here config is present.
 
-export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const POST = withApi(async function POST(req: NextRequest) {

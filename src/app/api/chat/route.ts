@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { CoreMessage as VercelChatMessage } from 'ai';
 import { PromptTemplate } from '@langchain/core/prompts';
