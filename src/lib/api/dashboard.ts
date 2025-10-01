@@ -6,6 +6,7 @@ export type ProfileSettings = {
 };
 
 import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 // Add this helper function at the top
 const getAuthHeaders = async () => {
@@ -30,7 +31,7 @@ export interface Document {
 
 // Document Management
 export const fetchDocuments = async (userId: string): Promise<Document[]> => {
-  console.log('Debug: fetchDocuments called with userId:', userId);
+  logger.debug('fetchDocuments:start', { userId });
   
   try {
     // Remove updated_at from the select since the column doesn't exist
@@ -40,24 +41,24 @@ export const fetchDocuments = async (userId: string): Promise<Document[]> => {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    console.log('Debug: Supabase response:', { data, error });
+  logger.debug('fetchDocuments:response', { count: data?.length || 0, error: !!error });
 
     if (error) {
-      console.error("Error fetching documents from Supabase:", error);
+  logger.error('fetchDocuments:error', error);
       throw new Error(`Failed to fetch documents: ${error.message}`);
     }
     
-    console.log('Debug: Returning documents:', data || []);
+  logger.debug('fetchDocuments:return', { count: data?.length || 0 });
     return data || [];
   } catch (err) {
-    console.error('Debug: fetchDocuments caught error:', err);
+  logger.error('fetchDocuments:exception', err);
     throw err;
   }
 };
 
 // Fix uploadTextDocument
 export const uploadTextDocument = async (text: string, filename: string) => {
-  console.log('Debug: uploadTextDocument called', { filename, textLength: text.length });
+  logger.debug('uploadTextDocument:start', { filename, textLength: text.length });
   
   const headers = await getAuthHeaders();
   const response = await fetch('/api/text-upload', {
@@ -67,7 +68,7 @@ export const uploadTextDocument = async (text: string, filename: string) => {
   });
 
   const result = await response.json();
-  console.log('Debug: Upload API response:', result);
+  logger.debug('uploadTextDocument:response', { ok: response.ok });
 
   if (!response.ok) {
     throw new Error(result.error || 'Upload failed');

@@ -1,13 +1,21 @@
 'use client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 
 interface DemoSectionProps {
   user: any;
 }
 
+interface ChatMessage {
+  sender: 'bot' | 'user';
+  text: string;
+  time: string;
+  action?: string;
+}
+
 export default function DemoSection({ user }: DemoSectionProps) {
-  const demoChatData = [
+  const supportChatData: ChatMessage[] = [
     {
       sender: 'bot' as const,
       text: "Hi there! I'm your AI support agent. How can I help you today?",
@@ -26,26 +34,21 @@ export default function DemoSection({ user }: DemoSectionProps) {
     }
   ];
 
-  const useCases = [
-    {
-      icon: "💬",
-      title: "AI Support Agent",
-      description: "24/7 customer support",
-      active: true
-    },
-    {
-      icon: "🎯",
-      title: "AI Lead Qualification",
-      description: "Automated lead capture",
-      active: false
-    },
-    {
-      icon: "🛍️",
-      title: "Product Recommender",
-      description: "Personalized suggestions",
-      active: false
-    }
+  // Lead demo replaced with concise restock + dual contact capture conversation (masked PII)
+  const leadChatData: ChatMessage[] = [
+    { sender: 'user' as const, text: 'When will the graphite jacket be back in stock?', time: '3:10 PM' },
+    { sender: 'bot' as const, text: 'The graphite jacket is expected to restock in about 5–6 days. I can notify you the moment it\'s live—please share your contact number or email.', time: '3:10 PM' },
+    { sender: 'user' as const, text: '+91 98765 112xx and notify me at amxx@gearforge.in', time: '3:11 PM' },
+    { sender: 'bot' as const, text: 'Noted. I\'ll send a restock alert to your number and email as soon as it arrives. Anything else you\'d like to check?', time: '3:11 PM' }
   ];
+
+  const useCases = [
+    { icon: '🤖', title: 'AI Support Agent', description: '24/7 customer support', key: 'support' },
+    { icon: '🎯', title: 'AI Lead Qualification', description: 'Automated lead capture', key: 'lead' },
+  ];
+
+  // simple local state for toggling between demos (client component already)
+  const [activeCase, setActiveCase] = useState<'support' | 'lead'>('support');
 
   return (
     <section className="relative py-24 bg-black">
@@ -69,25 +72,26 @@ export default function DemoSection({ user }: DemoSectionProps) {
                 {useCases.map((useCase, index) => (
                   <div
                     key={index}
+                    onClick={() => setActiveCase(useCase.key as any)}
                     className={`p-6 rounded-2xl transition-all duration-300 cursor-pointer ${
-                      useCase.active
+                      activeCase === useCase.key
                         ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30 shadow-lg shadow-blue-500/10'
                         : 'bg-gray-900/30 border border-gray-800/50 hover:border-gray-700/50'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`text-3xl ${useCase.active ? 'scale-110' : ''} transition-transform`}>
+                      <div className={`text-3xl ${activeCase === useCase.key ? 'scale-110' : ''} transition-transform`}>
                         {useCase.icon}
                       </div>
                       <div className="flex-1">
-                        <h4 className={`font-semibold ${useCase.active ? 'text-white' : 'text-gray-300'}`}>
+                        <h4 className={`font-semibold ${activeCase === useCase.key ? 'text-white' : 'text-gray-300'}`}>
                           {useCase.title}
                         </h4>
-                        <p className={`text-sm ${useCase.active ? 'text-blue-200' : 'text-gray-400'}`}>
+                        <p className={`text-sm ${activeCase === useCase.key ? 'text-blue-200' : 'text-gray-400'}`}>
                           {useCase.description}
                         </p>
                       </div>
-                      {useCase.active && (
+                      {activeCase === useCase.key && (
                         <span className="bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-medium">
                           Live
                         </span>
@@ -112,15 +116,15 @@ export default function DemoSection({ user }: DemoSectionProps) {
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-3xl p-6 text-white">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                  <h3 className="text-lg font-semibold">AI Support Agent</h3>
-                  <span className="ml-auto text-sm opacity-90">Online • 24/7</span>
+                  <h3 className="text-lg font-semibold">{activeCase === 'support' ? 'AI Support Agent' : 'AI Lead Qualification'}</h3>
+                  <span className="ml-auto text-sm opacity-90">{activeCase === 'support' ? 'Online • 24/7' : 'Capturing Leads'}</span>
                 </div>
               </div>
 
               {/* Chat Body */}
               <div className="bg-gradient-to-br from-gray-900 to-gray-900 rounded-b-3xl p-6 border-x border-b border-gray-800/50">
                 <div className="space-y-4 mb-6">
-                  {demoChatData.map((message, index) => (
+                  {(activeCase === 'support' ? supportChatData : leadChatData).map((message, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 20 }}

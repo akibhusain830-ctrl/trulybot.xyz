@@ -4,62 +4,146 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { simpleTextSplitter } from '@/lib/textSplitter';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { createRequestId } from '../../../lib/requestContext';
+import { getPlanQuota, countWords, currentMonthKey } from '@/lib/constants/quotas';
+import { config } from '@/lib/config/secrets';
+import { limitIp } from '@/lib/middleware/rateLimiter';
+import { withApi } from '@/lib/middleware/apiHandler';
+import { PlanLimitError, ValidationError, UnifiedRateLimitError, AuthError } from '@/lib/errors';
 
-// Add this admin client
+// Admin client (server role) via centralized config
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  config.supabase.url,
+  config.supabase.serviceRoleKey,
   { auth: { persistSession: false } }
 );
 
 // --- Environment Variable Check --- 
 // A fast check to ensure all required server-side variables are present.
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('🔴 Missing Supabase environment variables');
-  // We don't throw an error here to allow the build process to complete,
-  // but the endpoint will fail if these are not set at runtime.
-}
+// Config validation happens at import; if we reach here config is present.
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
+export const POST = withApi(async function POST(req: NextRequest) {
+  const reqId = createRequestId();
+  // Rate limit (per-IP upload limiter)
+  const rl = limitIp(req as any as Request, 'upload');
+  if (rl.limited) {
+    throw new UnifiedRateLimitError('Upload rate limit exceeded');
+  }
   const cookieStore = cookies();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.supabase.url,
+    config.supabase.anonKey,
     { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
   );
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'You must be logged in to upload.' }, { status: 401 });
-    }
+    if (authError || !user) throw new AuthError('You must be logged in to upload');
 
     const { text, filename } = await req.json();
     if (!text || !filename || !filename.trim()) {
-      return NextResponse.json({ error: 'File name and text content are required.' }, { status: 400 });
+      throw new ValidationError('File name and text content are required.');
     }
 
     // Convert user.id to string to match your database schema
     const userId = user.id; // Remove .toString() since database expects UUID
 
-    // 1. Create the main document record to get an ID and set status to PENDING
-    const { data: docData, error: docError } = await supabaseAdmin
-      .from('documents')
-      .insert({
-        user_id: userId, // Now this is UUID to UUID
-        filename,
-        content: text,
-        status: 'PENDING',
-      })
-      .select('id')
+    // Fetch profile to determine tier (fallback basic)
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id, subscription_status, subscription_tier, trial_ends_at, workspace_id')
+      .eq('id', userId)
       .single();
 
-    if (docError) {
-      console.error('Document insert error:', docError);
-      throw docError;
+    const subscriptionTier = (profile?.subscription_tier || 'basic') as string;
+    const quota = getPlanQuota(subscriptionTier) || getPlanQuota('basic')!;
+
+    // Word counting & per-upload limit
+    const wordCount = countWords(text);
+    if (wordCount === 0) throw new ValidationError('Text content is empty after normalization.');
+    if (wordCount > quota.perUploadWordLimit) {
+      throw new PlanLimitError('Per-upload word limit exceeded', { count: wordCount, limit: quota.perUploadWordLimit });
+    }
+
+    // Determine month key
+    const monthKey = currentMonthKey();
+
+    // Fetch or init usage_counters row
+    const { data: usageRow } = await supabaseAdmin
+      .from('usage_counters')
+      .select('*')
+      .eq('workspace_id', profile?.workspace_id)
+      .eq('month', monthKey)
+      .maybeSingle();
+
+    let monthlyUploads = usageRow?.monthly_uploads || 0;
+    let totalStored = usageRow?.total_stored_words || 0;
+    let monthlyWords = usageRow?.monthly_words || 0;
+
+    // Upload count enforcement
+    if (monthlyUploads + 1 > quota.monthlyUploadLimit) {
+      throw new PlanLimitError('Monthly upload limit reached', { limit: quota.monthlyUploadLimit });
+    }
+
+    // Total stored enforcement (non-ultra hard cap; ultra uses fair use)
+    if (quota.totalWordCap && totalStored + wordCount > quota.totalWordCap) {
+      throw new PlanLimitError('Total stored word cap exceeded', { cap: quota.totalWordCap, attempted: totalStored + wordCount });
+    }
+
+    // Ultra fair use
+    if (!quota.totalWordCap && quota.fairUseHard && totalStored + wordCount > quota.fairUseHard) {
+      throw new PlanLimitError('Fair use hard limit reached', { hard: quota.fairUseHard });
+    }
+
+    let fairUseWarning: string | null = null;
+    if (!quota.totalWordCap && quota.fairUseSoft && totalStored + wordCount > quota.fairUseSoft) {
+      fairUseWarning = 'Approaching fair use threshold';
+    }
+
+    // 1. Create the main document record to get an ID and set status to PENDING
+    let docData: any = null;
+    try {
+      const { data: primaryInsert, error: primaryError } = await supabaseAdmin
+        .from('documents')
+        .insert({
+          user_id: userId,
+          filename,
+          content: text,
+          word_count: wordCount,
+          status: 'PENDING',
+        })
+        .select('id')
+        .single();
+      if (primaryError) throw primaryError;
+      docData = primaryInsert;
+    } catch (primaryErr: any) {
+      // Fallback: if column missing, retry without word_count
+      const missingColumn = /word_count/i.test(primaryErr?.message || '');
+      if (missingColumn) {
+        logger.warn('word_count column missing – retrying insert without it', { reqId });
+        const { data: fallbackInsert, error: fallbackError } = await supabaseAdmin
+          .from('documents')
+          .insert({
+            user_id: userId,
+            filename,
+            content: text,
+            status: 'PENDING',
+          })
+          .select('id')
+          .single();
+        if (fallbackError) {
+          logger.error('Document insert fallback failed', { reqId, error: fallbackError });
+          throw fallbackError;
+        }
+        docData = fallbackInsert;
+      } else {
+        logger.error('Document insert error', { reqId, error: primaryErr });
+        throw primaryErr;
+      }
     }
     
     const documentId = docData.id;
@@ -81,7 +165,7 @@ export async function POST(req: NextRequest) {
         });
 
       if (chunkError) {
-        console.error('Chunk insert error:', chunkError);
+        logger.error('Chunk insert error', { reqId, error: chunkError });
         // If any chunk fails, mark the document as FAILED and stop
         await supabaseAdmin
           .from('documents')
@@ -104,23 +188,49 @@ export async function POST(req: NextRequest) {
       .eq('id', documentId)
       .single();
 
+    // Upsert usage counters (increment values)
+    const updates = {
+      monthly_uploads: monthlyUploads + 1,
+      monthly_words: monthlyWords + wordCount,
+      total_stored_words: totalStored + wordCount,
+      workspace_id: profile?.workspace_id,
+      user_id: userId,
+      month: monthKey
+    };
+
+    if (usageRow) {
+      await supabaseAdmin
+        .from('usage_counters')
+        .update(updates)
+        .eq('id', usageRow.id);
+    } else {
+      await supabaseAdmin
+        .from('usage_counters')
+        .insert(updates);
+    }
+
     return NextResponse.json({
       message: 'Text uploaded and indexed successfully!',
       document: finalDocument,
+      quota: {
+        plan: subscriptionTier,
+        word_count: wordCount,
+        monthly_uploads: monthlyUploads + 1,
+        monthly_upload_limit: quota.monthlyUploadLimit,
+        total_stored_words: totalStored + wordCount,
+        total_stored_limit: quota.totalWordCap || quota.fairUseHard,
+        fair_use_warning: fairUseWarning,
+      },
+      request_id: reqId
+    }, {
+      headers: {
+        ...(fairUseWarning ? { 'x-fair-use-warning': fairUseWarning } : {}),
+        'x-rate-limit-remaining': String(rl.remaining)
+      }
     });
 
-  } catch (error: any) {
-    // --- Improved Error Logging --- 
-    // Log the full error for server-side debugging
-    console.error('[text-upload API Error]', {
-        message: error.message,
-        details: error.details, // Supabase errors often have this
-        code: error.code,       // and this
-        stack: error.stack,
-    });
-    
-    // Return a more informative error message to the client
-    const message = error.message || 'An unexpected internal error occurred.';
-    return NextResponse.json({ error: `Server error: ${message}` }, { status: 500 });
+  } catch (error: any) { // will be handled by withApi but keep logging for context
+    logger.error('[text-upload API Error]', { reqId, error });
+    throw error; // delegate to wrapper
   }
-}
+});

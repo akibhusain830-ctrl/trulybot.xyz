@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import dynamic from 'next/dynamic';
+import SkeletonSection from '@/components/SkeletonSection';
 
 // --- Core Components (Load Immediately) ---
 import Header from '@/components/Header';
@@ -11,10 +12,38 @@ import SignInPromptModal from '@/components/SignInPromptModal';
 // --- Lazy-Loaded Components (Load as needed) ---
 // These components will only be loaded by the browser when they are needed,
 // making the initial page load much faster.
-const FeaturesSection = dynamic(() => import('@/components/FeaturesSection'));
-const DemoSection = dynamic(() => import('@/components/DemoSection'));
-const PricingSection = dynamic(() => import('@/components/PricingSection'));
-const Footer = dynamic(() => import('@/components/Footer'));
+const FeaturesSection = dynamic(() => import('@/components/FeaturesSection'), {
+  loading: () => <SkeletonSection height={540} ariaLabel="Loading features" />,
+});
+const DemoSection = dynamic(() => import('@/components/DemoSection'), {
+  loading: () => <SkeletonSection height={480} ariaLabel="Loading demo" />,
+});
+const PricingSection = dynamic(() => import('@/components/PricingSection'), {
+  loading: () => <SkeletonSection height={820} ariaLabel="Loading pricing" />,
+});
+const Footer = dynamic(() => import('@/components/Footer'), {
+  loading: () => <SkeletonSection height={380} ariaLabel="Loading footer" />,
+});
+
+function buildHomeJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'TrulyBot',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Any',
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: '5',
+      highPrice: '30',
+      offerCount: 3,
+      url: 'https://trulybot.xyz/pricing'
+    },
+    url: 'https://trulybot.xyz',
+    description: 'AI chatbot for e-commerce that captures leads and answers product questions in real-time.'
+  };
+}
 
 export default function HomePage() {
   const { user, signOut, loading } = useAuth();
@@ -64,6 +93,11 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen font-sans text-white bg-black overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildHomeJsonLd()) }}
+      />
       <Header user={user} loading={loading} signOut={signOut} />
       <Hero user={user} />
       

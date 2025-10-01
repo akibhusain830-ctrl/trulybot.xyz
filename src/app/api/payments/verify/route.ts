@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { createRequestId } from '../../../../lib/requestContext';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const reqId = createRequestId();
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
     const valid = expectedSignature === razorpay_signature;
     return NextResponse.json({ valid });
   } catch (err: any) {
-    console.error('Razorpay verification error:', err);
+    logger.error('Razorpay verification error', { reqId, error: err });
     return NextResponse.json({ valid: false, error: 'Verification failed' }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 
+import { logger } from '@/lib/logger';
+
 export function logSupabaseError(message: string, error: any) {
-  console.error(`[Supabase Error] ${message}:`, {
+  logger.error(`[Supabase Error] ${message}:`, {
     message: error?.message,
     details: error?.details,
     hint: error?.hint,

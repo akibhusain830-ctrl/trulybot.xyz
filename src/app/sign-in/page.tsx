@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { motion, easeOut } from 'framer-motion';
 import { useRouter } from 'next/navigation';

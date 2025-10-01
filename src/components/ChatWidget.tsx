@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { BRAND } from '@/lib/branding';
 
 type Role = 'bot' | 'user';
@@ -157,7 +158,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
           try {
             metadata = JSON.parse(chunk.substring(8));
           } catch (e) {
-            console.error('Failed to parse metadata chunk:', chunk);
+            logger.error('Failed to parse metadata chunk:', chunk);
           }
           continue; // Don't append metadata to the visible reply
         }
@@ -190,7 +191,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error';
-      console.error('[widget:callApi:error]', msg, err);
+      logger.error('[widget:callApi:error]', { msg, error: err });
       if (isMounted.current) {
         // Update the placeholder with an error message
         setMessages(prev => prev.map(m =>

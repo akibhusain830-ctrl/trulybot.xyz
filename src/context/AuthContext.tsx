@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
+import { logger } from '@/lib/logger';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'none';
 
@@ -16,6 +17,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   subscriptionStatus: SubscriptionStatus;
+  subscriptionLoading: boolean;
   trialInfo: TrialInfo | null;
   signOut: () => Promise<void>;
   refreshSubscriptionStatus: () => Promise<void>;
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   subscriptionStatus: 'none',
+  subscriptionLoading: true,
   trialInfo: null,
   signOut: async () => {},
   refreshSubscriptionStatus: async () => {},
@@ -34,12 +37,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
 
   const refreshSubscriptionStatus = async () => {
     if (!user?.id) return;
 
     try {
+      setSubscriptionLoading(true);
       // Check for active subscription first
       const { data: subscription } = await supabase
         .from('subscriptions')
@@ -51,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (subscription) {
         setSubscriptionStatus('active');
         setTrialInfo(null);
+        setSubscriptionLoading(false);
         return;
       }
 
@@ -69,11 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSubscriptionStatus('none');
         setTrialInfo(null);
       }
+      setSubscriptionLoading(false);
 
     } catch (error) {
-      console.error('Error refreshing subscription status:', error);
+      logger.error('Error refreshing subscription status:', error);
       setSubscriptionStatus('none');
       setTrialInfo(null);
+      setSubscriptionLoading(false);
     }
   };
 
@@ -122,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, 
       loading, 
       subscriptionStatus, 
+      subscriptionLoading,
       trialInfo,
       signOut, 
       refreshSubscriptionStatus 

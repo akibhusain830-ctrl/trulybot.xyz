@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { createRequestId } from '../../../lib/requestContext';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
 export async function GET(req: NextRequest) {
+  const reqId = createRequestId();
   // Add authentication check
   const cookieStore = cookies();
   const supabase = createServerClient(
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await query;
   if (error) {
-    console.error('[GET /api/leads] error', error);
+    logger.error('[GET /api/leads] error', { reqId, error });
     return NextResponse.json({ error: 'Fetch failed' }, { status: 500 });
   }
 
@@ -65,6 +68,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const reqId = createRequestId();
   try {
     // Get auth token from request headers
     const authHeader = req.headers.get('authorization');
@@ -91,7 +95,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[POST /api/leads] error', error);
+      logger.error('[POST /api/leads] error', { reqId, error });
       return NextResponse.json({ error: 'Failed to create lead' }, { status: 500 });
     }
 

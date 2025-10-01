@@ -1,5 +1,6 @@
 
 import OpenAI from 'openai';
+import { logger } from './logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,7 +15,7 @@ export async function embed(text: string): Promise<number[]> {
 
     return response.data[0].embedding;
   } catch (error) {
-    console.error('Error creating embedding:', error);
+    logger.error('Error creating embedding:', error);
     throw new Error('Failed to create embedding');
   }
 }
@@ -28,7 +29,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
 
     return response.data.map(item => item.embedding);
   } catch (error) {
-    console.error('Error creating batch embeddings:', error);
+    logger.error('Error creating batch embeddings:', error);
     throw new Error('Failed to create batch embeddings');
   }
 }

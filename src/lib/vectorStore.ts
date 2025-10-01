@@ -1,12 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from './logger';
+import { config } from './config/secrets';
 
 // --- Supabase Admin Client ---
 // We use the Service Role Key here for trusted server-to-server communication.
 // This is secure because the database function we call (`match_document_chunks`)
 // still enforces user-level security.
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  config.supabase.url,
+  config.supabase.serviceRoleKey
 );
 
 interface QueryVectorStoreParams {
@@ -57,7 +59,7 @@ export async function queryVectorStore(params: QueryVectorStoreParams): Promise<
   );
 
   if (rpcError) {
-    console.error('Error calling match_document_chunks RPC:', rpcError);
+    logger.error('Error calling match_document_chunks RPC:', rpcError);
     return []; // Return empty on error
   }
 
@@ -76,7 +78,7 @@ export async function queryVectorStore(params: QueryVectorStoreParams): Promise<
     .in('id', documentIds);
 
   if (docError) {
-    console.error('Error fetching document filenames:', docError);
+    logger.error('Error fetching document filenames:', docError);
     // We can still proceed without titles if this fails.
   }
 

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
+import { currentMonthKey } from '@/lib/constants/quotas';
 import { NextRequest, NextResponse } from 'next/server';
 
 // ADD THESE MISSING IMPORTS
@@ -40,10 +41,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Document ID and content are required.' }, { status: 400 });
     }
 
-    // 1. --- Security Check ---
+    // 1. --- Security Check & fetch existing word count ---
     const { data: document, error: docError } = await supabaseAdmin
       .from('documents')
-      .select('id')
+      .select('id, word_count')
       .eq('id', docId)
       .eq('user_id', user.id)
       .single();
@@ -54,9 +55,14 @@ export async function PUT(
 
     // 2. --- Re-indexing Process ---
     // Mark document as PENDING
+    // Recompute new word count
+    const newWordCount = typeof content === 'string' ? content.trim().split(/\s+/).filter(Boolean).length : 0;
+    const oldWordCount = document.word_count || 0;
+
     await supabaseAdmin.from('documents').update({ 
       status: 'PENDING', 
       content, 
+      word_count: newWordCount,
       updated_at: new Date().toISOString() 
     }).eq('id', docId);
 
@@ -95,6 +101,41 @@ export async function PUT(
 
     if (finalDocError) throw finalDocError;
 
+    // Adjust usage counters total_stored_words delta (do not change monthly_uploads here)
+    try {
+      const month = currentMonthKey();
+      // Fetch profile to derive workspace_id
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('workspace_id')
+        .eq('id', user.id)
+        .single();
+      if (profile?.workspace_id) {
+        const delta = newWordCount - oldWordCount;
+        if (delta !== 0) {
+          const { data: usageRow } = await supabaseAdmin
+            .from('usage_counters')
+            .select('id, total_stored_words')
+            .eq('workspace_id', profile.workspace_id)
+            .eq('month', month)
+            .maybeSingle();
+          if (usageRow) {
+            await supabaseAdmin
+              .from('usage_counters')
+              .update({ total_stored_words: Math.max(0, (usageRow.total_stored_words || 0) + delta) })
+              .eq('id', usageRow.id);
+          } else {
+            // Create a baseline row if not exists
+            await supabaseAdmin
+              .from('usage_counters')
+              .insert({ workspace_id: profile.workspace_id, user_id: user.id, month, total_stored_words: Math.max(0, delta), monthly_uploads: 0 });
+          }
+        }
+      }
+    } catch (uErr) {
+      console.error('[PUT Document] usage counter adjust failed', uErr);
+    }
+
     return NextResponse.json(updatedDocument, { status: 200 });
 
   } catch (error: any) {
@@ -127,11 +168,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Document ID is required.' }, { status: 400 });
     }
 
-    // --- Security Check ---
-    // First, verify that the document exists and belongs to the current user.
+    // --- Security Check & fetch word count ---
     const { data: document, error: docError } = await supabaseAdmin
       .from('documents')
-      .select('id')
+      .select('id, word_count')
       .eq('id', docId)
       .eq('user_id', user.id)
       .single();
@@ -151,6 +191,33 @@ export async function DELETE(
 
     if (deleteError) {
       throw deleteError;
+    }
+
+    // Adjust usage counters (decrement total stored words) & do NOT decrement monthly_uploads (uploads is historical count)
+    try {
+      const month = currentMonthKey();
+      const removedWords = document.word_count || 0;
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('workspace_id')
+        .eq('id', user.id)
+        .single();
+      if (profile?.workspace_id && removedWords > 0) {
+        const { data: usageRow } = await supabaseAdmin
+          .from('usage_counters')
+          .select('id, total_stored_words')
+          .eq('workspace_id', profile.workspace_id)
+          .eq('month', month)
+          .maybeSingle();
+        if (usageRow) {
+          await supabaseAdmin
+            .from('usage_counters')
+            .update({ total_stored_words: Math.max(0, (usageRow.total_stored_words || 0) - removedWords) })
+            .eq('id', usageRow.id);
+        }
+      }
+    } catch (uErr) {
+      console.error('[DELETE Document] usage counter adjust failed', uErr);
     }
 
     return NextResponse.json({ message: 'Document deleted successfully.' }, { status: 200 });

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetchProfileSettings, saveProfileSettings, ProfileSettings } from '@/lib/api/dashboard';
+import { logger } from '@/lib/logger';
 import toast from 'react-hot-toast';
 
 export default function ChatbotSettings() {
@@ -20,7 +21,7 @@ export default function ChatbotSettings() {
           setAccentColor(settings.accent_color || '#2563EB');
         }
       }).catch(err => {
-        console.error(err);
+        logger.error(err);
         toast.error('Failed to load chatbot settings.');
       });
     }
@@ -38,7 +39,7 @@ export default function ChatbotSettings() {
       await saveProfileSettings(user.id, settings);
       toast.success('Settings saved successfully!');
     } catch (error) {
-      console.error('Error saving settings', error);
+      logger.error('Error saving settings', error);
       toast.error('Failed to save settings.');
     } finally {
       setSaving(false);

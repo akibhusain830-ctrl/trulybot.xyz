@@ -5,8 +5,11 @@ export default function FeaturesSection() {
   const features = [
     {
       icon: (
-        <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2a7 7 0 0 1 7 7v1a5 5 0 0 1 0 10H5a5 5 0 0 1 0-10V9a7 7 0 0 1 7-7z"/>
+        // Brain / AI chip hybrid icon
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="8" y="8" width="8" height="8" rx="2" />
+          <path d="M10 2v4M14 2v4M10 18v4M14 18v4M2 10h4M2 14h4M18 10h4M18 14h4" />
+          <path d="M12 12h.01" />
         </svg>
       ),
       title: "Create Your AI Expert",
@@ -27,10 +30,14 @@ export default function FeaturesSection() {
     },
     {
       icon: (
-        <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="13" width="7" height="8" rx="2"/>
-          <rect x="14" y="7" width="7" height="14" rx="2"/>
-          <rect x="9" y="2" width="6" height="9" rx="2"/>
+        // Upward trend / growth line over bars
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 3v18h18" />
+          <path d="M7 15l4-4 3 3 5-7" />
+          <circle cx="7" cy="15" r="1" />
+          <circle cx="11" cy="11" r="1" />
+          <circle cx="14" cy="14" r="1" />
+          <circle cx="19" cy="7" r="1" />
         </svg>
       ),
       title: "Manage & Grow",

@@ -19,11 +19,7 @@ export default function CheckoutPage() {
         <RazorpayButton
           amount={499} // ₹499.00
           currency="INR"
-          prefill={{
-            // Use the part of the email before the "@" as a fallback name
-            name: user?.email?.split('@')[0] || 'Test User',
-            email: user?.email || 'test@example.com',
-          }}
+          billingPeriod="monthly"
           notes={{ plan: 'pro' }}
           label="Buy Pro — ₹499"
           user_id={user?.id || ''}

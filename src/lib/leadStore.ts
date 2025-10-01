@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!supabaseUrl || !serviceKey) {
-  console.warn('[leadStore] Missing Supabase env vars');
+  logger.warn('[leadStore] Missing Supabase env vars');
 }
 
 // Server-only admin client
@@ -52,7 +53,7 @@ export async function persistLeadIfAny(params: PersistLeadParams): Promise<{ cre
       .limit(1)
       .maybeSingle();
 
-    if (selErr) console.error('[leadStore] select existing error', selErr);
+  if (selErr) logger.error('[leadStore] select existing error', selErr);
 
     if (existing) {
       const { error: updErr } = await adminClient
@@ -69,7 +70,7 @@ export async function persistLeadIfAny(params: PersistLeadParams): Promise<{ cre
         })
         .eq('id', existing.id);
 
-      if (updErr) console.error('[leadStore] update existing error', updErr);
+  if (updErr) logger.error('[leadStore] update existing error', updErr);
       return { created: false, id: existing.id };
     }
   }
@@ -96,7 +97,7 @@ export async function persistLeadIfAny(params: PersistLeadParams): Promise<{ cre
     .single();
 
   if (error) {
-    console.error('[leadStore] insert error', error);
+    logger.error('[leadStore] insert error', error);
     return { created: false };
   }
   return { created: true, id: data?.id };

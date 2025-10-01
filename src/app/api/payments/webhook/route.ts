@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { createRequestId } from '../../../../lib/requestContext';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,6 +14,7 @@ const supabase = createClient(
 );
 
 export async function POST(req: Request) {
+  const reqId = createRequestId();
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!;
   const signature = req.headers.get('x-razorpay-signature') || '';
   const rawBody = await req.text();
@@ -50,7 +53,7 @@ export async function POST(req: Request) {
           .single();
 
         if (orderError || !order) {
-          console.error('Order not found for razorpay_order_id:', razorpay_order_id);
+          logger.error('Order not found for razorpay_order_id', { reqId, razorpay_order_id });
           return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
         }
 
@@ -68,7 +71,7 @@ export async function POST(req: Request) {
         }]);
 
         if (bhError) {
-          console.error('Failed to insert billing_history:', bhError);
+          logger.error('Failed to insert billing_history', { reqId, error: bhError });
           return NextResponse.json({ ok: false, error: 'Billing history insert failed' }, { status: 500 });
         }
 
@@ -89,7 +92,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error('Webhook handling error:', e);
+    logger.error('Webhook handling error', { reqId, error: e });
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
 }

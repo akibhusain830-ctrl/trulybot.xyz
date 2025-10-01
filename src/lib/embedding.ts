@@ -1,7 +1,9 @@
 import { openai } from './openai'; // Uses your existing OpenAI client
+import { logger } from './logger';
+import { config } from './config/secrets';
 
-const MODEL = 'text-embedding-3-small';
-const DIMENSIONS = 1536; // Must match the model's output and your DB column
+const MODEL = config.openai.embeddingModel;
+const DIMENSIONS = config.openai.embeddingDimensions; // Must match the model's output and your DB column
 
 // Simple in-memory cache to avoid re-embedding the same text within a short period.
 // For a production system, a more persistent cache like Redis would be better.
@@ -42,7 +44,7 @@ export async function embed(text: string): Promise<number[]> {
 
     return embedding;
   } catch (error) {
-    console.error('Error creating embedding:', error);
+    logger.error('Error creating embedding:', error);
     // Depending on the use case, you might want to throw the error
     // or return a zero-vector as a fallback.
     throw new Error('Failed to create text embedding.');

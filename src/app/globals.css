@@ -68,4 +68,39 @@ html {
     backdrop-filter: blur(16px) saturate(180%);
     background-color: rgba(17, 25, 40, 0.75);
   }
+
+}
+
+/* Accessible focus styles: only show on keyboard nav (focus-visible) */
+*:focus {
+  outline: none;
+}
+
+/* Base ring utility (opt-in via class or default on interactive) */
+.focus-ring:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.7), 0 0 0 4px rgba(59,130,246,0.35);
+  border-radius: 4px;
+  transition: box-shadow 120ms ease-out;
+}
+
+/* High contrast mode consideration */
+@media (forced-colors: active) {
+  .focus-ring:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
 }

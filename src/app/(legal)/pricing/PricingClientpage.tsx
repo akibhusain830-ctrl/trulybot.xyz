@@ -105,6 +105,7 @@ export default function PricingClientPage() {
                   <RazorpayButton
                     amount={price}
                     currency={currency}
+                    billingPeriod="monthly"
                     label="Get Started"
                     notes={{ plan: plan.id }}
                     user_id={user.id}

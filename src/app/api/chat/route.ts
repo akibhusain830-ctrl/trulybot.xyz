@@ -5,7 +5,9 @@ import { CoreMessage as VercelChatMessage } from 'ai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence, RunnablePassthrough } from '@langchain/core/runnables';
 import { BytesOutputParser } from '@langchain/core/output_parsers';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
+import { cache, KnowledgeCache } from '@/lib/cache/manager';
+import { performanceMonitor } from '@/lib/performance/optimization';
 
 // All imports from your lib directory
 import { findKnowledgeAnswer } from '@/lib/productKnowledge';
@@ -15,6 +17,8 @@ import { getGeneralAnswer } from '@/lib/generalAnswer';
 import { detectLead } from '@/lib/lead';
 import { extractIntentKeywords, persistLeadIfAny } from '@/lib/leadStore';
 import { BRAND } from '@/lib/branding';
+import { getPlanQuota, currentMonthKey } from '@/lib/constants/quotas';
+import { createClient } from '@supabase/supabase-js';
 
 // ---------------- Types ----------------
 interface IncomingMsg {
@@ -86,7 +90,10 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
 
   try {
-    // 1. Parse
+    // Performance monitoring
+    const perfStart = performance.now();
+    
+    // 1. Parse with caching consideration
     let body: ChatBody;
     try {
       body = await req.json();
@@ -94,13 +101,35 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid JSON body');
     }
 
-    const { botId, messages: raw } = body || {};
+    // Generate cache key for repeated queries
+    const cacheKey = `chat:${JSON.stringify({
+      botId: body.botId,
+      query: body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text,
+    })}`;
+
+    // Try cache first for repeated queries
+    const cachedResponse = await KnowledgeCache.getAnswer(
+      body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text || '',
+      body.botId || 'default'
+    );
+
+    if (cachedResponse) {
+      const responseTime = performance.now() - perfStart;
+      return NextResponse.json({
+        success: true,
+        message: cachedResponse,
+        cached: true,
+        responseTime: Math.round(responseTime),
+      });
+    }
+
+  const { botId, messages: raw } = body || {};
     if (!botId) return jsonError('botId is required');
     if (!raw || !Array.isArray(raw) || raw.length === 0) {
       return jsonError('messages array required');
     }
 
-    const mode: 'demo' | 'subscriber' = botId === 'demo' ? 'demo' : 'subscriber';
+  const mode: 'demo' | 'subscriber' = botId === 'demo' ? 'demo' : 'subscriber';
     const messages = normalizeMessages(raw);
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     if (!lastUser) return jsonError('No user message found');
@@ -108,6 +137,59 @@ export async function POST(req: NextRequest) {
     if (!userText) return jsonError('Empty user message');
 
     log('start', { botId, mode, msgLen: messages.length, userText: safeSlice(userText) });
+
+    // Conversation quota enforcement (only for subscriber bots)
+    if (mode === 'subscriber') {
+      try {
+        const supabaseAdmin = createSupabaseAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        // Get workspace (botId acts as workspace_id here)
+        const workspaceId = botId;
+        const monthKey = currentMonthKey();
+        // Fetch subscription tier from any profile in workspace (simplest heuristic)
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('workspace_id', workspaceId)
+          .limit(1)
+          .maybeSingle();
+
+        const tier = profile?.subscription_tier || 'basic';
+        const quota = getPlanQuota(tier);
+        if (quota?.monthlyConversationCap) {
+          const { data: usage } = await supabaseAdmin
+            .from('usage_counters')
+            .select('id, monthly_conversations')
+            .eq('workspace_id', workspaceId)
+            .eq('month', monthKey)
+            .maybeSingle();
+
+            const convs = usage?.monthly_conversations || 0;
+            if (convs + 1 > quota.monthlyConversationCap) {
+              return jsonError('Conversation limit reached for plan. Upgrade to Pro for unlimited.', 429);
+            }
+            // Increment afterwards (fire and forget)
+            const updates = {
+              monthly_conversations: convs + 1,
+              workspace_id: workspaceId,
+              user_id: null,
+              month: monthKey
+            } as any;
+            if (usage?.id) {
+              await supabaseAdmin.from('usage_counters').update(updates).eq('id', usage.id);
+            } else {
+              await supabaseAdmin.from('usage_counters').insert(updates);
+            }
+        }
+      } catch (quotaErr) {
+        console.error('[chat:quota-check-error]', quotaErr);
+        // Continue silently; do not block chat if quota check fails unexpectedly.
+      }
+    }
 
     // 2. Conversation window (for style continuity in fallback)
     const conversationWindow = messages
