@@ -84,19 +84,33 @@ export default function SignUpPageContent() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
-      }
-    });
+    try {
+      const canonical = (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, '');
+      const canonicalOrigin = new URL(canonical).origin;
 
-    if (error) setError(error.message);
-    setLoading(false);
+      if (window.location.origin !== canonicalOrigin) {
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = `${canonicalOrigin}/sign-up?redirect=${encodeURIComponent(currentPath)}`;
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${canonicalOrigin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+
+      if (error) setError(error.message);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to initiate Google sign-in');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
