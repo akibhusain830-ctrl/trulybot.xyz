@@ -1,12 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { motion, cubicBezier } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeroProps {
   user?: any;
 }
 
 export default function Hero({ user }: HeroProps) {
+  const { loading: authLoading } = useAuth();
+  
   const heroVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -128,15 +131,18 @@ export default function Hero({ user }: HeroProps) {
             className="flex justify-center items-center mt-8 px-4 w-full"
           >
             <Link 
-              href={user ? "/start-trial" : "/sign-up"}
-              className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px] flex items-center justify-center max-w-fit mx-auto"
+              href={authLoading ? "#" : (user ? "/start-trial" : "/sign-up")}
+              className={`group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px] flex items-center justify-center max-w-fit mx-auto ${authLoading ? 'cursor-wait opacity-75' : ''}`}
               aria-label="Start 7-Day Free Trial"
+              onClick={authLoading ? (e) => e.preventDefault() : undefined}
             >
               <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
-                Start 7-Day Free Trial 
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                {authLoading ? 'Loading...' : 'Start 7-Day Free Trial'}
+                {!authLoading && (
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                )}
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>

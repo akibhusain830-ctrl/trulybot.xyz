@@ -158,8 +158,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Listen for manual auth refresh events (e.g., after OAuth callback)
+    const handleAuthRefresh = async () => {
+      logger.info('Manual auth refresh requested');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        logger.info('Auth refresh found new session:', { userId: session.user.id });
+        setUser(session.user as UserProfile);
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('auth-state-refresh', handleAuthRefresh);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('auth-state-refresh', handleAuthRefresh);
+    };
+  }, []); // Remove user dependency to avoid infinite loops
 
   // Refresh subscription status when user changes
   useEffect(() => {

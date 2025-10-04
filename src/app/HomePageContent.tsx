@@ -181,11 +181,19 @@ export default function HomePageContent() {
       newUrl.searchParams.delete('auth');
       window.history.replaceState({}, '', newUrl.toString());
       
-      // Force a brief delay to ensure authentication state is updated
-      setTimeout(() => {
-        // The user state should be updated by now through the AuthContext
-        console.log('Authentication successful, user state:', { user: !!user, loading });
-      }, 200);
+      console.log('OAuth callback success detected, user state:', { user: !!user, loading });
+      
+      // If we have a successful auth callback but no user yet, wait for the auth state to update
+      if (!user && !loading) {
+        console.log('Waiting for authentication state to update after OAuth callback...');
+        // Give extra time for the session to be established
+        const checkAuth = () => {
+          // Force AuthContext to refresh
+          const event = new CustomEvent('auth-state-refresh');
+          window.dispatchEvent(event);
+        };
+        setTimeout(checkAuth, 300);
+      }
     }
   }, [user, loading]);
 
