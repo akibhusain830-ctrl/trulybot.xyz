@@ -13,18 +13,38 @@ import ChatWidgetLauncher from '@/components/ChatWidgetLauncher';
 // --- Lazy-Loaded Components (Load as needed) ---
 // These components will only be loaded by the browser when they are needed,
 // making the initial page load much faster.
-const FeaturesSection = dynamic(() => import('@/components/FeaturesSection'), {
-  loading: () => <SkeletonSection height={540} ariaLabel="Loading features" />,
-});
-const DemoSection = dynamic(() => import('@/components/DemoSection'), {
-  loading: () => <SkeletonSection height={480} ariaLabel="Loading demo" />,
-});
-const PricingSection = dynamic(() => import('@/components/PricingSection'), {
-  loading: () => <SkeletonSection height={820} ariaLabel="Loading pricing" />,
-});
-const Footer = dynamic(() => import('@/components/Footer'), {
-  loading: () => <SkeletonSection height={380} ariaLabel="Loading footer" />,
-});
+const FeaturesSection = dynamic(
+  () => import('@/components/FeaturesSection').catch(() => ({
+    default: () => <SkeletonSection height={540} ariaLabel="Features temporarily unavailable" />
+  })), 
+  {
+    loading: () => <SkeletonSection height={540} ariaLabel="Loading features" />,
+  }
+);
+const DemoSection = dynamic(
+  () => import('@/components/DemoSection').catch(() => ({
+    default: () => <SkeletonSection height={480} ariaLabel="Demo temporarily unavailable" />
+  })), 
+  {
+    loading: () => <SkeletonSection height={480} ariaLabel="Loading demo" />,
+  }
+);
+const PricingSection = dynamic(
+  () => import('@/components/PricingSection').catch(() => ({
+    default: () => <SkeletonSection height={820} ariaLabel="Pricing temporarily unavailable" />
+  })), 
+  {
+    loading: () => <SkeletonSection height={820} ariaLabel="Loading pricing" />,
+  }
+);
+const Footer = dynamic(
+  () => import('@/components/Footer').catch(() => ({
+    default: () => <SkeletonSection height={380} ariaLabel="Footer temporarily unavailable" />
+  })), 
+  {
+    loading: () => <SkeletonSection height={380} ariaLabel="Loading footer" />,
+  }
+);
 
 function buildAdvancedJsonLd() {
   return {

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { BRAND } from '@/lib/branding';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import SubscriptionGuard from '@/components/SubscriptionGuard';
 
 // --- Icons ---
 const HomeIcon = () => (
@@ -243,9 +244,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }} />;
   }
 
-  // If we have a user, render the full dashboard layout.
+  // If we have a user, render the full dashboard layout with subscription guard.
   return (
-  <div className="h-screen w-full bg-black text-white flex font-sans overflow-hidden">
+    <SubscriptionGuard redirectTo="/subscription-required">
+      <div className="h-screen w-full bg-black text-white flex font-sans overflow-hidden">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-blue-600 text-white px-4 py-2 rounded-md z-50">Skip to main content</a>
       {/* --- Desktop Sidebar --- */}
       <aside className="w-64 flex-shrink-0 bg-[#111] border-r border-slate-800 flex-col hidden lg:flex">
@@ -293,5 +295,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <SubscriptionModal subscriptionStatus={subscriptionStatus} onClose={() => setShowSubscription(false)} />
       )}
     </div>
+    </SubscriptionGuard>
   );
 }
