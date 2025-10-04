@@ -170,6 +170,25 @@ export default function HomePageContent() {
   const [currency, setCurrency] = useState<'INR' | 'USD'>('USD');
   const [isGeoLoading, setIsGeoLoading] = useState(true);
 
+  // Handle authentication success from OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authSuccess = urlParams.get('auth');
+    
+    if (authSuccess === 'success') {
+      // Clear the auth parameter from URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('auth');
+      window.history.replaceState({}, '', newUrl.toString());
+      
+      // Force a brief delay to ensure authentication state is updated
+      setTimeout(() => {
+        // The user state should be updated by now through the AuthContext
+        console.log('Authentication successful, user state:', { user: !!user, loading });
+      }, 200);
+    }
+  }, [user, loading]);
+
   useEffect(() => {
     const fetchGeolocation = async () => {
       try {

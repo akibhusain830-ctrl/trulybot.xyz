@@ -3,8 +3,9 @@
 import { motion, easeOut } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/context/AuthContext';
 
 // --- Google Icon Component (optional) ---
 const GoogleIcon = () => (
@@ -18,9 +19,35 @@ const GoogleIcon = () => (
 
 export default function SignUpPageContent() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
+      router.push(redirectTo);
+    }
+  }, [user, authLoading, router]);
+
+  // Show loading while checking authentication state
+  if (authLoading) {
+    return (
+      <main className="min-h-screen font-sans text-white bg-black flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Don't render anything if user is authenticated (redirect is in progress)
+  if (user) {
+    return null;
+  }
 
   const formVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } } };

@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
+  const next = requestUrl.searchParams.get('next') || '/'
 
   // Handle OAuth errors
   if (error) {
@@ -38,6 +39,9 @@ export async function GET(request: Request) {
         provider: data.user?.app_metadata.provider 
       })
 
+      // Force a small delay to ensure the session is properly set
+      await new Promise(resolve => setTimeout(resolve, 100))
+
     } catch (error) {
       logger.error('Callback processing error:', error)
       return NextResponse.redirect(`${requestUrl.origin}/sign-in?error=callback_failed`)
@@ -45,5 +49,8 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(`${requestUrl.origin}/`)
+  // Add a success parameter to help the client know authentication was successful
+  const redirectUrl = new URL(next, requestUrl.origin)
+  redirectUrl.searchParams.set('auth', 'success')
+  return NextResponse.redirect(redirectUrl.toString())
 }

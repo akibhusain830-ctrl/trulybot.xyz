@@ -132,7 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        logger.info('Initial session found:', { userId: session.user.id, email: session.user.email });
         setUser(session.user as UserProfile);
+      } else {
+        logger.info('No initial session found');
       }
       setLoading(false);
     });
@@ -140,9 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        logger.info('Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
+        
         if (session?.user) {
+          logger.info('User authenticated:', { userId: session.user.id, email: session.user.email, provider: session.user.app_metadata?.provider });
           setUser(session.user as UserProfile);
         } else {
+          logger.info('User signed out');
           setUser(null);
           setSubscriptionStatus('none');
           setTrialInfo(null);
