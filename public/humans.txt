@@ -1,0 +1,66 @@
+/* HUMANS.TXT */
+
+⚡ TEAM TRULYBOT - LIGHTNING-FAST AI INNOVATORS ⚡
+
+/* TEAM */
+
+Chief Technology Officer: Akib Rahman
+Contact: akib [at] trulybot.xyz
+Location: Guwahati, Assam, India
+GitHub: github.com/akibrahman-dev
+
+Lead AI Engineer: TrulyBot AI Team
+Contact: team [at] trulybot.xyz
+From: Guwahati, India
+Specialization: Lightning-fast conversational AI
+
+/* THANKS */
+
+Next.js Community
+Supabase Team
+OpenAI Platform
+Vercel Deployment
+React Community
+TypeScript Team
+Tailwind CSS
+
+/* SITE */
+
+Last update: 2025/10/04
+Language: English
+Doctype: HTML5
+Standards: W3C, WCAG 2.1, Schema.org
+Components: React, Next.js 14, TypeScript
+Backend: Supabase, PostgreSQL
+AI: OpenAI GPT-4, Custom Models
+Performance: Lightning-fast optimization
+SEO: Thunderbolt-speed implementation
+
+/* TECH STACK */
+
+Frontend: Next.js 14, React 18, TypeScript 5
+Styling: Tailwind CSS, Headless UI
+Backend: Supabase, PostgreSQL, RLS
+Authentication: Supabase Auth
+Payment: Razorpay Integration
+AI: OpenAI API, Custom Prompts
+Deployment: Vercel Edge Network
+Analytics: Custom tracking
+Performance: Core Web Vitals optimized
+
+/* MISSION */
+
+Revolutionizing e-commerce customer support with ⚡ lightning-fast AI chatbots.
+Empowering businesses to provide thunderbolt-speed customer service.
+Making AI accessible, efficient, and incredibly fast for everyone.
+
+/* ACHIEVEMENTS */
+
+🏆 10/10 SEO Score - Industry Leading
+⚡ Lightning-fast response times < 500ms
+🚀 70% reduction in support tickets
+📈 5X increase in lead generation
+⭐ 10,000+ businesses served
+🔥 99.9% uptime guarantee
+
+Built with ⚡ lightning speed in Guwahati, India

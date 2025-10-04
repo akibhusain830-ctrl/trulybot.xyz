@@ -1,4 +1,13 @@
 import React from 'react';
+import { Metadata } from 'next';
+import { generateSEOMetadata, seoConfigs } from '@/lib/seo';
+
+// Terms page metadata export for SEO
+export const metadata: Metadata = generateSEOMetadata({
+  ...seoConfigs.terms,
+  keywords: [...seoConfigs.terms.keywords],
+  canonical: '/terms'
+});
 
 export default function TermsOfServicePage() {
   return (

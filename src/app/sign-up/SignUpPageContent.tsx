@@ -38,14 +38,16 @@ export default function SignUpPageContent() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
     });
 
     if (error) {
       setError(error.message);
     } else {
-      setSuccess('Check your email to confirm your account!');
-      // Optionally redirect after a short delay
-      setTimeout(() => router.push('/'), 2000);
+      setSuccess('Check your email to confirm your account before signing in!');
+      // Don't auto-redirect - wait for email confirmation
     }
     setLoading(false);
   };

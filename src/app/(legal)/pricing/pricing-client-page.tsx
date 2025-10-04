@@ -232,8 +232,8 @@ export default function PricingClientPage() {
                   <span className="text-xs xs:text-sm text-gray-300 truncate">
                     <span className="hidden xs:inline">Pricing in </span>
                     <span className="font-semibold text-white">{currency}</span>
-                    <span className="hidden sm:inline"> • {currency === 'INR' ? '🇮🇳 India detected' : '🌍 International pricing'}</span>
-                    <span className="xs:hidden sm:hidden"> {currency === 'INR' ? '🇮🇳' : '🌍'}</span>
+                    <span className="hidden sm:inline"> • {currency === 'INR' ? 'India detected' : 'International pricing'}</span>
+                    <span className="xs:hidden sm:hidden"> {currency === 'INR' ? 'IN' : 'INTL'}</span>
                   </span>
                 </div>
               )}

@@ -5,6 +5,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
 import { logger } from '@/lib/logger';
+import { validateSubscriptionFromProfile, toAuthContextStatus } from '@/lib/subscriptionValidation';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'none';
 
@@ -40,6 +41,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
 
+  // Fallback method for subscription check using standardized validation
+  const fallbackSubscriptionCheck = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Check profile for subscription info
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) {
+        // Use standardized subscription validation
+        const validation = validateSubscriptionFromProfile(profile);
+        const authStatus = toAuthContextStatus(validation.status, validation.isTrialActive);
+        
+        setSubscriptionStatus(authStatus);
+        
+        // Set trial info if user has active trial
+        if (validation.isTrialActive && profile.trial_ends_at) {
+          const trial = calculateTrialInfo(profile.trial_ends_at);
+          setTrialInfo(trial);
+        } else {
+          setTrialInfo(null);
+        }
+      } else {
+        setSubscriptionStatus('none');
+        setTrialInfo(null);
+      }
+      
+      setSubscriptionLoading(false);
+
+    } catch (error) {
+      logger.error('Error in fallback subscription check:', error);
+      setSubscriptionStatus('none');
+      setTrialInfo(null);
+      setSubscriptionLoading(false);
+    }
+  }, [user?.id]);
+
   const refreshSubscriptionStatus = useCallback(async () => {
     if (!user?.id) return;
 
@@ -59,20 +101,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       
       if (data.subscription) {
-        // Use the subscription info from ProfileManager + calculateSubscriptionAccess
-        if (data.subscription.status === 'trial' && data.subscription.is_trial_active) {
-          setSubscriptionStatus('trialing');
-          if (data.subscription.trial_ends_at) {
-            const trial = calculateTrialInfo(data.subscription.trial_ends_at);
-            setTrialInfo(trial);
-          } else {
-            setTrialInfo(null);
-          }
-        } else if (data.subscription.status === 'active') {
-          setSubscriptionStatus('active');
-          setTrialInfo(null);
+        // Use standardized subscription validation
+        const validation = validateSubscriptionFromProfile(data.profile || {});
+        const authStatus = toAuthContextStatus(validation.status, validation.isTrialActive);
+        
+        setSubscriptionStatus(authStatus);
+        
+        // Set trial info if user has active trial
+        if (validation.isTrialActive && data.subscription.trial_ends_at) {
+          const trial = calculateTrialInfo(data.subscription.trial_ends_at);
+          setTrialInfo(trial);
         } else {
-          setSubscriptionStatus('none');
           setTrialInfo(null);
         }
       } else {
@@ -87,50 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fall back to direct database check
       await fallbackSubscriptionCheck();
     }
-  }, [user?.id]);
-
-  // Fallback method for subscription check (original logic)
-  const fallbackSubscriptionCheck = async () => {
-    try {
-      // Check for active subscription first
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('status, current_period_end')
-        .eq('user_id', user!.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (subscription) {
-        setSubscriptionStatus('active');
-        setTrialInfo(null);
-        setSubscriptionLoading(false);
-        return;
-      }
-
-      // Check profile for trial info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('trial_ends_at, subscription_status')
-        .eq('id', user!.id)
-        .maybeSingle();
-
-      if (profile?.trial_ends_at) {
-        const trial = calculateTrialInfo(profile.trial_ends_at);
-        setTrialInfo(trial);
-        setSubscriptionStatus(trial.isActive ? 'trialing' : 'expired');
-      } else {
-        setSubscriptionStatus('none');
-        setTrialInfo(null);
-      }
-      setSubscriptionLoading(false);
-
-    } catch (error) {
-      logger.error('Error in fallback subscription check:', error);
-      setSubscriptionStatus('none');
-      setTrialInfo(null);
-      setSubscriptionLoading(false);
-    }
-  };
+  }, [user?.id, fallbackSubscriptionCheck]);
 
   useEffect(() => {
     // Get initial session

@@ -23,7 +23,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const trackEvent = async (eventName: string, properties?: Record<string, any>) => {
+  const trackEvent = useCallback(async (eventName: string, properties?: Record<string, any>) => {
     try {
       // Track to multiple analytics platforms
       await Promise.allSettled([
@@ -67,7 +67,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Analytics tracking error:', error)
     }
-  }
+  }, [userId, supabase])
 
   const trackPageView = useCallback((page: string, properties?: Record<string, any>) => {
     trackEvent('page_view', {

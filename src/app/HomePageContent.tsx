@@ -14,35 +14,31 @@ import ChatWidgetLauncher from '@/components/ChatWidgetLauncher';
 // These components will only be loaded by the browser when they are needed,
 // making the initial page load much faster.
 const FeaturesSection = dynamic(
-  () => import('@/components/FeaturesSection').catch(() => ({
-    default: () => <SkeletonSection height={540} ariaLabel="Features temporarily unavailable" />
-  })), 
+  () => import('@/components/FeaturesSection'),
   {
     loading: () => <SkeletonSection height={540} ariaLabel="Loading features" />,
+    ssr: false
   }
 );
 const DemoSection = dynamic(
-  () => import('@/components/DemoSection').catch(() => ({
-    default: () => <SkeletonSection height={480} ariaLabel="Demo temporarily unavailable" />
-  })), 
+  () => import('@/components/DemoSection'),
   {
     loading: () => <SkeletonSection height={480} ariaLabel="Loading demo" />,
+    ssr: false
   }
 );
 const PricingSection = dynamic(
-  () => import('@/components/PricingSection').catch(() => ({
-    default: () => <SkeletonSection height={820} ariaLabel="Pricing temporarily unavailable" />
-  })), 
+  () => import('@/components/PricingSection'),
   {
     loading: () => <SkeletonSection height={820} ariaLabel="Loading pricing" />,
+    ssr: false
   }
 );
 const Footer = dynamic(
-  () => import('@/components/Footer').catch(() => ({
-    default: () => <SkeletonSection height={380} ariaLabel="Footer temporarily unavailable" />
-  })), 
+  () => import('@/components/Footer'),
   {
     loading: () => <SkeletonSection height={380} ariaLabel="Loading footer" />,
+    ssr: false
   }
 );
 
@@ -206,7 +202,7 @@ export default function HomePageContent() {
       <Header user={user} loading={loading} signOut={signOut} />
       
       {/* Hero Section */}
-      <Hero />
+      <Hero user={user} />
       
       {/* The lazy-loaded components will be rendered here */}
       <FeaturesSection />

@@ -1,4 +1,13 @@
 import React from 'react';
+import { Metadata } from 'next';
+import { generateSEOMetadata, seoConfigs } from '@/lib/seo';
+
+// Privacy page metadata export for SEO
+export const metadata: Metadata = generateSEOMetadata({
+  ...seoConfigs.privacy,
+  keywords: [...seoConfigs.privacy.keywords],
+  canonical: '/privacy'
+});
 
 export default function PrivacyPolicyPage() {
   return (

@@ -341,7 +341,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
           {widgetConfig.chatbot_logo_url ? (
             <Image 
               src={widgetConfig.chatbot_logo_url} 
-              alt={`${widgetConfig.chatbot_name} logo`}
+              alt={`${widgetConfig.chatbot_name} - Lightning-Fast AI Chatbot Assistant`}
               width={24}
               height={24}
               style={{ borderRadius: '50%', objectFit: 'cover' }}

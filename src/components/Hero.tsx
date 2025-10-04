@@ -62,7 +62,34 @@ export default function Hero({ user }: HeroProps) {
             variants={itemVariants}
             className="text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight max-w-5xl"
           >
-            Your 24/7 AI Support and{' '}
+            <svg 
+              width="48" 
+              height="48" 
+              viewBox="0 0 512 512" 
+              fill="none"
+              className="inline-block mr-2 -mt-2"
+            >
+              <defs>
+                <linearGradient id="heroLightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
+                  <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                </linearGradient>
+              </defs>
+              <polygon 
+                fill="url(#heroLightningGradient)"
+                points="320,8 136,296 248,296 192,504 400,216 288,216"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+              <polygon 
+                fill="#ffffff"
+                opacity="0.3"
+                points="310,20 146,290 240,290 200,480 380,220 280,220"
+              />
+            </svg>
+            Your Lightning-Fast AI Support and{' '}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-text-shine">
               Lead Generation Agent
             </span>
@@ -73,7 +100,7 @@ export default function Hero({ user }: HeroProps) {
             variants={itemVariants}
             className="text-slate-300 text-base xs:text-lg sm:text-xl lg:text-2xl max-w-3xl mx-auto font-light leading-relaxed px-4"
           >
-            Deploy an AI agent that instantly answers customer questions, reduces support team load, and captures qualified leads—all without coding. Setup in minutes.
+            Deploy a thunderbolt-speed AI agent that instantly answers customer questions, reduces support team load by 70%, and captures qualified leads—all without coding. Lightning-fast setup in minutes.
           </motion.p>
 
           {/* Stats */}

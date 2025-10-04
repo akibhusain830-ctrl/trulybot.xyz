@@ -2,12 +2,13 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/AuthContext';
 import { Analytics } from "@vercel/analytics/next";
+import { WebVitals } from '@/components/WebVitals';
 import './globals.css';
 
 const siteUrl = 'https://trulybot.xyz';
-const siteName = 'TrulyBot';
+const siteName = 'TrulyBot - Lightning-Fast AI Chatbot';
 const title = 'TrulyBot - #1 AI Chatbot for E-Commerce | 24/7 Customer Support & Lead Generation';
-const description = "Transform your e-commerce customer support with TrulyBot's AI chatbot. Get 70% fewer tickets, 5X more leads, and 24/7 automated support. Free 7-day trial. Setup in 5 minutes.";
+const description = "Transform your e-commerce customer support with TrulyBot's lightning-fast AI chatbot. Get 70% fewer tickets, 5X more leads, and 24/7 automated support. Free 7-day trial. Setup in 5 minutes.";
 const ogImage = `${siteUrl}/og-image.svg`;
 
 export const metadata: Metadata = {
@@ -47,14 +48,14 @@ export const metadata: Metadata = {
         url: ogImage, 
         width: 1200, 
         height: 630, 
-        alt: 'TrulyBot AI Chatbot for E-Commerce - 24/7 Customer Support & Lead Generation',
+        alt: 'TrulyBot AI Chatbot for E-Commerce - Lightning-Fast 24/7 Customer Support & Lead Generation',
         type: 'image/svg+xml'
       },
       {
         url: `${siteUrl}/logo-trulybot.svg`,
         width: 400,
         height: 400,
-        alt: 'TrulyBot Logo - AI Chatbot Platform'
+        alt: 'TrulyBot Logo - Lightning-Fast AI Chatbot Platform with Thunderbolt Speed'
       }
     ],
     locale: 'en_US',
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@trulybot',
     creator: '@trulybot', 
-    title: 'TrulyBot - AI Chatbot That Converts Visitors Into Customers',
+    title: 'TrulyBot - Lightning-Fast AI Chatbot That Converts Visitors Into Customers',
     description: 'See how TrulyBot AI chatbot helped 10,000+ e-commerce businesses reduce support load by 70% and increase leads by 5X. Free 7-day trial.',
     images: [ogImage]
   },
@@ -90,7 +91,17 @@ export const metadata: Metadata = {
     }
   },
   alternates: {
-    canonical: siteUrl
+    canonical: siteUrl,
+    languages: {
+      'en-US': `${siteUrl}`,
+      'en-GB': `${siteUrl}/en-gb`,
+      'en-IN': `${siteUrl}/en-in`,
+      'x-default': siteUrl
+    }
+  },
+  manifest: '/manifest.json',
+  other: {
+    'humans': '/humans.txt'
   },
   category: 'technology'
 };
@@ -113,17 +124,62 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div id="main-content">{children}</div>
         </AuthProvider>
         {/* Razorpay script removed; will be lazy-loaded only on checkout/start-trial */}
-        <script
+                <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
+            '@id': `${siteUrl}/#organization`,
             name: siteName,
+            alternateName: 'TrulyBot AI Chatbot',
             url: siteUrl,
-            logo: `${siteUrl}/logo-trulybot.svg`
+            logo: {
+              '@type': 'ImageObject',
+              url: `${siteUrl}/logo-trulybot.svg`,
+              width: 400,
+              height: 400,
+              caption: '⚡ TrulyBot Logo - Lightning-Fast AI Chatbot Platform'
+            },
+            description: 'Lightning-fast AI chatbot platform for e-commerce businesses. Reduce support tickets by 70%, increase leads by 5X.',
+            foundingDate: '2024',
+            founder: {
+              '@type': 'Person',
+              name: 'TrulyBot Team'
+            },
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: 'MG Path, Christian Basti',
+              addressLocality: 'Guwahati',
+              addressRegion: 'Assam',
+              postalCode: '781005',
+              addressCountry: 'IN'
+            },
+            contactPoint: {
+              '@type': 'ContactPoint',
+              telephone: '+91-9101361482',
+              contactType: 'customer service',
+              email: 'infotrulybot@gmail.com',
+              availableLanguage: ['English', 'Hindi']
+            },
+            sameAs: [
+              'https://twitter.com/trulybot',
+              'https://linkedin.com/company/trulybot'
+            ],
+            serviceArea: {
+              '@type': 'Country',
+              name: 'Worldwide'
+            },
+            knowsAbout: [
+              'AI Chatbots',
+              'Customer Support Automation',
+              'E-commerce Solutions',
+              'Lead Generation',
+              'Conversational AI'
+            ]
           }) }}
         />
+        <WebVitals />
         <Analytics />
       </body>
     </html>

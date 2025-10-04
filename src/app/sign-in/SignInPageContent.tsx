@@ -50,10 +50,15 @@ export default function SignInPageContent() {
         setLoading(true);
         setError('');
 
-        // Option 1: Let Supabase use the default redirect (home page)
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            // options: { redirectTo: `${window.location.origin}/` }, // Uncomment to force home redirect
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                }
+            }
         });
 
         if (error) {

@@ -130,7 +130,7 @@ export function ProgressiveImage({
       {isError && (
         <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-4xl mb-2">🖼️</div>
+            <div className="text-4xl mb-2">�</div>
             <p className="text-sm text-gray-500">Failed to load image</p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export function ContentLoader({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
-        <div className="text-4xl mb-4">⚠️</div>
+        <div className="text-4xl mb-4">!</div>
         <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
         <p className="text-gray-500 text-center max-w-md">{error}</p>
         <button 

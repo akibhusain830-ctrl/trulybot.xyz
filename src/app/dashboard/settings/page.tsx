@@ -634,7 +634,7 @@ export default function SettingsPage() {
                               <div className="relative">
                                 <Image 
                                   src={settings.chatbot_logo_url} 
-                                  alt="Chatbot Logo" 
+                                  alt="⚡ Chatbot Logo - Lightning-Fast AI Assistant Branding" 
                                   width={64}
                                   height={64}
                                   className="w-16 h-16 object-contain bg-slate-800 rounded-lg border border-slate-700"
