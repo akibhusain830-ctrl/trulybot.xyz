@@ -41,12 +41,15 @@ export async function GET(request: Request) {
         userId: data.user?.id, 
         email: data.user?.email,
         provider: data.user?.app_metadata?.provider,
-        hasSession: !!data.session 
+        hasSession: !!data.session,
+        emailConfirmed: data.user?.email_confirmed_at,
+        userMetadata: data.user?.app_metadata
       })
 
-      // Check if email is verified for email/password signups
-      if (data.user && !data.user.email_confirmed_at && data.user.app_metadata.provider === 'email') {
-        logger.warn('Unverified email attempting access:', { userId: data.user.id })
+      // Check if email is verified for email/password signups ONLY
+      // Google OAuth users are automatically verified and don't need email_confirmed_at
+      if (data.user && !data.user.email_confirmed_at && data.user.app_metadata?.provider === 'email') {
+        logger.warn('Unverified email attempting access:', { userId: data.user.id, provider: data.user.app_metadata?.provider })
         return NextResponse.redirect(`${requestUrl.origin}/sign-in?error=email_not_verified`)
       }
 
@@ -56,26 +59,13 @@ export async function GET(request: Request) {
       
       const response = NextResponse.redirect(redirectUrl.toString())
       
-      // Ensure session cookies are properly set with secure options
-      if (data.session) {
-        const maxAge = 60 * 60 * 24 * 7; // 7 days
-        const cookieOptions = {
-          path: '/',
-          maxAge,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' as const
-        }
-        
-        // Set the auth cookie explicitly to ensure it's available immediately
-        response.cookies.set('sb-access-token', data.session.access_token, cookieOptions)
-        response.cookies.set('sb-refresh-token', data.session.refresh_token, cookieOptions)
-      }
-
-      logger.info('Redirecting to:', { url: redirectUrl.toString() })
+      // Let Supabase handle its own cookie management - don't manually set auth cookies
+      // The createRouteHandlerClient already handles cookie setting properly
       
-      // Force a longer delay to ensure the session is properly set and cookies are written
-      await new Promise(resolve => setTimeout(resolve, 500))
+      logger.info('Redirecting to:', { url: redirectUrl.toString(), hasSession: !!data.session })
+      
+      // Small delay to ensure the session is properly established
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       return response
 
