@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/AuthContext';
+import { Analytics } from "@vercel/analytics/next";
 import './globals.css';
 
 const siteUrl = 'https://trulybot.xyz';
@@ -123,6 +124,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             logo: `${siteUrl}/logo-trulybot.svg`
           }) }}
         />
+        <Analytics />
       </body>
     </html>
   );

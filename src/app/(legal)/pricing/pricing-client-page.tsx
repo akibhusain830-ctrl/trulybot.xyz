@@ -91,18 +91,44 @@ export default function PricingClientPage() {
   useEffect(() => {
     if (!mounted) return;
     
-    (async () => {
+    const detectCurrency = async () => {
       try {
+        // Method 1: Client-side timezone detection (fastest, most reliable)
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Check for Indian timezones
+        if (timezone === 'Asia/Kolkata' || timezone === 'Asia/Calcutta') {
+          setCurrency('INR');
+          setGeoLoading(false);
+          return;
+        }
+
+
+
+        // Method 2: Fallback to server-side geolocation API
         const res = await fetch('/api/geolocation');
-        if (!res.ok) throw new Error('Geo failed');
-        const data = await res.json();
-        setCurrency(data.country === 'IN' ? 'INR' : 'USD');
+        if (res.ok) {
+          const data = await res.json();
+          const detectedCurrency = data.currency || (data.country === 'IN' ? 'INR' : 'USD');
+          setCurrency(detectedCurrency);
+        } else {
+          throw new Error('Server geolocation failed');
+        }
       } catch (e: any) {
-        setGeoError(e.message || 'Geo unavailable');
+        // Method 3: Final fallback - check Accept-Language header patterns
+        const language = navigator.language || navigator.languages?.[0] || '';
+        if (language.includes('hi') || language.includes('IN')) {
+          setCurrency('INR');
+        } else {
+          setCurrency('USD');
+        }
+        setGeoError('Using fallback detection');
       } finally {
         setGeoLoading(false);
       }
-    })();
+    };
+
+    detectCurrency();
   }, [mounted]);
 
   function planPrice(tier: typeof PRICING_TIERS[number]) {
@@ -110,6 +136,8 @@ export default function PricingClientPage() {
     const yearly = currency === 'INR' ? tier.yearlyInr : tier.yearlyUsd;
     return currency === 'INR' ? Math.round(yearly) : Number(yearly.toFixed(2));
   }
+
+
 
   const symbol = currency === 'INR' ? '₹' : '$';
   const periodLabel = billingPeriod === 'monthly' ? '/month' : '/year';
@@ -202,16 +230,10 @@ export default function PricingClientPage() {
                 <div className="inline-flex items-center gap-2 xs:gap-3 px-3 xs:px-5 py-1.5 xs:py-2.5 rounded-full bg-gray-800/40 backdrop-blur-sm border border-white/10 max-w-full">
                   <div className="w-1.5 h-1.5 xs:w-2 xs:h-2 bg-emerald-400 rounded-full flex-shrink-0" />
                   <span className="text-xs xs:text-sm text-gray-300 truncate">
-                    {geoError ? (
-                      <>Currency: <span className="font-semibold text-white">{currency}</span> (fallback)</>
-                    ) : (
-                      <>
-                        <span className="hidden xs:inline">Pricing in </span>
-                        <span className="font-semibold text-white">{currency}</span>
-                        <span className="hidden sm:inline"> • {currency === 'INR' ? '🇮🇳 India detected' : '🌍 International'}</span>
-                        <span className="xs:hidden sm:hidden"> {currency === 'INR' ? '🇮🇳' : '🌍'}</span>
-                      </>
-                    )}
+                    <span className="hidden xs:inline">Pricing in </span>
+                    <span className="font-semibold text-white">{currency}</span>
+                    <span className="hidden sm:inline"> • {currency === 'INR' ? '🇮🇳 India detected' : '🌍 International pricing'}</span>
+                    <span className="xs:hidden sm:hidden"> {currency === 'INR' ? '🇮🇳' : '🌍'}</span>
                   </span>
                 </div>
               )}
