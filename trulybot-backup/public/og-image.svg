@@ -1,0 +1,42 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Open Graph Image with Lightning Logo -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0284C7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Pattern -->
+  <circle cx="100" cy="100" r="2" fill="#00D4FF" opacity="0.1"/>
+  <circle cx="1100" cy="530" r="2" fill="#00D4FF" opacity="0.1"/>
+  <circle cx="200" cy="500" r="1" fill="#0284C7" opacity="0.2"/>
+  <circle cx="1000" cy="150" r="1" fill="#0284C7" opacity="0.2"/>
+  
+  <!-- Lightning Logo -->
+  <g transform="translate(480, 200)">
+    <polygon 
+      fill="url(#logoGradient)"
+      points="80,0 34,74 62,74 48,126 100,54 72,54"
+      filter="drop-shadow(0 0 20px #00D4FF)"
+    />
+  </g>
+  
+  <!-- Text Content -->
+  <text x="600" y="350" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">
+    TrulyBot
+  </text>
+  <text x="600" y="400" text-anchor="middle" fill="#00D4FF" font-family="Arial, sans-serif" font-size="28" font-weight="500">
+    AI Chatbot for E-Commerce
+  </text>
+  <text x="600" y="450" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="20">
+    70% Fewer Support Tickets • 5X More Leads • 24/7 Automation
+  </text>
+</svg>
