@@ -194,24 +194,27 @@ export default function PricingSection({
                       ))}
                     </ul>
                     <div className="pt-4 border-t border-white/5">
-                      {user ? (
+                      {user && user.id ? (
                         <RazorpayButton
-                          amount={price}
-                          currency={resolvedCurrency}
-                          billingPeriod={billingPeriod}
-                          label={isPopular ? 'Get Started' : `Choose ${plan.name}`}
-                          notes={{ plan: plan.id }}
-                          user_id={user.id}
-                          plan_id={plan.id}
-                          disabled={loading || isGeoLoading}
-                          className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isPremium
-                              ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
-                              : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
-                          }`}
-                          onSuccess={() => { window.location.href = '/dashboard'; }}
-                          onFailure={(e) => { alert(`Payment failed: ${e?.error?.description || 'Unknown error'}`); }}
-                        />
+                            amount={price}
+                            currency={resolvedCurrency}
+                            billingPeriod={billingPeriod}
+                            label={isPopular ? 'Get Started' : `Choose ${plan.name}`}
+                            notes={{ plan: plan.id }}
+                            user_id={user.id}
+                            plan_id={plan.id}
+                            disabled={loading || isGeoLoading}
+                            className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isPremium
+                                ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
+                                : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
+                            }`}
+                            onSuccess={() => { window.location.href = '/dashboard'; }}
+                            onFailure={(e) => { 
+                              console.log('Payment failed:', e);
+                              alert(`Payment failed: ${e?.error?.description || 'Unknown error'}`); 
+                            }}
+                          />
                       ) : (
                         <button
                           onClick={() => setShowSignInModal(true)}
@@ -222,7 +225,7 @@ export default function PricingSection({
                               : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
                           }`}
                         >
-                          {isPopular ? 'Get Started' : `Choose ${plan.name}`}
+                          {loading ? 'Loading...' : (isPopular ? 'Get Started' : `Choose ${plan.name}`)}
                         </button>
                       )}
                     </div>

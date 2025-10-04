@@ -102,7 +102,7 @@ export default function KnowledgeBaseManager() {
     } catch {}
     loadDocuments();
     loadUsage();
-  }, [loadDocuments]);
+  }, [loadDocuments, loadUsage]);
 
   // 80% usage toast (total words)
   useEffect(() => {
@@ -186,13 +186,25 @@ export default function KnowledgeBaseManager() {
       await deleteDocument(docId);
       toast.success('Document deleted.', { id: toastId });
       setDocuments(docs => docs.filter(d => d.id !== docId));
-      // Optimistic adjust stored words if available
+      
+      // Optimistically update counters for immediate UI feedback
       if (target && totalStoredWords !== null) {
         const removed = target.content.trim().split(/\s+/).filter(Boolean).length;
         setTotalStoredWords(prev => prev !== null ? Math.max(0, prev - removed) : prev);
       }
-      // Refresh usage in background (no need to block UI)
-      loadUsage();
+      
+      // Optimistically decrement uploads count for real-time update
+      if (uploadsRemaining !== null && uploadLimit !== null) {
+        const currentUploads = uploadLimit - uploadsRemaining;
+        if (currentUploads > 0) {
+          setUploadsRemaining(prev => prev !== null ? prev + 1 : prev);
+        }
+      }
+      
+      // Refresh usage to ensure accuracy (in background)
+      setTimeout(() => {
+        loadUsage();
+      }, 100);
     } catch (error) {
       console.error('Error deleting document', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

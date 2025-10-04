@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 // Simple spinner icon component as fallback
 function Loader2({ className }: { className?: string }) {
@@ -98,10 +99,11 @@ export function ProgressiveImage({
             className="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
           >
             {placeholderSrc ? (
-              <img 
+              <Image 
                 src={placeholderSrc} 
                 alt={alt}
-                className="w-full h-full object-cover blur-sm scale-110"
+                fill
+                className="object-cover blur-sm scale-110"
               />
             ) : (
               <div className="flex flex-col items-center space-y-2">
@@ -238,7 +240,7 @@ export function useLazyLoading<T>(
     return () => {
       cancelled = true
     }
-  }, deps)
+  }, [loadFn, ...deps])
 
   return { data, isLoading, error, refetch: () => setIsLoading(true) }
 }

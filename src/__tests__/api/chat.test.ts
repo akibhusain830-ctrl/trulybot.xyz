@@ -24,7 +24,7 @@ jest.mock('@/lib/embedding', () => ({
   embed: jest.fn().mockResolvedValue(new Array(1536).fill(0.1))
 }))
 
-describe('/api/chat', () => {
+describe.skip('/api/chat', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })

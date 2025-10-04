@@ -17,12 +17,48 @@ export async function POST(req: NextRequest) {
     const supabase = createServerClient(
       NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+      {
+        cookies: {
+          get: (name: string) => cookieStore.get(name)?.value,
+          set: (name: string, value: string, options: any) => {
+            try {
+              cookieStore.set({ name, value, ...options });
+            } catch {
+              // Handle cases where cookies cannot be set (e.g., in middleware)
+            }
+          },
+          remove: (name: string, options: any) => {
+            try {
+              cookieStore.set({ name, value: '', ...options });
+            } catch {
+              // Handle cases where cookies cannot be removed
+            }
+          },
+        },
+      }
     );
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    // Debug logging
+    console.log('[start-trial] Auth check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message,
+      cookies: Object.keys(cookieStore.getAll()).length
+    });
+    
     if (authError || !user) {
-      return NextResponse.json({ error: 'You must be logged in to start a trial' }, { status: 401 });
+      console.log('[start-trial] Auth failed:', { authError, user: !!user });
+      return NextResponse.json({ 
+        error: 'You must be logged in to start a trial',
+        debug: {
+          authError: authError?.message,
+          hasUser: !!user,
+          cookieCount: Object.keys(cookieStore.getAll()).length
+        }
+      }, { status: 401 });
     }
 
     // Ensure profile exists
@@ -46,6 +82,13 @@ export async function POST(req: NextRequest) {
           error: 'Trial already active',
           subscription: access,
           redirect: '/dashboard'
+        }, { status: 400 });
+      }
+      if (reason === 'trial-already-used') {
+        return NextResponse.json({
+          error: 'You have already used your free trial. Please choose a paid plan to continue.',
+          subscription: access,
+          redirect: '/pricing'
         }, { status: 400 });
       }
       return NextResponse.json({

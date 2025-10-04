@@ -192,7 +192,7 @@ export async function DELETE(
       throw deleteError;
     }
 
-    // Adjust usage counters (decrement total stored words) & do NOT decrement monthly_uploads (uploads is historical count)
+    // Adjust usage counters (decrement total stored words AND monthly_uploads for real-time updates)
     try {
       const month = currentMonthKey();
       const removedWords = document.word_count || 0;
@@ -201,17 +201,25 @@ export async function DELETE(
         .select('workspace_id')
         .eq('id', user.id)
         .single();
-      if (profile?.workspace_id && removedWords > 0) {
+      if (profile?.workspace_id) {
         const { data: usageRow } = await supabaseAdmin
           .from('usage_counters')
-          .select('id, total_stored_words')
+          .select('id, total_stored_words, monthly_uploads')
           .eq('workspace_id', profile.workspace_id)
           .eq('month', month)
           .maybeSingle();
         if (usageRow) {
+          const updates: any = {};
+          // Decrement stored words if there were any
+          if (removedWords > 0) {
+            updates.total_stored_words = Math.max(0, (usageRow.total_stored_words || 0) - removedWords);
+          }
+          // Decrement monthly uploads for real-time counter
+          updates.monthly_uploads = Math.max(0, (usageRow.monthly_uploads || 0) - 1);
+          
           await supabaseAdmin
             .from('usage_counters')
-            .update({ total_stored_words: Math.max(0, (usageRow.total_stored_words || 0) - removedWords) })
+            .update(updates)
             .eq('id', usageRow.id);
         }
       }

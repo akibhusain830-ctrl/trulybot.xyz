@@ -27,6 +27,12 @@ const MobileMenu = ({ open, onClose, user, signOut }: HeaderProps & { open: bool
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-lg flex flex-col items-center justify-center"
+        style={{
+          paddingTop: 'max(24px, env(safe-area-inset-top))',
+          paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(24px, env(safe-area-inset-left))',
+          paddingRight: 'max(24px, env(safe-area-inset-right))'
+        }}
         onClick={onClose}
       >
         <motion.div
@@ -37,7 +43,28 @@ const MobileMenu = ({ open, onClose, user, signOut }: HeaderProps & { open: bool
           className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
           onClick={e => e.stopPropagation()}
         >
-          <Link href="/" className="text-xl font-bold tracking-tight mb-2" onClick={onClose}>trulybot.xyz</Link>
+          <Link href="/" className="flex items-center justify-center gap-2 text-xl font-bold tracking-tight mb-2" onClick={onClose}>
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 512 512" 
+              fill="none"
+              className="flex-shrink-0"
+            >
+              <defs>
+                <linearGradient id="lightningGradientMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
+                  <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                </linearGradient>
+              </defs>
+              <polygon 
+                fill="url(#lightningGradientMobile)"
+                points="320,32 136,296 248,296 192,480 400,216 288,216"
+              />
+            </svg>
+            trulybot.xyz
+          </Link>
           <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
           <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
           <Link href="/pricing" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Pricing</Link>
@@ -56,7 +83,11 @@ const MobileMenu = ({ open, onClose, user, signOut }: HeaderProps & { open: bool
           )}
         </motion.div>
         <button
-          className="absolute top-6 right-6 z-50 text-3xl text-white"
+          className="absolute z-50 text-3xl text-white w-12 h-12 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
+          style={{
+            top: 'max(24px, env(safe-area-inset-top))',
+            right: 'max(24px, env(safe-area-inset-right))'
+          }}
           aria-label="Close menu"
           onClick={onClose}
         >×</button>
@@ -72,7 +103,28 @@ export default function Header({ user, loading, signOut }: HeaderProps) {
     <>
       <header className="relative z-20 flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center gap-12">
-          <Link href="/" className="text-xl font-bold tracking-tight">trulybot.xyz</Link>
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 512 512" 
+              fill="none"
+              className="flex-shrink-0"
+            >
+              <defs>
+                <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
+                  <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                </linearGradient>
+              </defs>
+              <polygon 
+                fill="url(#lightningGradient)"
+                points="320,32 136,296 248,296 192,480 400,216 288,216"
+              />
+            </svg>
+            trulybot.xyz
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <nav className="hidden md:flex items-center gap-8 text-sm text-slate-400">

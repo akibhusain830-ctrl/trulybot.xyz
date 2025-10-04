@@ -4,11 +4,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
+import Image from 'next/image';
 
 interface ProfileSettings {
   chatbot_name: string;
   welcome_message: string;
   accent_color: string;
+  chatbot_logo_url: string;
+  chatbot_theme: string;
+  custom_css: string;
 }
 
 interface SubscriptionInfo {
@@ -31,16 +35,63 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<ProfileSettings>({
     chatbot_name: '',
     welcome_message: '',
-    accent_color: '#2563EB'
+    accent_color: '#2563EB',
+    chatbot_logo_url: '',
+    chatbot_theme: 'default',
+    custom_css: ''
   });
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
   const [changingPassword, setChangingPassword] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  // Helper function to get current subscription tier
+  const getCurrentTier = (): 'basic' | 'pro' | 'ultra' | 'trial' => {
+    if (!subscription) {
+      // Check if user is in trial
+      if (trialInfo?.is_trial_active) {
+        return 'trial'; // Trial users are in trial mode
+      }
+      return 'basic';
+    }
+    
+    const planName = subscription.plan_name?.toLowerCase() || '';
+    if (planName.includes('ultra')) return 'ultra';
+    if (planName.includes('pro')) return 'pro';
+    return 'basic';
+  };
+
+  // Helper function to check if user is on trial
+  const isOnTrial = (): boolean => {
+    return !subscription && trialInfo?.is_trial_active === true;
+  };
+
+  // Helper function to check feature availability
+  const canAccessFeature = (feature: 'name' | 'welcome' | 'color' | 'logo' | 'theme' | 'css'): boolean => {
+    // Trial users get full Ultra plan features during trial
+    if (isOnTrial()) {
+      return true;
+    }
+    
+    const tier = getCurrentTier();
+    
+    switch (feature) {
+      case 'name':
+      case 'welcome':
+        return tier === 'pro' || tier === 'ultra';
+      case 'color':
+      case 'logo':
+      case 'theme':
+      case 'css':
+        return tier === 'ultra';
+      default:
+        return false;
+    }
+  };
 
   const calculateTrialInfo = (trialEndDate: string): TrialInfo => {
     const endDate = new Date(trialEndDate);
@@ -63,7 +114,7 @@ export default function SettingsPage() {
         // Fetch profile settings and trial info
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('chatbot_name, welcome_message, accent_color, trial_ends_at, created_at')
+          .select('chatbot_name, welcome_message, accent_color, chatbot_logo_url, chatbot_theme, custom_css, trial_ends_at, created_at')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -73,7 +124,10 @@ export default function SettingsPage() {
           setSettings({
             chatbot_name: profileData.chatbot_name || '',
             welcome_message: profileData.welcome_message || '',
-            accent_color: profileData.accent_color || '#2563EB'
+            accent_color: profileData.accent_color || '#2563EB',
+            chatbot_logo_url: profileData.chatbot_logo_url || '',
+            chatbot_theme: profileData.chatbot_theme || 'default',
+            custom_css: profileData.custom_css || ''
           });
 
           // Check for trial information
@@ -122,7 +176,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
-  }, [user?.id, authLoading]); // Removed trialInfo from dependencies
+  }, [user?.id, user?.created_at, authLoading]); // Added user.created_at dependency
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -151,7 +205,7 @@ export default function SettingsPage() {
 
   const handlePasswordChange = async () => {
     if (!passwordData.newPassword || !passwordData.confirmPassword) {
-      toast.error('Please fill in all password fields.');
+      toast.error('Please enter and confirm your new password.');
       return;
     }
 
@@ -177,7 +231,6 @@ export default function SettingsPage() {
 
       toast.success('Password changed successfully!', { id: toastId });
       setPasswordData({
-        currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
@@ -187,6 +240,67 @@ export default function SettingsPage() {
     } finally {
       setChangingPassword(false);
     }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB.');
+      return;
+    }
+
+    setLogoUploading(true);
+    const toastId = toast.loading('Uploading logo...');
+
+    try {
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}/logo-${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('chatbot-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chatbot-assets')
+        .getPublicUrl(fileName);
+
+      // Update settings with new logo URL
+      setSettings(prev => ({
+        ...prev,
+        chatbot_logo_url: publicUrl
+      }));
+
+      toast.success('Logo uploaded successfully!', { id: toastId });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error('Failed to upload logo.', { id: toastId });
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setSettings(prev => ({
+      ...prev,
+      chatbot_logo_url: ''
+    }));
   };
 
   const handleInputChange = (field: keyof ProfileSettings, value: string) => {
@@ -423,58 +537,271 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Chatbot Settings */}
+        {/* Chatbot Customization Settings */}
         <div className="p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
-          <h2 className="text-xl font-semibold mb-4">Chatbot Settings</h2>
+          <h2 className="text-xl font-semibold mb-4">Chatbot Customization</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            Customize your chatbot based on your subscription plan. 
+            {getCurrentTier() === 'trial' && ' You have full access to all Ultra plan features during your trial! Upgrade to keep these customization options after your trial ends.'}
+            {getCurrentTier() === 'basic' && ' Upgrade to Pro or Ultra to unlock customization features.'}
+            {getCurrentTier() === 'pro' && ' Upgrade to Ultra to unlock advanced customization options.'}
+            {getCurrentTier() === 'ultra' && ' You have access to all customization features!'}
+          </p>
+          
           {loading ? (
             <div className="text-center py-4 text-slate-400">Loading settings...</div>
           ) : (
             <>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="chatbot_name" className="block text-sm font-medium text-slate-300 mb-1">
-                    Chatbot Name
-                  </label>
-                  <input
-                    id="chatbot_name"
-                    type="text"
-                    value={settings.chatbot_name}
-                    onChange={(e) => handleInputChange('chatbot_name', e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Support Bot, Assistant"
-                  />
-                </div>
+              {/* Basic Information - Pro & Ultra Plans */}
+              {(canAccessFeature('name') || canAccessFeature('welcome')) && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    Basic Information
+                  </h3>
+                  <div className="space-y-4">
+                    {canAccessFeature('name') && (
+                      <div>
+                        <label htmlFor="chatbot_name" className="block text-sm font-medium text-slate-300 mb-1">
+                          Chatbot Name
+                        </label>
+                        <input
+                          id="chatbot_name"
+                          type="text"
+                          value={settings.chatbot_name}
+                          onChange={(e) => handleInputChange('chatbot_name', e.target.value)}
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Support Bot, Assistant"
+                        />
+                      </div>
+                    )}
 
-                <div>
-                  <label htmlFor="welcome_message" className="block text-sm font-medium text-slate-300 mb-1">
-                    Welcome Message
-                  </label>
-                  <input
-                    id="welcome_message"
-                    type="text"
-                    value={settings.welcome_message}
-                    onChange={(e) => handleInputChange('welcome_message', e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Hello! How can I help you today?"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="accent_color" className="block text-sm font-medium text-slate-300 mb-1">
-                    Accent Color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      id="accent_color"
-                      type="color"
-                      value={settings.accent_color}
-                      onChange={(e) => handleInputChange('accent_color', e.target.value)}
-                      className="w-12 h-10 p-1 bg-slate-800/50 border border-slate-700 rounded-lg cursor-pointer"
-                    />
-                    <span className="text-sm text-slate-400">{settings.accent_color}</span>
+                    {canAccessFeature('welcome') && (
+                      <div>
+                        <label htmlFor="welcome_message" className="block text-sm font-medium text-slate-300 mb-1">
+                          Welcome Message
+                        </label>
+                        <input
+                          id="welcome_message"
+                          type="text"
+                          value={settings.welcome_message}
+                          onChange={(e) => handleInputChange('welcome_message', e.target.value)}
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Hello! How can I help you today?"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Visual Customization - Ultra Plan Only */}
+              {canAccessFeature('color') && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    Visual Customization
+                    <span className="px-2 py-1 text-xs bg-purple-600 text-white rounded-full">Ultra</span>
+                  </h3>
+                  <div className="space-y-6">
+                    {/* Accent Color */}
+                    <div>
+                      <label htmlFor="accent_color" className="block text-sm font-medium text-slate-300 mb-1">
+                        Accent Color
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          id="accent_color"
+                          type="color"
+                          value={settings.accent_color}
+                          onChange={(e) => handleInputChange('accent_color', e.target.value)}
+                          className="w-12 h-10 p-1 bg-slate-800/50 border border-slate-700 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-400">{settings.accent_color}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">This color will be used for buttons, links, and highlights in your chatbot.</p>
+                    </div>
+
+                    {/* Logo Upload */}
+                    {canAccessFeature('logo') && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                          Custom Logo
+                        </label>
+                        <div className="space-y-3">
+                          {settings.chatbot_logo_url ? (
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                <Image 
+                                  src={settings.chatbot_logo_url} 
+                                  alt="Chatbot Logo" 
+                                  width={64}
+                                  height={64}
+                                  className="w-16 h-16 object-contain bg-slate-800 rounded-lg border border-slate-700"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm text-slate-300">Logo uploaded successfully</p>
+                                <button
+                                  type="button"
+                                  onClick={handleRemoveLogo}
+                                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  Remove Logo
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center">
+                              <div className="mb-2">
+                                <svg className="mx-auto h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <label htmlFor="logo-upload" className="cursor-pointer">
+                                <span className="text-sm text-slate-300">Click to upload your logo</span>
+                                <input
+                                  id="logo-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleLogoUpload}
+                                  className="hidden"
+                                  disabled={logoUploading}
+                                />
+                              </label>
+                              <p className="text-xs text-slate-500 mt-1">PNG, JPG, or SVG. Max 5MB.</p>
+                            </div>
+                          )}
+                          {logoUploading && (
+                            <div className="text-center py-2">
+                              <div className="text-sm text-blue-400">Uploading...</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Theme Selection */}
+                    {canAccessFeature('theme') && (
+                      <div>
+                        <label htmlFor="chatbot_theme" className="block text-sm font-medium text-slate-300 mb-1">
+                          Theme
+                        </label>
+                        <select
+                          id="chatbot_theme"
+                          value={settings.chatbot_theme}
+                          onChange={(e) => handleInputChange('chatbot_theme', e.target.value)}
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="default">Default</option>
+                          <option value="minimal">Minimal</option>
+                          <option value="corporate">Corporate</option>
+                          <option value="friendly">Friendly</option>
+                          <option value="modern">Modern</option>
+                        </select>
+                        <p className="text-xs text-slate-500 mt-1">Choose a pre-built theme for your chatbot's appearance.</p>
+                      </div>
+                    )}
+
+                    {/* Custom CSS */}
+                    {canAccessFeature('css') && (
+                      <div>
+                        <label htmlFor="custom_css" className="block text-sm font-medium text-slate-300 mb-1">
+                          Custom CSS <span className="text-xs text-slate-500">(Advanced)</span>
+                        </label>
+                        <textarea
+                          id="custom_css"
+                          value={settings.custom_css}
+                          onChange={(e) => handleInputChange('custom_css', e.target.value)}
+                          rows={6}
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                          placeholder="/* Add your custom CSS here */
+.chatbot-container {
+  border-radius: 12px;
+}
+.chatbot-message {
+  font-family: 'Your Font', sans-serif;
+}"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Add custom CSS to further customize your chatbot's appearance.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Upgrade Prompts */}
+              {getCurrentTier() === 'trial' && (
+                <div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 border border-green-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium">Trial - Keep Your Customizations</h4>
+                      <p className="text-slate-300 text-sm mt-1">
+                        You're enjoying full Ultra features during your trial! Upgrade before your trial ends to keep all these customization options and ensure your branding remains active.
+                      </p>
+                      <button
+                        onClick={() => window.location.href = '/pricing'}
+                        className="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                      >
+                        Upgrade to Keep Features
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {getCurrentTier() === 'basic' && (
+                <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium">Unlock Chatbot Customization</h4>
+                      <p className="text-slate-300 text-sm mt-1">
+                        Upgrade to Pro to customize your chatbot's name and welcome message, or go Ultra for full branding control including logo, colors, and themes.
+                      </p>
+                      <button
+                        onClick={() => window.location.href = '/pricing'}
+                        className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                      >
+                        View Pricing Plans
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {getCurrentTier() === 'pro' && (
+                <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium">Unlock Advanced Branding</h4>
+                      <p className="text-slate-300 text-sm mt-1">
+                        Upgrade to Ultra to add your custom logo, brand colors, themes, and even custom CSS for complete control over your chatbot's appearance.
+                      </p>
+                      <button
+                        onClick={() => window.location.href = '/pricing'}
+                        className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                      >
+                        Upgrade to Ultra
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-6 flex justify-end">
                 <button
@@ -492,21 +819,10 @@ export default function SettingsPage() {
         {/* Password Change */}
         <div className="p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
           <h2 className="text-xl font-semibold mb-4">Security</h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Set a new password for your account. Since you're already logged in, you don't need to enter your current password. This is helpful if you've forgotten your current password.
+          </p>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-300 mb-1">
-                Current Password
-              </label>
-              <input
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter current password"
-              />
-            </div>
-
             <div>
               <label htmlFor="newPassword" className="block text-sm font-medium text-slate-300 mb-1">
                 New Password

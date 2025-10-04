@@ -31,8 +31,13 @@ export default function Hero({ user }: HeroProps) {
 
   return (
     <section 
-      className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center text-center overflow-hidden bg-black min-h-[80vh]"
-      style={{ minHeight: 'calc(100vh - 80px)', backgroundColor: '#000000' }}
+      className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center text-center overflow-hidden bg-black"
+      style={{ 
+        minHeight: 'max(80vh, calc(100vh - 80px))',
+        backgroundColor: '#000000',
+        paddingTop: 'max(40px, env(safe-area-inset-top))',
+        paddingBottom: 'max(40px, env(safe-area-inset-bottom))'
+      }}
       role="banner"
     >
       {/* Main Content */}
@@ -55,7 +60,7 @@ export default function Hero({ user }: HeroProps) {
           {/* Main Heading */}
           <motion.h1 
             variants={itemVariants}
-            className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight max-w-5xl"
+            className="text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight max-w-5xl"
           >
             Your 24/7 AI Support and{' '}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-text-shine">
@@ -66,7 +71,7 @@ export default function Hero({ user }: HeroProps) {
           {/* Subheading */}
           <motion.p 
             variants={itemVariants}
-            className="text-slate-300 text-lg sm:text-xl lg:text-2xl max-w-3xl mx-auto font-light leading-relaxed"
+            className="text-slate-300 text-base xs:text-lg sm:text-xl lg:text-2xl max-w-3xl mx-auto font-light leading-relaxed px-4"
           >
             Deploy an AI agent that instantly answers customer questions, reduces support team load, and captures qualified leads—all without coding. Setup in minutes.
           </motion.p>
@@ -74,33 +79,33 @@ export default function Hero({ user }: HeroProps) {
           {/* Stats */}
           <motion.div
             variants={itemVariants}
-            className="flex flex-wrap justify-center gap-8 mt-4 text-slate-400"
+            className="flex flex-wrap justify-center gap-6 xs:gap-8 mt-4 text-slate-400 px-4"
           >
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-300">24/7</div>
-              <div className="text-sm">Support Availability</div>
+            <div className="text-center min-w-0 flex-1">
+              <div className="text-xl xs:text-2xl font-bold text-cyan-300">24/7</div>
+              <div className="text-xs xs:text-sm">Support Availability</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-300">70%</div>
-              <div className="text-sm">Ticket Reduction</div>
+            <div className="text-center min-w-0 flex-1">
+              <div className="text-xl xs:text-2xl font-bold text-cyan-300">70%</div>
+              <div className="text-xs xs:text-sm">Ticket Reduction</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-300">5min</div>
-              <div className="text-sm">Setup Time</div>
+            <div className="text-center min-w-0 flex-1">
+              <div className="text-xl xs:text-2xl font-bold text-cyan-300">5min</div>
+              <div className="text-xs xs:text-sm">Setup Time</div>
             </div>
           </motion.div>
 
           {/* CTA Buttons */}
           <motion.div 
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 mt-8"
+            className="flex justify-center items-center mt-8 px-4 w-full"
           >
             <Link 
               href={user ? "/start-trial" : "/sign-up"}
-              className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 active:scale-95"
+              className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px] flex items-center justify-center max-w-fit mx-auto"
               aria-label="Start 7-Day Free Trial"
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
+              <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
                 Start 7-Day Free Trial 
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -108,27 +113,14 @@ export default function Hero({ user }: HeroProps) {
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
-            
-            <Link 
-              href="/widget-demo"
-              className="group border border-slate-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg backdrop-blur-sm hover:bg-slate-900/50 hover:border-slate-400 transition-all duration-300 hover:scale-105 active:scale-95"
-              aria-label="See Live Demo"
-            >
-              <span className="flex items-center justify-center gap-2">
-                See Live Demo
-                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </span>
-            </Link>
           </motion.div>
 
           {/* Trial Indicator */}
           <motion.div
             variants={itemVariants}
-            className="mt-12 text-slate-400 text-sm"
+            className="mt-6 text-slate-400 text-sm text-center max-w-md mx-auto px-4"
           >
-            Start a 7-day free trial • No card required
+            We offer a 7-day free trial of Ultra plan • No credit card required
           </motion.div>
         </motion.div>
       </div>

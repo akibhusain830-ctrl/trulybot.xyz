@@ -13,7 +13,29 @@ export default function ChatWidgetLauncher() {
           className="anemo-chat-bubble-btn"
           onClick={() => setOpen(true)}
         >
-          <span className="bubble-emoji">🌀</span>
+          <svg 
+            className="bubble-icon drop-shadow-lg" 
+            width="28" 
+            height="28" 
+            viewBox="0 0 64 64" 
+            fill="none"
+          >
+            {/* Main lightning bolt with premium gradient via CSS */}
+            <polygon 
+              fill="#00D4FF"
+              points="40,1 17,37 31,37 24,63 50,27 36,27"
+              style={{
+                background: 'linear-gradient(135deg, #00D4FF 0%, #0099FF 50%, #0066CC 100%)',
+                filter: 'brightness(1.1)'
+              }}
+            />
+            
+            {/* Inner highlight for depth */}
+            <polygon 
+              fill="rgba(255,255,255,0.2)" 
+              points="40,1 17,37 31,37 24,63 50,27 36,27"
+            />
+          </svg>
         </button>
       )}
 
@@ -33,8 +55,8 @@ export default function ChatWidgetLauncher() {
       <style jsx global>{`
         .anemo-chat-bubble-btn {
           position: fixed;
-          bottom: 32px;
-          right: 32px;
+          bottom: max(32px, env(safe-area-inset-bottom));
+          right: max(32px, env(safe-area-inset-right));
           width: 62px;
           height: 62px;
           background: linear-gradient(135deg, #2563eb 60%, #1744ad 100%);
@@ -42,7 +64,7 @@ export default function ChatWidgetLauncher() {
           box-shadow: 0 8px 36px #2563eb66;
           border: none;
           cursor: pointer;
-          z-index: 11001;
+          z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -52,9 +74,10 @@ export default function ChatWidgetLauncher() {
           transform: scale(1.07);
           box-shadow: 0 12px 40px #2563eb88;
         }
-        .bubble-emoji {
-          font-size: 2.2rem;
+        .bubble-icon {
           color: #fff;
+          width: 28px;
+          height: 28px;
         }
 
         .anemo-widget-overlay {
@@ -66,7 +89,7 @@ export default function ChatWidgetLauncher() {
             position: fixed;
             inset: 0;
             background: rgba(16, 18, 21, 0.32);
-            z-index: 12000;
+            z-index: 9998;
             animation: anemo-fadein 0.18s;
           }
         }
@@ -87,7 +110,7 @@ export default function ChatWidgetLauncher() {
           border-radius: 16px;
           box-shadow: 0 8px 36px 0 #0005, 0 1.5px 0 #2563eb40 inset;
           overflow: hidden;
-          z-index: 12001;
+          z-index: 9999;
           display: flex;
           flex-direction: column;
           animation: anemo-slidein 0.23s cubic-bezier(0.46,0.03,0.52,0.96);
@@ -104,12 +127,16 @@ export default function ChatWidgetLauncher() {
             bottom: 0;
             top: 0;
             width: 100vw !important;
+            height: 100vh !important;
             height: 100dvh !important;
+            height: calc(var(--vh, 1vh) * 100) !important;
             max-width: none;
             max-height: none;
             border-radius: 0;
             box-shadow: none;
             animation: anemo-mobilein 0.24s cubic-bezier(0.46,0.03,0.52,0.96);
+            position: fixed;
+            overflow: hidden;
           }
           @keyframes anemo-mobilein {
             from { transform: translateY(30px); opacity: 0; }

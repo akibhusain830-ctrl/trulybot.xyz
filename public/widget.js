@@ -4,7 +4,9 @@
     var w = window;
 
     // Discover the <script> tag (customers paste this)
-    var script = d.currentScript || d.querySelector('script[data-bot-id][src*="/widget.js"]');
+    var script = d.currentScript || 
+                 d.querySelector('script[data-bot-id][src*="/widget.js"]') ||
+                 d.querySelector('script[data-chatbot-id][src*="/widget.js"]');
     if (!script) {
       script = d.querySelector('script[src*="/widget.js"]') || d.scripts[d.scripts.length - 1];
     }
@@ -13,11 +15,22 @@
       return (script && script.getAttribute(name)) || fallback;
     }
 
-    var botId = getAttr('data-bot-id', 'demo');
+    var botId = getAttr('data-bot-id', null) || getAttr('data-chatbot-id', 'demo');
     var position = getAttr('data-position', 'right'); // 'right' or 'left'
-    var color = getAttr('data-color', '#2563eb');      // launcher color
+    var color = getAttr('data-color', '#2563eb');      // launcher color (will be overridden by user settings)
     var greeting = getAttr('data-greeting', 'Chat');   // launcher label (visually hidden on desktop)
     var zIndex = parseInt(getAttr('data-z', '2147483000'), 10); // keep above most UI
+    
+    // Configuration will be loaded from API
+    var widgetConfig = {
+      accent_color: color,
+      chatbot_name: 'Assistant',
+      welcome_message: 'Hello! How can I help you today?',
+      chatbot_logo_url: '',
+      chatbot_theme: 'default',
+      custom_css: '',
+      tier: 'basic'
+    };
 
     // Compute origin from script src (e.g., https://trulybot.xyz)
     var src = script && script.src || '';
@@ -27,6 +40,88 @@
       origin = u.origin;
     } catch (e) {
       origin = (location.protocol + '//' + location.host);
+    }
+
+    // Load user configuration
+    function loadWidgetConfig() {
+      if (botId && botId !== 'demo') {
+        var configUrl = origin + '/api/widget/config/' + encodeURIComponent(botId);
+        
+        fetch(configUrl)
+          .then(function(response) {
+            if (response.ok) {
+              return response.json();
+            }
+            throw new Error('Failed to load config');
+          })
+          .then(function(config) {
+            // Update widget configuration
+            widgetConfig = Object.assign(widgetConfig, config);
+            
+            // Apply custom styling
+            applyCustomStyling();
+            
+            // Update iframe URL with config
+            if (frame && frame.src) {
+              var configParam = '&config=' + encodeURIComponent(JSON.stringify(widgetConfig));
+              if (frame.src.indexOf('&config=') === -1) {
+                frame.src += configParam;
+              }
+            }
+          })
+          .catch(function(error) {
+            console.warn('[Trulybot widget] Config load failed:', error);
+            // Continue with default config
+            applyCustomStyling();
+          });
+      } else {
+        // Demo mode - use defaults
+        applyCustomStyling();
+      }
+    }
+
+    // Apply custom styling based on configuration
+    function applyCustomStyling() {
+      // Update launcher button color
+      if (widgetConfig.accent_color) {
+        btn.style.backgroundColor = widgetConfig.accent_color;
+      }
+      
+      // Apply custom CSS if available (Ultra plan)
+      if (widgetConfig.custom_css && widgetConfig.tier === 'ultra') {
+        var style = d.createElement('style');
+        style.textContent = '/* Trulybot Custom CSS */\n' + widgetConfig.custom_css;
+        d.head.appendChild(style);
+      }
+      
+      // Apply theme-specific styling
+      if (widgetConfig.chatbot_theme && widgetConfig.tier === 'ultra') {
+        applyThemeStyling(widgetConfig.chatbot_theme);
+      }
+    }
+
+    // Apply theme-specific styling
+    function applyThemeStyling(theme) {
+      switch (theme) {
+        case 'minimal':
+          btn.style.boxShadow = 'none';
+          btn.style.border = '1px solid ' + widgetConfig.accent_color;
+          break;
+        case 'corporate':
+          btn.style.borderRadius = '4px';
+          break;
+        case 'friendly':
+          btn.style.borderRadius = '50%';
+          btn.style.transform = 'scale(1.1)';
+          break;
+        case 'modern':
+          btn.style.background = 'linear-gradient(135deg, ' + widgetConfig.accent_color + ', ' + widgetConfig.accent_color + 'cc)';
+          btn.style.backdropFilter = 'blur(10px)';
+          break;
+        default:
+          // Default theme - no additional styling
+          break;
+      }
     }
 
     // Build iframe URL that hosts your ChatWidget
@@ -101,6 +196,9 @@
     // Append in the correct order
     container.appendChild(panel);
     container.appendChild(btn);
+
+    // Load user configuration and apply styling
+    loadWidgetConfig();
 
     var open = false;
     function openPanel() {

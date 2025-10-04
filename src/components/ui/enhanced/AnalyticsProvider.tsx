@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 // Enhanced Analytics Context
@@ -21,26 +21,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  useEffect(() => {
-    // Initialize analytics and get user
-    const initializeAnalytics = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUserId(user.id)
-        // Set user properties for analytics
-        setUserProperties({
-          userId: user.id,
-          email: user.email,
-          signUpDate: user.created_at,
-        })
-      }
 
-      // Track initial page view
-      trackPageView(window.location.pathname)
-    }
-
-    initializeAnalytics()
-  }, [])
 
   const trackEvent = async (eventName: string, properties?: Record<string, any>) => {
     try {
@@ -88,12 +69,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const trackPageView = (page: string, properties?: Record<string, any>) => {
+  const trackPageView = useCallback((page: string, properties?: Record<string, any>) => {
     trackEvent('page_view', {
       page,
       ...properties,
     })
-  }
+  }, [trackEvent])
 
   const trackConversion = (type: string, value?: number, properties?: Record<string, any>) => {
     trackEvent('conversion', {
@@ -103,7 +84,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const setUserProperties = async (properties: Record<string, any>) => {
+  const setUserProperties = useCallback(async (properties: Record<string, any>) => {
     try {
       // Update user properties in Supabase
       if (userId) {
@@ -124,7 +105,28 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('User properties update error:', error)
     }
-  }
+  }, [userId, supabase])
+
+  useEffect(() => {
+    // Initialize analytics and get user
+    const initializeAnalytics = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+        // Set user properties for analytics
+        setUserProperties({
+          userId: user.id,
+          email: user.email,
+          signUpDate: user.created_at,
+        })
+      }
+
+      // Track initial page view
+      trackPageView(window.location.pathname)
+    }
+
+    initializeAnalytics()
+  }, [setUserProperties, trackPageView, supabase.auth])
 
   return (
     <AnalyticsContext.Provider value={{

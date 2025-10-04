@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 import { calculateSubscriptionAccess } from '@/lib/subscription';
 import { ProfileManager } from '@/lib/profile-manager';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const cookieStore = cookies();

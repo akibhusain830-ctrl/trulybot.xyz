@@ -7,7 +7,7 @@ interface EmbedSnippetProps {
 }
 
 const buildEmbedSnippet = (userId: string) => {
-  return `<script src="${window.location.origin}/widget.js" data-chatbot-id="${userId}" defer></script>`;
+  return `<script async src="${window.location.origin}/widget.js" data-bot-id="${userId}"></script>`;
 };
 
 export default function EmbedSnippet({ userId }: EmbedSnippetProps) {

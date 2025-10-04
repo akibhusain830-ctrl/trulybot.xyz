@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react'; // ADD THIS IMPORT
+import React, { useState, useEffect } from 'react';
 import { PRICING_TIERS } from '@/lib/constants/pricing';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const CheckIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 flex-shrink-0">
@@ -13,8 +15,26 @@ const CheckIcon = () => (
 
 export default function StartTrialPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before doing auth checks
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Optional: Redirect to sign-in if definitely not authenticated
+  useEffect(() => {
+    if (mounted && !loading && !user) {
+      // Only redirect after a delay to avoid false positives
+      const timer = setTimeout(() => {
+        router.push('/sign-in?redirect=/start-trial');
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, user, loading, router]);
 
   const ultraPlan = PRICING_TIERS.find(p => p.id === 'ultra');
 
@@ -22,9 +42,26 @@ export default function StartTrialPage() {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/start-trial', { method: 'POST' });
+      // Debug: Check client-side session before API call
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[client] Session before API call:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userId: session?.user?.id,
+        accessToken: session?.access_token ? 'present' : 'missing'
+      });
+
+      const res = await fetch('/api/start-trial', { 
+        method: 'POST',
+        credentials: 'include', // Ensure cookies are sent
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (!res.ok) {
         const data = await res.json();
+        console.log('[client] API Error Response:', data);
         throw new Error(data.error || 'Failed to start trial');
       }
       router.push('/dashboard');
@@ -34,6 +71,15 @@ export default function StartTrialPage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking authentication or before mount
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">

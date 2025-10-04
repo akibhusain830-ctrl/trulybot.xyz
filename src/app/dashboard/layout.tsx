@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { BRAND } from '@/lib/branding';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,11 +95,18 @@ const SignInModal = ({ onClose }: { onClose: () => void }) => (
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, signOut, subscriptionStatus, subscriptionLoading, loading, refreshSubscriptionStatus } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Modal visibility states MUST be declared before any conditional return to avoid hook order variation.
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  // Add mounted state to prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   useEffect(() => {
     // This effect ensures that the subscription status is up-to-date
@@ -127,7 +134,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const SidebarContent = () => (
     <>
       <div className="h-20 flex items-center px-6 border-b border-slate-800 flex-shrink-0">
-        <Link href="/" className="text-xl font-bold tracking-tight">{brandHost}</Link>
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 512 512" 
+            fill="none"
+            className="flex-shrink-0"
+          >
+            <defs>
+              <linearGradient id="lightningGradientDashboard" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
+                <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
+                <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+              </linearGradient>
+            </defs>
+            <polygon 
+              fill="url(#lightningGradientDashboard)"
+              points="320,32 136,296 248,296 192,480 400,216 288,216"
+            />
+          </svg>
+          {brandHost}
+        </Link>
       </div>
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto" role="navigation" aria-label="Dashboard navigation">
         {navItems.map((item) => {
@@ -199,7 +227,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, loading, subscriptionResolved, subscriptionStatus]);
 
-  if (loading) {
+  // Prevent hydration mismatch by showing loading until mounted
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black p-4" aria-busy="true" aria-live="polite">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -208,7 +237,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!user) {
-    return <SignInModal onClose={() => setShowSignIn(false)} />;
+    return <SignInModal onClose={() => {
+      setShowSignIn(false);
+      router.push('/');
+    }} />;
   }
 
   // If we have a user, render the full dashboard layout.

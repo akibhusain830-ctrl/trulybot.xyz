@@ -20,6 +20,7 @@ export interface UserProfile {
   trial_ends_at: string | null;
   subscription_ends_at: string | null;
   payment_id: string | null;
+  has_used_trial: boolean;
   created_at: string;
   updated_at: string;
 }

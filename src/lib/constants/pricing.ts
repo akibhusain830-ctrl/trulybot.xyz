@@ -31,7 +31,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     features: [
       'Core AI Chatbot',
       '1,000 Conversations / Month',
-      'Standard Knowledge Base',
+      'Standard Knowledge Base (2,000 words)',
+      '4 Knowledge Uploads',
     ],
   },
   {
@@ -47,7 +48,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     features: [
       'Core AI Chatbot',
       'Unlimited Conversations',
-      'Expanded Knowledge Base',
+      'Expanded Knowledge Base (15,000 words)',
+      '10 Knowledge Uploads',
       'Chatbot Personalization (Name & Welcome Message)',
       'Automated Lead Capture',
       'Priority Content Sync',
@@ -66,7 +68,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     features: [
       'Core AI Chatbot',
       'Unlimited Conversations',
-      'Maximum Knowledge Base',
+      'Maximum Knowledge Base (50,000 words)',
+      '25 Knowledge Uploads',
       'Full Brand Customization (Color, Theme, Logo, Name & Welcome Message)',
       'Enhanced Lead Capture',
       'Priority Support Queue',

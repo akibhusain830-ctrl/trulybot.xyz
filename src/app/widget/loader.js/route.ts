@@ -1,6 +1,5 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   const widgetScript = `
@@ -11,7 +10,7 @@ export async function GET(req: NextRequest) {
   const apiUrl = script?.getAttribute('data-api-url') || '${process.env.NEXT_PUBLIC_APP_URL || 'https://trulybot.xyz'}';
   
   if (!chatbotId) {
-    logger.error('TrulyBot: data-chatbot-id is required');
+    console.error('TrulyBot: data-chatbot-id is required');
     return;
   }
 
@@ -22,14 +21,14 @@ export async function GET(req: NextRequest) {
       const config = await response.json();
       
       if (config.error) {
-        logger.error('TrulyBot: Failed to load configuration');
+        console.error('TrulyBot: Failed to load configuration');
         return;
       }
 
       // Create widget with dynamic settings
       createWidget(config);
     } catch (error) {
-      logger.error('TrulyBot: Failed to load widget', error);
+      console.error('TrulyBot: Failed to load widget', error);
     }
   }
 

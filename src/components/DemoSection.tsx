@@ -51,7 +51,7 @@ export default function DemoSection({ user }: DemoSectionProps) {
   const [activeCase, setActiveCase] = useState<'support' | 'lead'>('support');
 
   return (
-    <section className="relative py-24 bg-black">
+    <section id="demo-section" className="relative py-24 bg-black">
       {/* Very Subtle Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-purple-500/2 to-emerald-500/3" />
       

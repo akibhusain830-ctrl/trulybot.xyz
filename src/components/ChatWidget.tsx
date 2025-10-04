@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { BRAND } from '@/lib/branding';
+import Image from 'next/image';
 
 type Role = 'bot' | 'user';
 
@@ -35,12 +36,28 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+export interface WidgetConfig {
+  tier: 'basic' | 'pro' | 'ultra';
+  chatbot_name: string;
+  welcome_message: string;
+  accent_color: string;
+  chatbot_logo_url?: string;
+  chatbot_theme?: string;
+  custom_css?: string;
+}
+
 export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
   const [botId, setBotId] = useState<string>('demo');
+  const [widgetConfig, setWidgetConfig] = useState<WidgetConfig>({
+    tier: 'basic',
+    chatbot_name: 'Assistant',
+    welcome_message: 'Hello! How can I help you today?',
+    accent_color: '#2563EB'
+  });
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null); // Ref for the textarea
@@ -48,8 +65,28 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     isMounted.current = true;
+    
+    // Mobile keyboard handling
+    const handleViewportChange = () => {
+      if (window.innerWidth <= 700) {
+        // On mobile, adjust for keyboard
+        const viewHeight = window.visualViewport?.height || window.innerHeight;
+        document.documentElement.style.setProperty('--vh', `${viewHeight * 0.01}px`);
+      }
+    };
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+    }
+    window.addEventListener('resize', handleViewportChange);
+    handleViewportChange(); // Initial call
+    
     return () => {
       isMounted.current = false;
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      }
+      window.removeEventListener('resize', handleViewportChange);
     };
   }, []);
 
@@ -61,18 +98,99 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     }
   }, []);
 
+  // Load widget configuration when botId changes
+  useEffect(() => {
+    if (botId && botId !== 'demo') {
+      fetch(`/api/widget/config/${encodeURIComponent(botId)}`)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Failed to load config');
+        })
+        .then((config: WidgetConfig) => {
+          setWidgetConfig(config);
+        })
+        .catch(error => {
+          console.warn('Failed to load widget config:', error);
+          // Continue with default config
+        });
+    }
+  }, [botId]);
+
+  // Apply custom styling when configuration changes
+  useEffect(() => {
+    if (widgetConfig && botId && botId !== 'demo') {
+      const styleId = `widget-style-${botId}`;
+      let existingStyle = document.getElementById(styleId);
+      
+      if (!existingStyle) {
+        existingStyle = document.createElement('style');
+        existingStyle.id = styleId;
+        document.head.appendChild(existingStyle);
+      }
+
+      let customCSS = '';
+
+      // Apply accent color
+      if (widgetConfig.accent_color && widgetConfig.accent_color !== '#00D4FF') {
+        customCSS += `
+          .anemo-card .anemo-card-header { background: ${widgetConfig.accent_color} !important; }
+          .anemo-msg.bot .anemo-bubble { background: ${widgetConfig.accent_color} !important; }
+          .send-btn { background: ${widgetConfig.accent_color} !important; }
+          .send-btn:hover { background: ${widgetConfig.accent_color}dd !important; }
+        `;
+      }
+
+      // Apply theme-based styling
+      if (widgetConfig.chatbot_theme === 'dark') {
+        customCSS += `
+          .anemo-card { background: #1a1a1a !important; color: #ffffff !important; }
+          .anemo-card-body { background: #1a1a1a !important; }
+          .anemo-input-container { background: #2d2d2d !important; }
+          .anemo-textarea { background: #2d2d2d !important; color: #ffffff !important; }
+          .anemo-msg.user .anemo-bubble { background: #333333 !important; color: #ffffff !important; }
+        `;
+      } else if (widgetConfig.chatbot_theme === 'minimal') {
+        customCSS += `
+          .anemo-card { box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; border: 1px solid #e0e0e0 !important; }
+          .anemo-card-header { background: #f8f9fa !important; color: #333333 !important; }
+          .anemo-msg.bot .anemo-bubble { background: #f1f3f4 !important; color: #333333 !important; }
+        `;
+      }
+
+      // Apply custom CSS if provided (Ultra tier only)
+      if (widgetConfig.tier === 'ultra' && widgetConfig.custom_css) {
+        customCSS += widgetConfig.custom_css;
+      }
+
+      existingStyle.textContent = customCSS;
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (botId && botId !== 'demo') {
+        const styleId = `widget-style-${botId}`;
+        const existingStyle = document.getElementById(styleId);
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+      }
+    };
+  }, [widgetConfig, botId]);
+
   useEffect(() => {
     const seen = localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
       setMessages([{
         id: uid(),
         role: 'bot',
-        text: `Hi! I'm ${BRAND.name}, your AI assistant. How can I help you today?`,
+        text: widgetConfig.welcome_message,
         at: Date.now()
       }]);
       localStorage.setItem(INTRO_KEY, '1');
     }
-  }, [messages.length]);
+  }, [messages.length, widgetConfig.welcome_message]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -220,10 +338,37 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     <div className="anemo-card-widget">
       <div className="anemo-card-header">
         <div className="anemo-bot-avatar">
-          <span role="img" aria-label="Trulybot logo">🌀</span>
+          {widgetConfig.chatbot_logo_url ? (
+            <Image 
+              src={widgetConfig.chatbot_logo_url} 
+              alt={`${widgetConfig.chatbot_name} logo`}
+              width={24}
+              height={24}
+              style={{ borderRadius: '50%', objectFit: 'cover' }}
+              onError={(e) => {
+                // Fallback to default SVG if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.removeAttribute('style');
+              }}
+            />
+          ) : null}
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 64 64" 
+            fill="none"
+            aria-label="Chatbot logo"
+            style={widgetConfig.chatbot_logo_url ? { display: 'none' } : {}}
+          >
+            <polygon 
+              fill={widgetConfig.accent_color || "#00D4FF"}
+              points="40,1 17,37 31,37 24,63 50,27 36,27"
+            />
+          </svg>
         </div>
         <div className="anemo-bot-titlebox">
-          <div className="anemo-bot-title">{BRAND.name}</div>
+          <div className="anemo-bot-title">{widgetConfig.chatbot_name}</div>
           <div className="anemo-bot-desc">{botId === 'demo' ? 'Demo' : 'AI'}</div>
         </div>
         {onClose && (
@@ -284,7 +429,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(input); } }}
-              placeholder={`Message ${BRAND.name}...`}
+              placeholder={`Message ${widgetConfig.chatbot_name}...`}
               rows={1}
               disabled={isLoading}
               aria-label="Chat message input"
@@ -339,9 +484,27 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         .suggestion-btn { background: #282c34; color: #a5aebf; border: 1px solid #23272f; border-radius: 15px; padding: 8px 16px; font-size: 0.9em; cursor: pointer; transition: all 0.2s; }
         .suggestion-btn:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
         .anemo-composer { background: #23272f; border-top: 1px solid #282c34; position: relative; z-index: 10; }
+        @media (max-width: 700px) {
+          .anemo-composer {
+            position: sticky;
+            bottom: 0;
+            background: #23272f;
+            padding-bottom: max(env(safe-area-inset-bottom), 8px);
+          }
+          .anemo-chatbox {
+            height: calc(var(--vh, 1vh) * 100) !important;
+            max-height: calc(var(--vh, 1vh) * 100) !important;
+          }
+        }
         .composer-inner { display: flex; align-items: flex-end; gap: 12px; background: #282c34; border-radius: 24px; border: 1px solid #23272f; padding: 8px 8px 8px 20px; margin: 10px 8px 8px 8px; transition: border-color 0.2s; }
-        .composer-inner:focus-within { border-color: #2563eb; }
+        .composer-inner:focus-within { border-color: #23272f; }
         .composer-inner textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 1rem; font-family: inherit; padding: 8px 0; min-height: 24px; max-height: 100px; resize: none; outline: none; }
+        @media (max-width: 700px) {
+          .composer-inner textarea {
+            font-size: 16px; /* Prevents zoom on iOS */
+            max-height: 80px;
+          }
+        }
         .composer-inner textarea::placeholder { color: #a5aebf; }
         .send-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #2563eb; color: white; border: none; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }

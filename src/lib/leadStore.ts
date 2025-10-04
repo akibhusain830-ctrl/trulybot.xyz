@@ -48,6 +48,7 @@ export async function persistLeadIfAny(params: PersistLeadParams): Promise<{ cre
     const { data: existing, error: selErr } = await adminClient
       .from('leads')
       .select('id,status')
+      .eq('workspace_id', params.workspaceId)
       .eq('source_bot_id', params.sourceBotId)
       .eq('email', params.email)
       .limit(1)

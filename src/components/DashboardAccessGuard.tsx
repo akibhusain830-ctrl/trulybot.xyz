@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 import { UserSubscription } from '@/lib/subscription';
@@ -14,11 +14,7 @@ export default function DashboardAccessGuard({ children }: DashboardAccessGuardP
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAccess();
-  }, []);
-
-  const checkAccess = async () => {
+  const checkAccess = useCallback(async () => {
     try {
       const response = await fetch('/api/user/profile');
       if (!response.ok) {
@@ -39,7 +35,11 @@ export default function DashboardAccessGuard({ children }: DashboardAccessGuardP
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAccess();
+  }, [checkAccess]);
 
   const syncSubscription = async () => {
     try {
