@@ -9,6 +9,7 @@ import {
 } from '@/lib/utils/geolocation-pricing';
 
 export interface UseCurrencyDetectionResult {
+<<<<<<< HEAD
   currency: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
   symbol: '$' | '₹' | '€' | '£' | 'C$' | 'A$';
   isIndia: boolean;
@@ -17,6 +18,13 @@ export interface UseCurrencyDetectionResult {
   region: string;
   confidence: number;
   isVpn: boolean;
+=======
+  currency: 'USD' | 'INR';
+  symbol: '$' | '₹';
+  isIndia: boolean;
+  isLoading: boolean;
+  country: string;
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 }
 
 /**
@@ -37,6 +45,20 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
         if (cached) {
           setResult(cached);
           setIsLoading(false);
+<<<<<<< HEAD
+=======
+          
+          // Still detect in background to update cache if needed
+          detectUserCurrency().then(detected => {
+            if (detected.country !== cached.country) {
+              setResult(detected);
+              setCachedUserCurrency(detected);
+            }
+          }).catch(() => {
+            // Keep cached result if background detection fails
+          });
+          
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
           return;
         }
 
@@ -55,9 +77,12 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
           symbol: '$',
           country: 'Unknown',
           isIndia: false,
+<<<<<<< HEAD
           region: 'Unknown',
           isVpn: false,
           confidence: 0.3,
+=======
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
         };
         setResult(fallback);
         setCachedUserCurrency(fallback);
@@ -69,6 +94,7 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
     initializeCurrency();
   }, []);
 
+<<<<<<< HEAD
   // Default loading state
   if (isLoading || !result) {
     return {
@@ -80,6 +106,16 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
       region: 'Unknown',
       confidence: 0,
       isVpn: false,
+=======
+  // Return loading state until currency is detected
+  if (isLoading || !result) {
+    return {
+      currency: 'INR', // Default to INR while loading (assuming Indian user)
+      symbol: '₹',
+      isIndia: true,
+      isLoading: true,
+      country: 'IN',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     };
   }
 
@@ -89,9 +125,12 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
     isIndia: result.isIndia,
     isLoading: false,
     country: result.country,
+<<<<<<< HEAD
     region: result.region,
     confidence: result.confidence,
     isVpn: result.isVpn,
+=======
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 

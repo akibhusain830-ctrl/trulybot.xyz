@@ -10,7 +10,11 @@ declare const window: any;
 // Defines the properties (props) the component accepts.
 interface Props {
   amount: number; // retained for display but not trusted by server
+<<<<<<< HEAD
   currency: 'INR' | 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD'; // Accept all currencies
+=======
+  currency: 'INR' | 'USD';
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   billingPeriod: 'monthly' | 'yearly'; // IMPROVEMENT: Added billing period
   label: string;
   notes: Record<string, any>;
@@ -55,6 +59,7 @@ export default function RazorpayButton({
   // Internal loading state for when the payment process is active.
   const [loading, setLoading] = useState(false);
 
+<<<<<<< HEAD
   // Map currencies to Razorpay-supported currencies
   const getRazorpayCurrency = (currency: string): 'INR' | 'USD' => {
     switch (currency) {
@@ -72,6 +77,8 @@ export default function RazorpayButton({
 
   const razorpayCurrency = getRazorpayCurrency(currency);
 
+=======
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   const createOrder = async () => {
     setLoading(true);
     try {
@@ -86,7 +93,11 @@ export default function RazorpayButton({
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+<<<<<<< HEAD
         body: JSON.stringify({ plan_id, currency: razorpayCurrency, billing_period: billingPeriod, user_id, notes }),
+=======
+        body: JSON.stringify({ plan_id, currency, billing_period: billingPeriod, user_id, notes }),
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
       });
 
       if (!res.ok) {

@@ -3,23 +3,32 @@
 
 import { PRICING_TIERS, type PricingTier } from '@/lib/constants/pricing';
 
+<<<<<<< HEAD
 export type Currency = 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
 export type CurrencySymbol = '$' | '₹' | '€' | '£' | 'C$' | 'A$';
+=======
+export type Currency = 'USD' | 'INR';
+export type CurrencySymbol = '$' | '₹';
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 
 export interface GeolocationResult {
   currency: Currency;
   symbol: CurrencySymbol;
   country: string;
   isIndia: boolean;
+<<<<<<< HEAD
   region: string;
   isVpn: boolean;
   confidence: number;
+=======
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 }
 
 // Cache geolocation result to avoid repeated API calls
 let cachedGeolocation: GeolocationResult | null = null;
 
 /**
+<<<<<<< HEAD
  * Enhanced currency mapping for better global support
  */
 const CURRENCY_MAP: Record<string, { currency: Currency; symbol: CurrencySymbol; region: string }> = {
@@ -47,6 +56,10 @@ const CURRENCY_MAP: Record<string, { currency: Currency; symbol: CurrencySymbol;
 /**
  * Detect user's currency based on geolocation with enhanced reliability
  * Returns appropriate currency for user's location with VPN detection
+=======
+ * Detect user's currency based on geolocation
+ * Returns INR for Indian visitors, USD for everyone else
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
  */
 export async function detectUserCurrency(): Promise<GeolocationResult> {
   // Return cached result if available
@@ -54,6 +67,7 @@ export async function detectUserCurrency(): Promise<GeolocationResult> {
     return cachedGeolocation;
   }
 
+<<<<<<< HEAD
   try {
     // Try multiple geolocation services with timeout and VPN detection
     const results = await Promise.allSettled([
@@ -111,6 +125,76 @@ export async function detectUserCurrency(): Promise<GeolocationResult> {
       }, 100);
     }
     
+=======
+  // Check for manual override (for testing)
+  if (typeof window !== 'undefined') {
+    const override = new URLSearchParams(window.location.search).get('currency');
+    if (override === 'INR' || override === 'USD') {
+      const result: GeolocationResult = {
+        currency: override as Currency,
+        symbol: override === 'INR' ? '₹' : '$',
+        country: override === 'INR' ? 'IN' : 'US',
+        isIndia: override === 'INR',
+      };
+      cachedGeolocation = result;
+      return result;
+    }
+  }
+
+  try {
+    // Try all geolocation services with timeout
+    const services = [
+      fetchFromIpInfo(),
+      fetchFromIpApi(),
+      fetchFromCloudflare(),
+      fetchFromIpApiCom(),
+      fetchFromFreeGeoIP()
+    ];
+
+    // Race all services but wait for at least one to complete
+    const result = await Promise.race(services);
+    
+    // Validate result
+    if (result && result.country) {
+      cachedGeolocation = result;
+      return result;
+    }
+    
+    throw new Error('No valid geolocation result');
+
+  } catch (error) {
+    console.warn('All geolocation services failed, using heuristic detection:', error);
+    
+    // Try browser timezone as backup
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const isIndianTimezone = timezone === 'Asia/Kolkata' || 
+                              timezone === 'Asia/Calcutta' ||
+                              timezone.includes('Asia/India');
+      
+      if (isIndianTimezone) {
+        const result: GeolocationResult = {
+          currency: 'INR',
+          symbol: '₹',
+          country: 'IN',
+          isIndia: true,
+        };
+        cachedGeolocation = result;
+        return result;
+      }
+    } catch (timezoneError) {
+      console.warn('Timezone detection failed:', timezoneError);
+    }
+    
+    // Ultimate fallback - assume USD for international
+    const fallback: GeolocationResult = {
+      currency: 'USD',
+      symbol: '$',
+      country: 'Unknown',
+      isIndia: false,
+    };
+    cachedGeolocation = fallback;
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     return fallback;
   }
 }
@@ -148,7 +232,11 @@ export function setCachedUserCurrency(result: GeolocationResult): void {
 }
 
 /**
+<<<<<<< HEAD
  * Enhanced Cloudflare geolocation (most reliable)
+=======
+ * Cloudflare geolocation (most reliable)
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
  */
 async function fetchFromCloudflare(): Promise<GeolocationResult> {
   const response = await fetch('/cdn-cgi/trace', { 
@@ -163,6 +251,7 @@ async function fetchFromCloudflare(): Promise<GeolocationResult> {
   const countryLine = lines.find(line => line.startsWith('loc='));
   const country = countryLine ? countryLine.split('=')[1] : 'Unknown';
   
+<<<<<<< HEAD
   const currencyInfo = CURRENCY_MAP[country] || { currency: 'USD' as Currency, symbol: '$' as CurrencySymbol, region: 'Unknown' };
   const isIndia = country === 'IN';
   
@@ -174,10 +263,20 @@ async function fetchFromCloudflare(): Promise<GeolocationResult> {
     region: currencyInfo.region,
     isVpn: false, // Cloudflare usually accurate
     confidence: 0.95,
+=======
+  const isIndia = country === 'IN';
+  
+  return {
+    currency: isIndia ? 'INR' : 'USD',
+    symbol: isIndia ? '₹' : '$',
+    country,
+    isIndia,
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 
 /**
+<<<<<<< HEAD
  * Secure IP-API geolocation (HTTPS)
  */
 async function fetchFromIpApiSecure(): Promise<GeolocationResult> {
@@ -208,6 +307,27 @@ async function fetchFromIpApiSecure(): Promise<GeolocationResult> {
     region: currencyInfo.region,
     isVpn,
     confidence: isVpn ? 0.6 : 0.85,
+=======
+ * IP-API geolocation (free tier, reliable)
+ */
+async function fetchFromIpApi(): Promise<GeolocationResult> {
+  const response = await fetch('https://ipapi.co/json/', {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(3000)
+  });
+  
+  if (!response.ok) throw new Error('IP-API failed');
+  
+  const data = await response.json();
+  const country = data.country_code || 'Unknown';
+  const isIndia = country === 'IN';
+  
+  return {
+    currency: isIndia ? 'INR' : 'USD',
+    symbol: isIndia ? '₹' : '$',
+    country,
+    isIndia,
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 
@@ -217,13 +337,18 @@ async function fetchFromIpApiSecure(): Promise<GeolocationResult> {
 async function fetchFromIpInfo(): Promise<GeolocationResult> {
   const response = await fetch('https://ipinfo.io/json', {
     cache: 'no-store',
+<<<<<<< HEAD
     signal: AbortSignal.timeout(4000)
+=======
+    signal: AbortSignal.timeout(3000)
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   });
   
   if (!response.ok) throw new Error('IPInfo failed');
   
   const data = await response.json();
   const country = data.country || 'Unknown';
+<<<<<<< HEAD
   const currencyInfo = CURRENCY_MAP[country] || { currency: 'USD' as Currency, symbol: '$' as CurrencySymbol, region: 'Unknown' };
   const isIndia = country === 'IN';
   
@@ -242,10 +367,20 @@ async function fetchFromIpInfo(): Promise<GeolocationResult> {
     region: currencyInfo.region,
     isVpn,
     confidence: isVpn ? 0.5 : 0.8,
+=======
+  const isIndia = country === 'IN';
+  
+  return {
+    currency: isIndia ? 'INR' : 'USD',
+    symbol: isIndia ? '₹' : '$',
+    country,
+    isIndia,
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 
 /**
+<<<<<<< HEAD
  * Additional geolocation service for redundancy
  */
 async function fetchFromIpGeolocation(): Promise<GeolocationResult> {
@@ -274,10 +409,32 @@ async function fetchFromIpGeolocation(): Promise<GeolocationResult> {
     region: currencyInfo.region,
     isVpn,
     confidence: isVpn ? 0.4 : 0.75,
+=======
+ * IP-API.com geolocation (additional backup)
+ */
+async function fetchFromIpApiCom(): Promise<GeolocationResult> {
+  const response = await fetch('https://ip-api.com/json/?fields=countryCode', {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(3000)
+  });
+  
+  if (!response.ok) throw new Error('IP-API.com failed');
+  
+  const data = await response.json();
+  const country = data.countryCode || 'Unknown';
+  const isIndia = country === 'IN';
+  
+  return {
+    currency: isIndia ? 'INR' : 'USD',
+    symbol: isIndia ? '₹' : '$',
+    country,
+    isIndia,
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 
 /**
+<<<<<<< HEAD
  * Intelligent fallback using browser heuristics
  */
 function getIntelligentFallback(): GeolocationResult {
@@ -334,6 +491,27 @@ function getIntelligentFallback(): GeolocationResult {
     region: currencyInfo.region,
     isVpn: false,
     confidence,
+=======
+ * FreeGeoIP (additional backup)
+ */
+async function fetchFromFreeGeoIP(): Promise<GeolocationResult> {
+  const response = await fetch('https://freeipapi.com/api/json', {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(3000)
+  });
+  
+  if (!response.ok) throw new Error('FreeGeoIP failed');
+  
+  const data = await response.json();
+  const country = data.countryCode || 'Unknown';
+  const isIndia = country === 'IN';
+  
+  return {
+    currency: isIndia ? 'INR' : 'USD',
+    symbol: isIndia ? '₹' : '$',
+    country,
+    isIndia,
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 }
 

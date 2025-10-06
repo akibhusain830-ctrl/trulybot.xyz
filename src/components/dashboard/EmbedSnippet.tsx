@@ -7,7 +7,15 @@ interface EmbedSnippetProps {
 }
 
 const buildEmbedSnippet = (userId: string) => {
+<<<<<<< HEAD
   return `<script async src="${window.location.origin}/widget.js" data-bot-id="${userId}"></script>`;
+=======
+  // Always use canonical domain without www
+  const origin = typeof window !== 'undefined' 
+    ? window.location.origin.replace('://www.', '://')
+    : 'https://trulybot.xyz';
+  return `<script async src="${origin}/widget/loader.js" data-chatbot-id="${userId}" data-api-url="${origin}"></script>`;
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 };
 
 export default function EmbedSnippet({ userId }: EmbedSnippetProps) {

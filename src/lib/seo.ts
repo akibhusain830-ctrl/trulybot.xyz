@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { generateAdvancedSEOMetadata, SEOIntelligenceConfig } from './seo-intelligence';
 import { generateCompleteSchemaCollection } from './advanced-structured-data';
 
@@ -28,6 +29,17 @@ export interface Metadata {
   twitter?: any;
   alternates?: any;
   other?: Record<string, string>;
+=======
+import { Metadata } from 'next'
+
+interface SEOConfig {
+  title: string
+  description: string
+  keywords?: string[]
+  canonical?: string
+  ogImage?: string
+  noIndex?: boolean
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 }
 
 export function generateSEOMetadata({
@@ -36,6 +48,7 @@ export function generateSEOMetadata({
   keywords = [],
   canonical,
   ogImage = '/og-trulybot-ai-chatbot.jpg',
+<<<<<<< HEAD
   noIndex = false,
   voiceSearchOptimized = false,
   featuredSnippetTargeting = false,
@@ -60,6 +73,13 @@ export function generateSEOMetadata({
   const siteUrl = 'https://trulybot.xyz'
   const canonicalUrl = canonical ? `${siteUrl}${canonical}` : siteUrl
   const fullTitle = title.includes('TrulyBot') ? title : `${title} | TrulyBot`
+=======
+  noIndex = false
+}: SEOConfig): Metadata {
+  const siteUrl = 'https://trulybot.xyz'
+  const fullTitle = `${title} | TrulyBot - AI Chatbot for E-Commerce`
+  const canonicalUrl = canonical ? `${siteUrl}${canonical}` : siteUrl
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 
   return {
     title: fullTitle,
@@ -72,17 +92,33 @@ export function generateSEOMetadata({
       'customer support automation',
       'lead generation'
     ],
+<<<<<<< HEAD
     authors: [{ name: 'TrulyBot Team' }],
     creator: 'TrulyBot',
     publisher: 'TrulyBot',
+=======
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     openGraph: {
       title: fullTitle,
       description,
       url: canonicalUrl,
       siteName: 'TrulyBot',
+<<<<<<< HEAD
       locale: userLocation === 'india' ? 'en_IN' : 'en_US',
       type: 'website',
       images: [`${siteUrl}${ogImage}`]
+=======
+      images: [
+        {
+          url: `${siteUrl}${ogImage}`,
+          width: 1200,
+          height: 630,
+          alt: title
+        }
+      ],
+      locale: 'en_US',
+      type: 'website'
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     },
     twitter: {
       card: 'summary_large_image',
@@ -97,7 +133,11 @@ export function generateSEOMetadata({
   }
 }
 
+<<<<<<< HEAD
 // Enhanced SEO configs with voice search and featured snippet optimization
+=======
+// World-class SEO configs for maximum search visibility
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
 export const seoConfigs = {
   home: {
     title: 'TrulyBot - #1 AI Chatbot for E-Commerce | 24/7 Customer Support',
@@ -111,6 +151,7 @@ export const seoConfigs = {
       'customer support software',
       'AI customer service',
       'chatbot for business',
+<<<<<<< HEAD
       'intelligent customer support',
       'automated lead capture',
       'instant AI responses',
@@ -129,10 +170,23 @@ export const seoConfigs = {
   about: {
     title: 'About TrulyBot - Advanced AI Chatbot Platform',
     description: 'Discover TrulyBot\'s mission to revolutionize e-commerce customer support with intelligent AI chatbots. Learn about our cutting-edge technology and vision for the future.',
+=======
+      'thunderbolt fast chatbot',
+      'lightning speed customer support',
+      'instant AI responses',
+      'rapid chatbot deployment'
+    ]
+  },
+
+  about: {
+    title: 'About TrulyBot - Lightning-Fast AI Chatbot Innovation',
+    description: 'Discover TrulyBot\'s mission to revolutionize e-commerce customer support with lightning-fast AI chatbots. Learn about our thunderbolt-speed technology and vision.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'about trulybot',
       'AI chatbot company',
       'chatbot technology innovation',
+<<<<<<< HEAD
       'intelligent AI platform',
       'advanced chatbot technology',
       'AI customer service company',
@@ -149,6 +203,19 @@ export const seoConfigs = {
   contact: {
     title: 'Contact TrulyBot - Get Expert Support & Demo',
     description: 'Contact TrulyBot for personalized support and product demos. Reach our AI experts for assistance with chatbot implementation and questions.',
+=======
+      'lightning fast AI',
+      'thunderbolt chatbot speed',
+      'AI customer service company',
+      'chatbot startup story',
+      'ecommerce AI solutions'
+    ]
+  },
+
+  contact: {
+    title: 'Contact TrulyBot - Get Lightning-Fast Support',
+    description: 'Contact TrulyBot for thunderbolt-speed support and demos. Reach our AI experts for instant assistance with chatbot implementation and questions.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'contact trulybot',
       'chatbot support',
@@ -156,6 +223,7 @@ export const seoConfigs = {
       'customer service contact',
       'chatbot sales contact',
       'AI support team',
+<<<<<<< HEAD
       'chatbot consultation',
       'expert chatbot help',
       // Voice search
@@ -189,6 +257,16 @@ export const seoConfigs = {
   privacy: {
     title: 'Privacy Policy - TrulyBot Data Protection & Security',
     description: 'TrulyBot privacy policy ensures secure, compliant data handling for your AI chatbot. Learn how we protect customer data with enterprise-grade security.',
+=======
+      'instant chatbot help',
+      'lightning fast support'
+    ]
+  },
+
+  privacy: {
+    title: 'Privacy Policy - TrulyBot Data Protection',
+    description: 'TrulyBot privacy policy ensures lightning-fast, secure data handling for your AI chatbot. Learn how we protect customer data with thunderbolt security.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'trulybot privacy policy',
       'chatbot data privacy',
@@ -197,6 +275,7 @@ export const seoConfigs = {
       'GDPR compliant chatbot',
       'data security policy',
       'private AI conversations'
+<<<<<<< HEAD
     ],
     userIntent: 'informational' as const
   },
@@ -204,6 +283,14 @@ export const seoConfigs = {
   terms: {
     title: 'Terms of Service - TrulyBot Legal Terms & Conditions',
     description: 'TrulyBot terms of service for AI chatbot usage. Clear, fair terms for professional chatbot deployment and comprehensive customer support.',
+=======
+    ]
+  },
+
+  terms: {
+    title: 'Terms of Service - TrulyBot Legal Terms',
+    description: 'TrulyBot terms of service for AI chatbot usage. Clear, fair terms for lightning-fast chatbot deployment and thunderbolt-speed customer support.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'trulybot terms of service',
       'chatbot terms conditions',
@@ -211,13 +298,21 @@ export const seoConfigs = {
       'chatbot usage terms',
       'SaaS terms of service',
       'AI chatbot legal terms'
+<<<<<<< HEAD
     ],
     userIntent: 'informational' as const
+=======
+    ]
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   },
 
   dashboard: {
     title: 'Dashboard - TrulyBot AI Chatbot Management',
+<<<<<<< HEAD
     description: 'Manage your TrulyBot AI chatbot with our intuitive dashboard. Monitor conversations, track leads, and analyze performance with real-time insights.',
+=======
+    description: 'Manage your TrulyBot AI chatbot with lightning-fast dashboard. Monitor conversations, leads, analytics with thunderbolt-speed insights.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'chatbot dashboard',
       'AI chatbot management',
@@ -227,13 +322,21 @@ export const seoConfigs = {
       'lead tracking dashboard',
       'AI insights platform'
     ],
+<<<<<<< HEAD
     noIndex: true, // Private area
     userIntent: 'transactional' as const
+=======
+    noIndex: true // Private area
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   },
 
   widget: {
     title: 'Chat Widget - TrulyBot AI Customer Support',
+<<<<<<< HEAD
     description: 'Experience TrulyBot\'s intelligent AI chat widget. Fast responses, seamless customer support, and effortless e-commerce integration.',
+=======
+    description: 'Experience TrulyBot\'s lightning-fast AI chat widget. Thunderbolt-speed responses, instant customer support, seamless e-commerce integration.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'AI chat widget',
       'customer support widget',
@@ -241,6 +344,7 @@ export const seoConfigs = {
       'website chatbot',
       'ecommerce chat widget',
       'instant customer support',
+<<<<<<< HEAD
       'smart chat interface'
     ],
     userIntent: 'commercial' as const
@@ -249,12 +353,36 @@ export const seoConfigs = {
   features: {
     title: 'TrulyBot Features - Comprehensive AI Chatbot Capabilities',
     description: 'Discover TrulyBot\'s powerful features: 24/7 support, advanced lead capture, multi-language support, detailed analytics, and seamless integrations. See why 10,000+ businesses choose us.',
+=======
+      'lightning fast chat'
+    ]
+  },
+  
+  pricing: {
+    title: 'TrulyBot Pricing - Lightning-Fast AI Chatbot Plans Starting at $5/month',
+    description: 'Choose the perfect AI chatbot plan for your business. Basic $5, Pro $15, Ultra $30. Free 7-day trial, no setup fees. Scale customer support effortlessly.',
+    keywords: [
+      'chatbot pricing',
+      'AI chatbot cost',
+      'customer support software pricing',
+      'affordable chatbot solution',
+      'ecommerce chatbot plans',
+      'thunderbolt speed pricing',
+      'instant AI chatbot plans'
+    ]
+  },
+
+  features: {
+    title: 'TrulyBot Features - Lightning-Fast AI Chatbot Capabilities',
+    description: 'Discover TrulyBot\'s powerful features: 24/7 support, lead capture, multi-language, analytics, integrations. See why 10,000+ businesses choose us.',
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     keywords: [
       'chatbot features',
       'AI customer support features',
       'automated lead generation',
       'chatbot capabilities',
       'customer service automation',
+<<<<<<< HEAD
       'advanced chatbot features',
       'intelligent AI responses',
       // Voice search additions
@@ -264,6 +392,11 @@ export const seoConfigs = {
     voiceSearchOptimized: true,
     featuredSnippetTargeting: true,
     userIntent: 'informational' as const
+=======
+      'thunderbolt fast features',
+      'lightning AI responses'
+    ]
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   },
 
   signup: {
@@ -274,8 +407,13 @@ export const seoConfigs = {
       'AI chatbot signup',
       'customer support trial',
       'ecommerce chatbot demo',
+<<<<<<< HEAD
       'quick chatbot setup',
       'instant registration'
+=======
+      'instant chatbot setup',
+      'lightning fast registration'
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
     ]
   }
 } as const

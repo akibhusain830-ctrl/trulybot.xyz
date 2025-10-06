@@ -13,9 +13,13 @@ export const metadata: Metadata = generateSEOMetadata({
     'AI shopping assistant',
     'ecommerce automation',
     'online business chatbot',
+<<<<<<< HEAD
     'retail AI chatbot',
     'smart ecommerce support',
     'automated sales assistant'
+=======
+    'retail AI chatbot'
+>>>>>>> afe65066d37e0367748c163325382d953fb420b4
   ],
   canonical: '/ai-chatbot-for-ecommerce'
 });
