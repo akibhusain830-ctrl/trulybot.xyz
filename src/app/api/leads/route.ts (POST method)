@@ -1,0 +1,19 @@
+
+export async function POST(req: NextRequest) {
+  const { data: { user }, error: authError } = await admin.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const leadData = await req.json();
+  
+  const { data, error } = await admin
+    .from('leads')
+    .insert({
+      ...leadData,
+      user_id: user.id // Associate lead with current user
+    });
+
+  // ... rest of the code
+}
+i 

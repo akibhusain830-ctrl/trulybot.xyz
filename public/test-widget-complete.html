@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Test - Icon & Embedding</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+        }
+        
+        .pending {
+            background: rgba(251, 191, 36, 0.2);
+            border: 2px solid #fbbf24;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .check-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .highlight {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Widget Test Suite</h1>
+        <p>Testing both the new messaging icon (💬) and embedding functionality</p>
+        
+        <div id="icon-test" class="test-status pending">
+            ⏳ Checking for new messaging icon...
+        </div>
+        
+        <div id="embed-test" class="test-status pending">
+            ⏳ Testing iframe embedding...
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>📋 Test Checklist</h2>
+        <ul class="checklist">
+            <li><span class="check-icon" id="check1">⏳</span> Widget script loads from localhost:3000</li>
+            <li><span class="check-icon" id="check2">⏳</span> Chat button appears with <span class="highlight">💬</span> icon</li>
+            <li><span class="check-icon" id="check3">⏳</span> Button is clickable and responsive</li>
+            <li><span class="check-icon" id="check4">⏳</span> Chat iframe opens without CORS errors</li>
+            <li><span class="check-icon" id="check5">⏳</span> No "refused to connect" errors</li>
+        </ul>
+    </div>
+    
+    <div class="container">
+        <h2>🎯 What to Look For</h2>
+        <p><strong>Icon Test:</strong> The chat button should show a <span class="highlight">💬</span> speech bubble instead of the old 🌀 cyclone.</p>
+        <p><strong>Embedding Test:</strong> Clicking the button should open the chat iframe without any console errors.</p>
+        <p><strong>Position:</strong> Button should appear in the bottom-right corner with hover effects.</p>
+    </div>
+
+    <!-- Load widget from localhost:3000 with updated icon -->
+    <script 
+        src="http://localhost:3000/widget.js" 
+        data-bot-id="demo"
+        data-position="right"
+        data-color="#667eea"
+        data-greeting="Chat with us"
+        async>
+    </script>
+
+    <script>
+        let checks = {
+            script: false,
+            icon: false,
+            button: false,
+            iframe: false,
+            noErrors: true
+        };
+        
+        function updateCheck(id, status) {
+            const element = document.getElementById(id);
+            element.textContent = status ? '✅' : '❌';
+        }
+        
+        function updateStatus(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            element.className = `test-status ${success ? 'success' : 'error'}`;
+            element.textContent = message;
+        }
+        
+        // Monitor widget loading
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        function testWidget() {
+            attempts++;
+            
+            // Test 1: Script loaded
+            const container = document.getElementById('trulybot-widget-container');
+            const button = document.getElementById('trulybot-launcher');
+            
+            if (container) {
+                checks.script = true;
+                updateCheck('check1', true);
+            }
+            
+            // Test 2: Icon test
+            if (button) {
+                const iconSpan = button.querySelector('span[aria-hidden="true"]');
+                if (iconSpan && iconSpan.textContent === '💬') {
+                    checks.icon = true;
+                    updateCheck('check2', true);
+                    updateStatus('icon-test', true, '✅ Success! New messaging icon (💬) detected');
+                } else if (iconSpan) {
+                    updateStatus('icon-test', false, `❌ Wrong icon detected: ${iconSpan.textContent}`);
+                }
+                
+                // Test 3: Button functionality
+                checks.button = true;
+                updateCheck('check3', true);
+                
+                // Add click listener to test iframe
+                button.addEventListener('click', function() {
+                    setTimeout(() => {
+                        const panel = document.getElementById('trulybot-panel');
+                        const iframe = panel ? panel.querySelector('iframe') : null;
+                        
+                        if (iframe && iframe.src) {
+                            checks.iframe = true;
+                            updateCheck('check4', true);
+                            updateStatus('embed-test', true, '✅ Success! Iframe loads without CORS errors');
+                        }
+                    }, 500);
+                });
+            }
+            
+            if (checks.script && checks.icon && checks.button) {
+                updateCheck('check5', checks.noErrors);
+                return; // All tests completed
+            }
+            
+            if (attempts >= maxAttempts) {
+                if (!checks.script) updateStatus('icon-test', false, '❌ Widget script failed to load');
+                if (!checks.icon) updateStatus('icon-test', false, '❌ Icon test failed');
+                if (!checks.iframe) updateStatus('embed-test', false, '❌ Click the chat button to test iframe');
+                return;
+            }
+            
+            setTimeout(testWidget, 100);
+        }
+        
+        // Start testing after a delay
+        setTimeout(testWidget, 1000);
+        
+        // Monitor for errors
+        window.addEventListener('error', function(e) {
+            checks.noErrors = false;
+            updateCheck('check5', false);
+            console.error('Test Error:', e.message);
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            checks.noErrors = false;
+            updateCheck('check5', false);
+            console.error('Promise Rejection:', e.reason);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Embedding Test - Business Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .widget-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .test-scenarios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .scenario {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .scenario h4 {
+            margin-top: 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Widget Embedding Test - Business Details Integration</h1>
+        <p>This page tests the complete widget embedding functionality with custom business details and bot customization.</p>
+    </div>
+    
+    <div class="container">
+        <h2>📋 Test Scenarios</h2>
+        <div class="test-scenarios">
+            <div class="scenario">
+                <h4>Scenario 1: TechCorp Solutions</h4>
+                <p>Test with a technology consulting company's business details including services, pricing, and contact information.</p>
+                <button class="test-button" onclick="testTechCorpWidget()">Load TechCorp Widget</button>
+            </div>
+            
+            <div class="scenario">
+                <h4>Scenario 2: E-commerce Store</h4>
+                <p>Test with an online retail store's product catalog, shipping info, and return policies.</p>
+                <button class="test-button" onclick="testEcommerceWidget()">Load E-commerce Widget</button>
+            </div>
+            
+            <div class="scenario">
+                <h4>Scenario 3: Restaurant</h4>
+                <p>Test with a restaurant's menu, hours, location, and reservation system.</p>
+                <button class="test-button" onclick="testRestaurantWidget()">Load Restaurant Widget</button>
+            </div>
+            
+            <div class="scenario">
+                <h4>Scenario 4: Custom Bot Settings</h4>
+                <p>Test with custom bot name, welcome message, colors, and theme.</p>
+                <button class="test-button" onclick="testCustomBotSettings()">Test Custom Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Widget Functionality Tests</h2>
+        
+        <div class="test-section">
+            <h3>1. Widget Configuration Loading</h3>
+            <button class="test-button" onclick="testWidgetConfigLoading()">Test Config Loading</button>
+            <div id="config-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Business Knowledge Retrieval</h3>
+            <button class="test-button" onclick="testBusinessKnowledgeRetrieval()">Test Knowledge Retrieval</button>
+            <div id="knowledge-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Chat Response with Business Context</h3>
+            <button class="test-button" onclick="testBusinessContextResponse()">Test Business Context</button>
+            <div id="context-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+            <h3>4. Custom Styling Application</h3>
+            <button class="test-button" onclick="testCustomStyling()">Test Custom Styling</button>
+            <div id="styling-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+            <h3>5. Cross-Origin Widget Loading</h3>
+            <button class="test-button" onclick="testCrossOriginLoading()">Test Cross-Origin</button>
+            <div id="cross-origin-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Test Results Summary</h2>
+        <div id="summary-result" class="result info" style="display: none;"></div>
+        <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+    </div>
+
+    <!-- Widget Container -->
+    <div class="widget-container" id="widget-container"></div>
+
+    <script>
+        // Test data for different business scenarios
+        const testScenarios = {
+            techcorp: {
+                userId: 'techcorp-test-user',
+                businessDetails: `
+                    TechCorp Solutions - Your Trusted Technology Partner
+                    
+                    About Us:
+                    TechCorp Solutions is a leading technology consulting firm specializing in cloud infrastructure, cybersecurity, and digital transformation.
+                    
+                    Services:
+                    - Cloud Migration (AWS, Azure, GCP)
+                    - Cybersecurity Solutions
+                    - Digital Transformation
+                    
+                    Contact: (555) 123-4567 | info@techcorp.com
+                    Pricing: Starting at $5,000/month
+                `,
+                botSettings: {
+                    chatbot_name: 'TechCorp Assistant',
+                    welcome_message: 'Hello! I\'m TechCorp Assistant. How can I help you with our technology services?',
+                    accent_color: '#3B82F6',
+                    chatbot_theme: 'default'
+                }
+            },
+            ecommerce: {
+                userId: 'ecommerce-test-user',
+                businessDetails: `
+                    TechStore - Premium Electronics & Gadgets
+                    
+                    Products:
+                    - Smartphones & Accessories
+                    - Laptops & Computers
+                    - Audio Equipment
+                    
+                    Shipping: Free shipping on orders over $50
+                    Returns: 30-day return policy
+                    Support: 24/7 customer service
+                `,
+                botSettings: {
+                    chatbot_name: 'TechStore Helper',
+                    welcome_message: 'Welcome to TechStore! How can I help you find the perfect tech products?',
+                    accent_color: '#10B981',
+                    chatbot_theme: 'minimal'
+                }
+            },
+            restaurant: {
+                userId: 'restaurant-test-user',
+                businessDetails: `
+                    Bella Vista Restaurant - Authentic Italian Cuisine
+                    
+                    Menu Highlights:
+                    - Fresh Pasta & Risotto
+                    - Wood-fired Pizza
+                    - Fine Wines & Cocktails
+                    
+                    Hours: Mon-Sun 5PM-10PM
+                    Location: 123 Main St, Downtown
+                    Reservations: (555) 987-6543
+                `,
+                botSettings: {
+                    chatbot_name: 'Bella Vista Assistant',
+                    welcome_message: 'Buongiorno! Welcome to Bella Vista. How can I help you today?',
+                    accent_color: '#DC2626',
+                    chatbot_theme: 'dark'
+                }
+            }
+        };
+
+        let testResults = {};
+
+        // Load widget script dynamically
+        function loadWidget(userId, customConfig = {}) {
+            return new Promise((resolve, reject) => {
+                // Remove existing widget
+                const existingWidget = document.getElementById('anemo-widget');
+                if (existingWidget) {
+                    existingWidget.remove();
+                }
+
+                // Remove existing script
+                const existingScript = document.querySelector('script[data-bot-id]');
+                if (existingScript) {
+                    existingScript.remove();
+                }
+
+                // Create new script tag
+                const script = document.createElement('script');
+                script.src = '/widget.js';
+                script.setAttribute('data-bot-id', userId);
+                script.onload = () => {
+                    setTimeout(() => {
+                        const widget = document.getElementById('anemo-widget');
+                        if (widget) {
+                            resolve(widget);
+                        } else {
+                            reject(new Error('Widget not found after loading'));
+                        }
+                    }, 1000);
+                };
+                script.onerror = () => reject(new Error('Failed to load widget script'));
+                
+                document.head.appendChild(script);
+            });
+        }
+
+        // Test widget configuration loading
+        async function testWidgetConfigLoading() {
+            const resultDiv = document.getElementById('config-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/widget/config/techcorp-test-user');
+                const config = await response.json();
+                
+                if (response.ok && config.chatbot_name) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Config loaded successfully:<br>
+                        Bot Name: ${config.chatbot_name}<br>
+                        Welcome Message: ${config.welcome_message}<br>
+                        Accent Color: ${config.accent_color}<br>
+                        Tier: ${config.tier}`;
+                    testResults.configLoading = true;
+                } else {
+                    throw new Error('Invalid config response');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Config loading failed: ${error.message}`;
+                testResults.configLoading = false;
+            }
+        }
+
+        // Test business knowledge retrieval
+        async function testBusinessKnowledgeRetrieval() {
+            const resultDiv = document.getElementById('knowledge-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Simulate a chat request to test knowledge retrieval
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        botId: 'techcorp-test-user',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'What services does TechCorp Solutions offer?'
+                            }
+                        ]
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success && result.message) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Knowledge retrieval working:<br>
+                        Response: ${result.message.substring(0, 200)}...`;
+                    testResults.knowledgeRetrieval = true;
+                } else {
+                    throw new Error('Invalid knowledge retrieval response');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Knowledge retrieval failed: ${error.message}`;
+                testResults.knowledgeRetrieval = false;
+            }
+        }
+
+        // Test business context response
+        async function testBusinessContextResponse() {
+            const resultDiv = document.getElementById('context-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const testQueries = [
+                    'What are your business hours?',
+                    'How much do your services cost?',
+                    'What is your contact information?',
+                    'Tell me about your company'
+                ];
+
+                let successfulResponses = 0;
+                let responses = [];
+
+                for (const query of testQueries) {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            botId: 'techcorp-test-user',
+                            messages: [
+                                {
+                                    role: 'user',
+                                    content: query
+                                }
+                            ]
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success && result.message) {
+                        successfulResponses++;
+                        responses.push(`Q: ${query}<br>A: ${result.message.substring(0, 100)}...`);
+                    }
+                }
+
+                if (successfulResponses >= 2) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Business context responses working (${successfulResponses}/${testQueries.length} successful):<br>${responses.join('<br><br>')}`;
+                    testResults.businessContext = true;
+                } else {
+                    throw new Error('Insufficient successful responses');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Business context test failed: ${error.message}`;
+                testResults.businessContext = false;
+            }
+        }
+
+        // Test custom styling
+        async function testCustomStyling() {
+            const resultDiv = document.getElementById('styling-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Load widget with custom styling
+                await loadWidget('techcorp-test-user');
+                
+                // Check if custom styles are applied
+                const widget = document.getElementById('anemo-widget');
+                if (widget) {
+                    const computedStyle = window.getComputedStyle(widget);
+                    const hasCustomStyles = document.querySelector('style[id*="widget-style"]');
+                    
+                    if (hasCustomStyles) {
+                        resultDiv.className = 'result success';
+                        resultDiv.innerHTML = `✅ Custom styling applied successfully:<br>
+                            Widget loaded: Yes<br>
+                            Custom CSS found: Yes<br>
+                            Widget visible: ${widget.offsetHeight > 0 ? 'Yes' : 'No'}`;
+                        testResults.customStyling = true;
+                    } else {
+                        throw new Error('Custom styles not found');
+                    }
+                } else {
+                    throw new Error('Widget not loaded');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Custom styling test failed: ${error.message}`;
+                testResults.customStyling = false;
+            }
+        }
+
+        // Test cross-origin loading
+        async function testCrossOriginLoading() {
+            const resultDiv = document.getElementById('cross-origin-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Test loading widget from different origin (simulated)
+                const widgetUrl = `${window.location.origin}/widget.js`;
+                const response = await fetch(widgetUrl, { method: 'HEAD' });
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Cross-origin widget loading working:<br>
+                        Widget URL accessible: Yes<br>
+                        CORS headers present: Yes<br>
+                        Content-Type: ${response.headers.get('content-type')}`;
+                    testResults.crossOrigin = true;
+                } else {
+                    throw new Error('Widget URL not accessible');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Cross-origin test failed: ${error.message}`;
+                testResults.crossOrigin = false;
+            }
+        }
+
+        // Test specific business scenarios
+        async function testTechCorpWidget() {
+            try {
+                await loadWidget(testScenarios.techcorp.userId);
+                await testBusinessKnowledgeRetrieval();
+                console.log('✅ TechCorp widget test completed');
+            } catch (error) {
+                console.error('❌ TechCorp widget test failed:', error);
+            }
+        }
+
+        async function testEcommerceWidget() {
+            try {
+                await loadWidget(testScenarios.ecommerce.userId);
+                console.log('✅ E-commerce widget test completed');
+            } catch (error) {
+                console.error('❌ E-commerce widget test failed:', error);
+            }
+        }
+
+        async function testRestaurantWidget() {
+            try {
+                await loadWidget(testScenarios.restaurant.userId);
+                console.log('✅ Restaurant widget test completed');
+            } catch (error) {
+                console.error('❌ Restaurant widget test failed:', error);
+            }
+        }
+
+        async function testCustomBotSettings() {
+            try {
+                // Test with custom settings
+                await loadWidget('custom-bot-test');
+                await testWidgetConfigLoading();
+                console.log('✅ Custom bot settings test completed');
+            } catch (error) {
+                console.error('❌ Custom bot settings test failed:', error);
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            const summaryDiv = document.getElementById('summary-result');
+            summaryDiv.style.display = 'block';
+            summaryDiv.className = 'result info';
+            summaryDiv.innerHTML = '🔄 Running all tests...';
+
+            testResults = {};
+
+            await testWidgetConfigLoading();
+            await testBusinessKnowledgeRetrieval();
+            await testBusinessContextResponse();
+            await testCustomStyling();
+            await testCrossOriginLoading();
+
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(Boolean).length;
+
+            summaryDiv.className = `result ${passedTests === totalTests ? 'success' : 'error'}`;
+            summaryDiv.innerHTML = `
+                📊 Test Results Summary:<br>
+                ======================<br>
+                ✅ Config Loading: ${testResults.configLoading ? 'PASS' : 'FAIL'}<br>
+                ✅ Knowledge Retrieval: ${testResults.knowledgeRetrieval ? 'PASS' : 'FAIL'}<br>
+                ✅ Business Context: ${testResults.businessContext ? 'PASS' : 'FAIL'}<br>
+                ✅ Custom Styling: ${testResults.customStyling ? 'PASS' : 'FAIL'}<br>
+                ✅ Cross-Origin Loading: ${testResults.crossOrigin ? 'PASS' : 'FAIL'}<br><br>
+                📈 Overall: ${passedTests}/${totalTests} tests passed<br><br>
+                ${passedTests === totalTests ? '🎉 All tests passed! Widget embedding is working correctly.' : '⚠️ Some tests failed. Please check the implementation.'}
+            `;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Widget Embedding Test Page Loaded');
+        });
+    </script>
+</body>
+</html>

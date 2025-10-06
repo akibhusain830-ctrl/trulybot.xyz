@@ -1,0 +1,58 @@
+{
+  "name": "⚡ TrulyBot - Lightning-Fast AI Chatbot for E-Commerce",
+  "short_name": "⚡ TrulyBot",
+  "description": "Transform your e-commerce with TrulyBot's lightning-fast AI chatbot. Reduce support tickets 70%, increase leads 5X with thunderbolt-speed automation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "shopping"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-trulybot.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "⚡ TrulyBot Dashboard - Lightning-Fast AI Chatbot Management"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your lightning-fast AI chatbot dashboard",
+      "url": "/dashboard",
+      "icons": [{"src": "/favicon.svg", "sizes": "96x96"}]
+    },
+    {
+      "name": "Start Trial",
+      "short_name": "Trial",
+      "description": "Start your free 7-day thunderbolt-speed trial",
+      "url": "/start-trial",
+      "icons": [{"src": "/favicon.svg", "sizes": "96x96"}]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

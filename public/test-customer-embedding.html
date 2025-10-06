@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Widget Test - Trulybot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        h1 { color: #2563eb; margin-bottom: 10px; }
+        h2 { color: #374151; margin-top: 30px; }
+        h3 { color: #6b7280; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Customer Widget Embedding Test</h1>
+        <p>This page simulates how your widget appears on a customer's website.</p>
+        
+        <div id="widget-status" class="status info">
+            ⏳ Checking widget status...
+        </div>
+
+        <h2>How to Embed on Your Website</h2>
+        <div class="instructions">
+            <strong>Step 1:</strong> Replace "YOUR_BOT_ID" with your actual bot ID from your Trulybot dashboard.
+        </div>
+        
+        <div class="code">
+&lt;script 
+    src="https://trulybot.xyz/widget.js" 
+    data-bot-id="YOUR_BOT_ID"
+    data-position="right"
+    data-color="#2563eb"
+    async
+&gt;&lt;/script&gt;
+        </div>
+
+        <h3>Advanced Options</h3>
+        <ul>
+            <li><code>data-position="right"</code> - Position: "right" or "left"</li>
+            <li><code>data-color="#2563eb"</code> - Button color (hex code)</li>
+            <li><code>data-greeting="Chat"</code> - Button label</li>
+            <li><code>data-z="2147483000"</code> - Z-index for layering</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <div class="instructions">
+            <strong>If the widget doesn't appear:</strong>
+            <ol>
+                <li>Open browser Developer Tools (F12)</li>
+                <li>Check the Console tab for error messages</li>
+                <li>Look for red error messages starting with "[Trulybot widget]"</li>
+                <li>Verify your bot ID is correct</li>
+                <li>Ensure the script loads from https://trulybot.xyz/widget.js</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Test with demo bot ID -->
+    <script 
+        src="http://localhost:3000/widget.js" 
+        data-bot-id="demo"
+        data-position="right"
+        data-color="#2563eb"
+        async>
+    </script>
+
+    <script>
+        // Monitor widget loading
+        let checkCount = 0;
+        const maxChecks = 50;
+        
+        function checkWidget() {
+            checkCount++;
+            const container = document.getElementById('trulybot-widget-container');
+            const button = document.getElementById('trulybot-launcher');
+            const status = document.getElementById('widget-status');
+            
+            if (container && button) {
+                status.className = 'status success';
+                status.innerHTML = '✅ Widget loaded successfully! Click the chat button to test.';
+                
+                // Test click functionality
+                button.addEventListener('click', function() {
+                    setTimeout(function() {
+                        const panel = document.getElementById('trulybot-panel');
+                        if (panel && panel.style.opacity === '1') {
+                            status.innerHTML = '✅ Widget is fully functional! Chat panel opened successfully.';
+                        }
+                    }, 500);
+                });
+                return;
+            }
+            
+            if (checkCount >= maxChecks) {
+                status.className = 'status error';
+                status.innerHTML = '❌ Widget failed to load. Check browser console for errors.';
+                return;
+            }
+            
+            setTimeout(checkWidget, 100);
+        }
+        
+        setTimeout(checkWidget, 1000);
+        
+        // Enhanced error logging
+        window.addEventListener('error', function(e) {
+            const status = document.getElementById('widget-status');
+            status.className = 'status error';
+            status.innerHTML = '❌ JavaScript Error: ' + e.message + ' (line ' + e.lineno + ')';
+            console.error('Error:', e.message, 'at', e.filename + ':' + e.lineno);
+        });
+
+        // Log all network requests for debugging
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            console.log('[Debug] Fetch request:', args[0]);
+            return originalFetch.apply(this, arguments)
+                .then(response => {
+                    console.log('[Debug] Fetch response:', response.status, response.url);
+                    return response;
+                })
+                .catch(error => {
+                    console.error('[Debug] Fetch error:', error);
+                    throw error;
+                });
+        };
+    </script>
+</body>
+</html>
