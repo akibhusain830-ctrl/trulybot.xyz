@@ -2,70 +2,28 @@
 import { motion } from 'framer-motion';
 import RazorpayButton from '@/components/RazorpayButton';
 import { PRICING_TIERS } from '@/lib/constants/pricing';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useCurrencyDetection } from '@/hooks/useCurrencyDetection';
+import { getAllTiersPricing } from '@/lib/utils/geolocation-pricing';
 
 interface PricingSectionProps {
   user: any;
   loading: boolean;
-  currency?: 'INR' | 'USD'; // optional legacy prop, ignore if geo resolves
-  isGeoLoading: boolean;
   setShowSignInModal: (show: boolean) => void;
-  userCountry?: string; // optional injection
 }
 
 export default function PricingSection({
   user,
   loading,
-  currency: legacyCurrency,
-  isGeoLoading,
   setShowSignInModal,
-  userCountry,
 }: PricingSectionProps) {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   
-  // Smart initial currency detection
-  const getInitialCurrency = (): 'INR' | 'USD' => {
-    if (legacyCurrency) return legacyCurrency;
-    if (userCountry === 'IN') return 'INR';
-    if (typeof window === 'undefined') return 'INR'; // SSR fallback - default to INR
-    
-    // Quick timezone check for Indian users
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (timezone === 'Asia/Kolkata' || timezone === 'Asia/Calcutta') {
-      return 'INR';
-    }
-    
-    return 'INR'; // Default for Indian users first
-  };
+  // Use our robust currency detection system
+  const { currency, symbol, isIndia, isLoading: isGeoLoading, country } = useCurrencyDetection();
   
-  const [resolvedCurrency, setResolvedCurrency] = useState<'INR' | 'USD'>(getInitialCurrency());
-  const [geoCountry, setGeoCountry] = useState<string>(userCountry || '');
-  const [geoError, setGeoError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (userCountry) {
-      setGeoCountry(userCountry);
-      setResolvedCurrency(userCountry === 'IN' ? 'INR' : 'USD');
-      return;
-    }
-    (async () => {
-      try {
-        const res = await fetch('/api/geolocation');
-        if (!res.ok) throw new Error('geo failed');
-        const data = await res.json();
-        if (cancelled) return;
-        setGeoCountry(data.country);
-        setResolvedCurrency(data.country === 'IN' ? 'INR' : 'USD');
-      } catch (e: any) {
-        if (cancelled) return;
-        setGeoError(e.message || 'Unable to determine location');
-        // fallback to legacyCurrency or USD
-        setResolvedCurrency(legacyCurrency || 'INR'); // Indian fallback as primary market
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [legacyCurrency, userCountry]);
+  // Get all tiers with appropriate pricing
+  const tiersWithPricing = getAllTiersPricing(currency, billingPeriod);
 
   const pricingFeatures = {
     basic: [
@@ -90,16 +48,6 @@ export default function PricingSection({
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
-
-  const symbol = resolvedCurrency === 'INR' ? '₹' : '$';
-
-  function formatPrice(plan: (typeof PRICING_TIERS)[number]) {
-    if (billingPeriod === 'monthly') {
-      return resolvedCurrency === 'INR' ? plan.monthlyInr : plan.monthlyUsd;
-    }
-    const yearly = resolvedCurrency === 'INR' ? plan.yearlyInr : plan.yearlyUsd;
-    return resolvedCurrency === 'INR' ? Math.round(yearly) : Number(yearly.toFixed(2));
-  }
 
   const periodLabel = billingPeriod === 'monthly' ? '/month' : '/year';
   const discountBadge = billingPeriod === 'yearly' ? (
@@ -146,17 +94,25 @@ export default function PricingSection({
             >Yearly <span className="hidden sm:inline">(Save 20%)</span></button>
           </div>
           <div className="mt-4 text-sm text-gray-500">
-            {geoError ? <span>Currency fallback applied.</span> : <span>Pricing shown in {resolvedCurrency}. {resolvedCurrency === 'INR' ? 'Detected India region.' : 'Non-India region.'}</span>}
+            {isGeoLoading ? (
+              <span>Detecting your location...</span>
+            ) : (
+              <span>
+                Pricing shown in {currency}. 
+                {isIndia ? ' Detected India region.' : ` Detected ${country} region.`}
+                {currency === 'INR' && !isIndia && ' (Using INR as fallback)'}
+              </span>
+            )}
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch pb-12">
-          {PRICING_TIERS.map((plan, index) => {
-            const price = formatPrice(plan);
+          {tiersWithPricing.map((tierWithPricing, index) => {
+            const { pricing, ...plan } = tierWithPricing;
             const features = pricingFeatures[plan.id as keyof typeof pricingFeatures] || [];
             const isPopular = plan.id === 'pro';
             const isPremium = plan.id === 'pro' || plan.id === 'ultra';
-            const equivalentMonthlyInr = (billingPeriod === 'yearly' && resolvedCurrency === 'INR') ? Math.round((price / 12)) : null;
+            const equivalentMonthlyInr = (billingPeriod === 'yearly' && currency === 'INR') ? Math.round((pricing.amount / 12)) : null;
 
             return (
               <motion.div
@@ -187,7 +143,7 @@ export default function PricingSection({
                     <div className="text-center mb-6">
                       <h3 className="text-2xl font-bold text-white mb-4">{plan.name}</h3>
                       <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-5xl font-bold text-white">{symbol}{price}</span>
+                        <span className="text-5xl font-bold text-white">{pricing.symbol}{pricing.amount}</span>
                         <span className="text-gray-400 text-xl">{periodLabel}</span>
                         {discountBadge && billingPeriod === 'yearly' && discountBadge}
                       </div>
@@ -212,25 +168,25 @@ export default function PricingSection({
                     <div className="pt-4 border-t border-white/5">
                       {user && user.id ? (
                         <RazorpayButton
-                            amount={price}
-                            currency={resolvedCurrency}
-                            billingPeriod={billingPeriod}
-                            label={isPopular ? 'Get Started' : `Choose ${plan.name}`}
-                            notes={{ plan: plan.id }}
-                            user_id={user.id}
-                            plan_id={plan.id}
-                            disabled={loading || isGeoLoading}
-                            className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                              isPremium
-                                ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
-                                : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
-                            }`}
-                            onSuccess={() => { window.location.href = '/dashboard'; }}
-                            onFailure={(e) => { 
-                              console.log('Payment failed:', e);
-                              alert(`Payment failed: ${e?.error?.description || 'Unknown error'}`); 
-                            }}
-                          />
+                          amount={pricing.amount}
+                          currency={pricing.currency}
+                          billingPeriod={billingPeriod}
+                          label={isPopular ? 'Get Started' : `Choose ${plan.name}`}
+                          notes={{ plan: plan.id }}
+                          user_id={user.id}
+                          plan_id={plan.id}
+                          disabled={loading || isGeoLoading}
+                          className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isPremium
+                              ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
+                              : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
+                          }`}
+                          onSuccess={() => { window.location.href = '/dashboard'; }}
+                          onFailure={(e) => { 
+                            console.log('Payment failed:', e);
+                            alert(`Payment failed: ${e?.error?.description || 'Unknown error'}`); 
+                          }}
+                        />
                       ) : (
                         <button
                           onClick={() => setShowSignInModal(true)}

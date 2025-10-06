@@ -189,8 +189,6 @@ function buildAdvancedJsonLd() {
 export default function HomePageContent() {
   const { user, loading, signOut } = useAuth();
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [currency, setCurrency] = useState<'INR' | 'USD'>('INR');
-  const [isGeoLoading, setIsGeoLoading] = useState(true);
 
   // Handle authentication success from OAuth callback
   useEffect(() => {
@@ -219,24 +217,6 @@ export default function HomePageContent() {
     }
   }, [user, loading]);
 
-  useEffect(() => {
-    const fetchGeolocation = async () => {
-      try {
-        const response = await fetch('/api/geolocation');
-        if (response.ok) {
-          const data = await response.json();
-          setCurrency(data.country === 'IN' ? 'INR' : 'USD');
-        }
-      } catch (error) {
-        console.error('Failed to fetch geolocation:', error);
-      } finally {
-        setIsGeoLoading(false);
-      }
-    };
-
-    fetchGeolocation();
-  }, []);
-
   return (
     <main className="min-h-screen bg-black text-white overflow-x-hidden">
       {/* Structured Data */}
@@ -259,8 +239,6 @@ export default function HomePageContent() {
       <PricingSection
         user={user}
         loading={loading}
-        currency={currency}
-        isGeoLoading={isGeoLoading}
         setShowSignInModal={setShowSignInModal}
       />
       <Footer />
