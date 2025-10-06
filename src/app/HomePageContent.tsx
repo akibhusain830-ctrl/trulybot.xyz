@@ -189,7 +189,7 @@ function buildAdvancedJsonLd() {
 export default function HomePageContent() {
   const { user, loading, signOut } = useAuth();
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [currency, setCurrency] = useState<'INR' | 'USD'>('USD');
+  const [currency, setCurrency] = useState<'INR' | 'USD'>('INR');
   const [isGeoLoading, setIsGeoLoading] = useState(true);
 
   // Handle authentication success from OAuth callback

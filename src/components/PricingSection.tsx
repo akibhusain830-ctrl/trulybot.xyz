@@ -27,7 +27,7 @@ export default function PricingSection({
   const getInitialCurrency = (): 'INR' | 'USD' => {
     if (legacyCurrency) return legacyCurrency;
     if (userCountry === 'IN') return 'INR';
-    if (typeof window === 'undefined') return 'USD'; // SSR fallback
+    if (typeof window === 'undefined') return 'INR'; // SSR fallback - default to INR
     
     // Quick timezone check for Indian users
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -35,7 +35,7 @@ export default function PricingSection({
       return 'INR';
     }
     
-    return 'USD'; // Default for international users
+    return 'INR'; // Default for Indian users first
   };
   
   const [resolvedCurrency, setResolvedCurrency] = useState<'INR' | 'USD'>(getInitialCurrency());
@@ -61,7 +61,7 @@ export default function PricingSection({
         if (cancelled) return;
         setGeoError(e.message || 'Unable to determine location');
         // fallback to legacyCurrency or USD
-        setResolvedCurrency(legacyCurrency || 'USD'); // International fallback
+        setResolvedCurrency(legacyCurrency || 'INR'); // Indian fallback as primary market
       }
     })();
     return () => { cancelled = true; };
