@@ -1,12 +1,14 @@
 
 export function buildEmbedSnippet(userId: string): string {
-  // Get the current domain dynamically
+  // Always use the canonical domain without www
   const getBaseUrl = () => {
     if (typeof window !== 'undefined') {
-      return window.location.origin;
+      // Remove www. from the current origin if present
+      const origin = window.location.origin;
+      return origin.replace('://www.', '://');
     }
     
-    // For server-side rendering
+    // For server-side rendering, always use canonical URL
     return process.env.NEXT_PUBLIC_APP_URL || 'https://trulybot.xyz';
   };
 

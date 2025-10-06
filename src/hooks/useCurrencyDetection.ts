@@ -34,6 +34,17 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
         if (cached) {
           setResult(cached);
           setIsLoading(false);
+          
+          // Still detect in background to update cache if needed
+          detectUserCurrency().then(detected => {
+            if (detected.country !== cached.country) {
+              setResult(detected);
+              setCachedUserCurrency(detected);
+            }
+          }).catch(() => {
+            // Keep cached result if background detection fails
+          });
+          
           return;
         }
 
@@ -66,11 +77,11 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
   // Return loading state until currency is detected
   if (isLoading || !result) {
     return {
-      currency: 'USD', // Default to USD while loading
-      symbol: '$',
-      isIndia: false,
+      currency: 'INR', // Default to INR while loading (assuming Indian user)
+      symbol: '₹',
+      isIndia: true,
       isLoading: true,
-      country: 'Unknown',
+      country: 'IN',
     };
   }
 

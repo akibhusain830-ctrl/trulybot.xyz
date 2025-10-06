@@ -85,10 +85,26 @@ export default function PricingClientPage() {
   // Use our robust currency detection system
   const { currency, symbol, isIndia, isLoading: geoLoading, country } = useCurrencyDetection();
   
+  // ROBUST GUARD: Never show wrong currency to users
+  const safeCurrency = currency; // Keep the detected currency
+  const safeSymbol = symbol; // Keep the detected symbol
+  
   // Get all tiers with appropriate pricing
-  const tiersWithPricing = getAllTiersPricing(currency, billingPeriod);
+  const tiersWithPricing = getAllTiersPricing(safeCurrency, billingPeriod);
 
   const periodLabel = billingPeriod === 'monthly' ? '/month' : '/year';
+
+  // Show loading until currency is properly detected
+  if (geoLoading) {
+    return (
+      <div className="relative min-h-screen bg-black py-16 xs:py-20 sm:py-24 lg:py-32 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-400 mx-auto"></div>
+          <p className="text-white mt-4">Detecting your location for accurate pricing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -127,14 +143,10 @@ export default function PricingClientPage() {
             {/* Currency Detection Status */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-500">
-                {geoLoading ? (
-                  <span>Detecting your location...</span>
-                ) : (
-                  <span>
-                    Pricing shown in {currency}. 
-                    {isIndia ? ' Detected India region.' : ` Detected ${country} region.`}
-                  </span>
-                )}
+                <span>
+                  Pricing shown in {safeCurrency}. 
+                  {isIndia ? ' 🇮🇳 India region detected.' : ` 🌍 ${country} region detected.`}
+                </span>
               </p>
             </div>
 

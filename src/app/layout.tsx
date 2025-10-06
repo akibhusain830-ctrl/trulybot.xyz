@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
-import { AuthProvider } from '@/context/AuthContext';
+import { EnhancedAuthProvider } from '@/context/EnhancedAuthContext';
 import { Analytics } from "@vercel/analytics/next";
 import { WebVitals } from '@/components/WebVitals';
 import './globals.css';
@@ -120,9 +120,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased bg-black text-white min-h-screen">
         {/* Skip link for accessibility */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-blue-600 text-white px-4 py-2 rounded-md">Skip to main content</a>
-        <AuthProvider>
+        <EnhancedAuthProvider>
           <div id="main-content">{children}</div>
-        </AuthProvider>
+        </EnhancedAuthProvider>
         {/* Razorpay script removed; will be lazy-loaded only on checkout/start-trial */}
                 <script
           type="application/ld+json"
