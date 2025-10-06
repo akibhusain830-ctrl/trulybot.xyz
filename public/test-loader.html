@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Widget Loader.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>🧪 Widget Loader.js Test</h1>
+        <p>This tests the actual widget system used in your WordPress site.</p>
+        
+        <div id="loader-status" class="status warning">
+            ⏳ Loading widget from /widget/loader.js...
+        </div>
+        
+        <h3>Expected behavior:</h3>
+        <ul>
+            <li>✅ Script loads from <code>localhost:3000/widget/loader.js</code></li>
+            <li>✅ Chat bubble appears with 💬 icon</li>
+            <li>✅ Clicking opens iframe from <code>/widget</code> route</li>
+            <li>✅ No CORS or embedding errors</li>
+        </ul>
+    </div>
+    
+    <div class="test-box">
+        <h2>📋 Debug Info</h2>
+        <div id="debug-info">
+            <p>Monitoring widget loading...</p>
+        </div>
+    </div>
+    
+    <div class="test-box">
+        <h2>Sample Content</h2>
+        <p>This simulates your WordPress site content where the widget should appear.</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. The chat widget should load in the bottom-right corner.</p>
+        <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
+    </div>
+
+    <!-- This is the exact same script as in your WordPress -->
+    <script async 
+        src="http://localhost:3000/widget/loader.js"
+        data-chatbot-id="6b47cbac-9009-42e3-9a37-b116bff0cba0"
+        data-api-url="http://localhost:3000">
+    </script>
+
+    <script>
+        const debugInfo = document.getElementById('debug-info');
+        const loaderStatus = document.getElementById('loader-status');
+        
+        function addDebug(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const p = document.createElement('p');
+            p.innerHTML = `<strong>[${time}]</strong> ${message}`;
+            p.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#333';
+            debugInfo.appendChild(p);
+        }
+        
+        // Monitor script loading
+        const script = document.querySelector('script[src*="loader.js"]');
+        if (script) {
+            addDebug('✅ Script tag found in DOM');
+            
+            script.onload = function() {
+                addDebug('✅ loader.js script loaded successfully', 'success');
+                setTimeout(checkWidget, 1000);
+            };
+            
+            script.onerror = function() {
+                addDebug('❌ Failed to load loader.js script', 'error');
+                loaderStatus.className = 'status error';
+                loaderStatus.textContent = '❌ Script failed to load';
+            };
+        }
+        
+        function checkWidget() {
+            // Look for the chat bubble created by loader.js
+            const chatBubbles = document.querySelectorAll('button');
+            let foundChatBubble = false;
+            
+            chatBubbles.forEach(button => {
+                if (button.innerHTML.includes('💬') && 
+                    button.style.position === 'fixed' && 
+                    button.style.bottom && 
+                    button.style.right) {
+                    foundChatBubble = true;
+                    addDebug('✅ Chat bubble found with 💬 icon', 'success');
+                    loaderStatus.className = 'status success';
+                    loaderStatus.textContent = '✅ Widget loaded! Chat bubble visible with 💬 icon';
+                    
+                    // Test click functionality
+                    button.addEventListener('click', function() {
+                        addDebug('🖱️ Chat bubble clicked');
+                        setTimeout(() => {
+                            const iframes = document.querySelectorAll('iframe');
+                            const chatIframe = Array.from(iframes).find(iframe => 
+                                iframe.src.includes('/widget')
+                            );
+                            
+                            if (chatIframe) {
+                                addDebug('✅ Chat iframe opened successfully', 'success');
+                            } else {
+                                addDebug('❌ Chat iframe not found', 'error');
+                            }
+                        }, 1000);
+                    });
+                }
+            });
+            
+            if (!foundChatBubble) {
+                addDebug('❌ Chat bubble not found', 'error');
+                loaderStatus.className = 'status error';
+                loaderStatus.textContent = '❌ Widget not loaded';
+            }
+        }
+        
+        // Monitor for errors
+        window.addEventListener('error', function(e) {
+            addDebug(`❌ Error: ${e.message} (${e.filename}:${e.lineno})`, 'error');
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            addDebug(`❌ Promise rejection: ${e.reason}`, 'error');
+        });
+        
+        // Initial status
+        addDebug('🚀 Starting widget loader test...');
+    </script>
+</body>
+</html>

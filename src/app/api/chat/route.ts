@@ -1,0 +1,304 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { CoreMessage as VercelChatMessage } from 'ai';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence, RunnablePassthrough } from '@langchain/core/runnables';
+import { BytesOutputParser } from '@langchain/core/output_parsers';
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
+import { cache, KnowledgeCache } from '@/lib/cache/manager';
+import { performanceMonitor } from '@/lib/performance/optimization';
+
+// All imports from your lib directory
+import { findKnowledgeAnswer } from '@/lib/productKnowledge';
+import { retrieveWorkspaceChunks } from '@/lib/retrieval';
+import { generateAnswerFromDocs } from '@/lib/retrievalAnswer';
+import { getGeneralAnswer } from '@/lib/generalAnswer';
+import { detectLead } from '@/lib/lead';
+import { extractIntentKeywords, persistLeadIfAny } from '@/lib/leadStore';
+import { BRAND } from '@/lib/branding';
+import { getPlanQuota, currentMonthKey } from '@/lib/constants/quotas';
+import { createClient } from '@supabase/supabase-js';
+
+// ---------------- Types ----------------
+interface IncomingMsg {
+  role: string;
+  content?: string;
+  text?: string;
+}
+
+interface ChatBody {
+  botId?: string;
+  messages?: IncomingMsg[];
+}
+
+interface NormalizedMsg {
+  role: 'user' | 'bot';
+  content: string;
+}
+
+interface Source {
+  title: string;
+  docId: string;
+  url?: string;
+  snippet: string;
+}
+
+// ---------------- Utilities ----------------
+function log(stage: string, data: any) {
+  try {
+    console.log(`[chat:${stage}]`, JSON.stringify(data));
+  } catch {
+    console.log(`[chat:${stage}]`, data);
+  }
+}
+
+function jsonError(error: string, status = 400) {
+  console.error('[chat:error]', { error, status });
+  // This function ensures a valid JSON response is always sent on error
+  return NextResponse.json({ error }, { status });
+}
+
+function normalizeMessages(raw: IncomingMsg[]): NormalizedMsg[] {
+  return raw.map(m => ({
+    role: m.role === 'bot' ? 'bot' : 'user',
+    content: (m.content ?? m.text ?? '').toString()
+  }));
+}
+
+function safeSlice(t: string, n = 180) {
+  return t.length > n ? t.slice(0, n) + '…' : t;
+}
+
+function deterministicFallback() {
+  return 'I can help answer questions about our products and services. How can I assist you today?';
+}
+
+// Replace any lingering old brand text in final output
+function brandify(text: string) {
+  if (!text) return text;
+  const host = (() => {
+    try { return new URL(BRAND.url).hostname; } catch { return 'trulybot.xyz'; }
+  })();
+  return text
+    .replace(/\bAnemo\b/g, BRAND.name)
+    .replace(/anemo\.ai/gi, host);
+}
+
+// ---------------- Handler ----------------
+export async function POST(req: NextRequest) {
+  const started = Date.now();
+
+  try {
+    // Performance monitoring
+    const perfStart = performance.now();
+    
+    // 1. Parse with caching consideration
+    let body: ChatBody;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonError('Invalid JSON body');
+    }
+
+    // Generate cache key for repeated queries
+    const cacheKey = `chat:${JSON.stringify({
+      botId: body.botId,
+      query: body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text,
+    })}`;
+
+    // Try cache first for repeated queries
+    const cachedResponse = await KnowledgeCache.getAnswer(
+      body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text || '',
+      body.botId || 'default'
+    );
+
+    if (cachedResponse) {
+      const responseTime = performance.now() - perfStart;
+      return NextResponse.json({
+        success: true,
+        message: cachedResponse,
+        cached: true,
+        responseTime: Math.round(responseTime),
+      });
+    }
+
+  const { botId, messages: raw } = body || {};
+    if (!botId) return jsonError('botId is required');
+    if (!raw || !Array.isArray(raw) || raw.length === 0) {
+      return jsonError('messages array required');
+    }
+
+  const mode: 'demo' | 'subscriber' = botId === 'demo' ? 'demo' : 'subscriber';
+    const messages = normalizeMessages(raw);
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUser) return jsonError('No user message found');
+    const userText = lastUser.content.trim();
+    if (!userText) return jsonError('Empty user message');
+
+    log('start', { botId, mode, msgLen: messages.length, userText: safeSlice(userText) });
+
+    // Conversation quota enforcement (only for subscriber bots)
+    if (mode === 'subscriber') {
+      try {
+        const supabaseAdmin = createSupabaseAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        // Get workspace (botId acts as workspace_id here)
+        const workspaceId = botId;
+        const monthKey = currentMonthKey();
+        // Fetch subscription tier from any profile in workspace (simplest heuristic)
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('workspace_id', workspaceId)
+          .limit(1)
+          .maybeSingle();
+
+        const tier = profile?.subscription_tier || 'basic';
+        const quota = getPlanQuota(tier);
+        if (quota?.monthlyConversationCap) {
+          const { data: usage } = await supabaseAdmin
+            .from('usage_counters')
+            .select('id, monthly_conversations')
+            .eq('workspace_id', workspaceId)
+            .eq('month', monthKey)
+            .maybeSingle();
+
+            const convs = usage?.monthly_conversations || 0;
+            if (convs + 1 > quota.monthlyConversationCap) {
+              return jsonError('Conversation limit reached for plan. Upgrade to Pro for unlimited.', 429);
+            }
+            // Increment afterwards (fire and forget)
+            const updates = {
+              monthly_conversations: convs + 1,
+              workspace_id: workspaceId,
+              user_id: null,
+              month: monthKey
+            } as any;
+            if (usage?.id) {
+              await supabaseAdmin.from('usage_counters').update(updates).eq('id', usage.id);
+            } else {
+              await supabaseAdmin.from('usage_counters').insert(updates);
+            }
+        }
+      } catch (quotaErr) {
+        console.error('[chat:quota-check-error]', quotaErr);
+        // Continue silently; do not block chat if quota check fails unexpectedly.
+      }
+    }
+
+    // 2. Conversation window (for style continuity in fallback)
+    const conversationWindow = messages
+      .slice(-8)
+      .map(m => `${m.role === 'bot' ? 'assistant' : m.role}: ${m.content}`)
+      .join('\n');
+
+    // 3. Lead / intent signals (before orchestration)
+    const leadDetection = detectLead(userText);
+    const intentKeywords = extractIntentKeywords(userText);
+
+    // 4. Orchestration state
+    let reply = '';
+    let sources: Source[] = [];
+    let knowledgeSource: 'kb' | 'docs' | 'general' | null = null;
+    let fallback = false;
+    let usedDocs = false;
+
+    // -------- Phase A: Knowledge Base (always first) --------
+    const kbMatch = findKnowledgeAnswer(userText);
+    if (kbMatch) {
+      reply = kbMatch.answer;
+      knowledgeSource = 'kb';
+      log('kb-hit', { id: kbMatch.id, score: kbMatch.score });
+    }
+
+    // -------- Phase B: Retrieval (subscriber only & only if no KB) --------
+    if (!kbMatch && mode === 'subscriber') {
+      const { chunks, qualityHeuristicMet } = await retrieveWorkspaceChunks({
+        workspaceId: botId,
+        query: userText
+      });
+
+      if (chunks.length && qualityHeuristicMet) {
+        const docAns = await generateAnswerFromDocs({
+          userMessage: userText,
+          chunks
+        });
+
+        if (!docAns.indicatesNoAnswer && docAns.text.trim()) {
+          reply = docAns.text.trim();
+          sources = docAns.sources;
+          usedDocs = true;
+          knowledgeSource = 'docs';
+        }
+      }
+    }
+
+    // -------- Phase C: General Fallback --------
+    if (!reply) {
+      fallback = true;
+      knowledgeSource = 'general';
+      try {
+        reply = await getGeneralAnswer(userText, {
+          mode: mode === 'demo' ? 'demo' : 'fallback',
+          conversationWindow
+        });
+      } catch (e) {
+        console.error('[chat:error]', e);
+        reply = deterministicFallback();
+      }
+    }
+
+    // 5. Finalize
+    const finalReply = brandify(reply);
+    const finalSources = sources.map(s => ({ ...s, snippet: safeSlice(s.snippet) }));
+
+    // 6. Lead persistence (if any)
+    if (leadDetection) {
+      await persistLeadIfAny({
+        origin: mode,
+        workspaceId: botId,
+        sourceBotId: botId,
+        email: leadDetection.email,
+        firstMessage: userText,
+        lastMessage: userText,
+        intentKeywords,
+        intentPrompt: leadDetection.intentPrompt,
+        conversation: [] // Optionally pass recent messages here
+      });
+    }
+
+    // 7. Response (streaming-like using native Response)
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(finalReply));
+        controller.close();
+      }
+    });
+
+    const response = new Response(stream, {
+      headers: {
+        'x-knowledge-source': knowledgeSource || 'none',
+        'x-used-docs': usedDocs.toString(),
+        'x-fallback': fallback.toString(),
+        'x-response-time': `${Date.now() - started}ms`
+      }
+    });
+
+    log('end', {
+      source: knowledgeSource,
+      fallback,
+      usedDocs,
+      responseTime: `${Date.now() - started}ms`,
+      msgLen: finalReply.length
+    });
+
+    return response;
+  } catch (error) {
+    console.error('[chat:unhandled]', error);
+    return jsonError('Internal server error', 500);
+  }
+}

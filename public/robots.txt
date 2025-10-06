@@ -1,0 +1,88 @@
+# TrulyBot AI Chatbot - Professional SEO Robots.txt
+# Optimized for maximum search engine visibility and professional SEO standards
+
+User-agent: *
+Allow: /
+
+# Premium search engine bot configurations
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2
+
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 2
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Disallow sensitive and duplicate content areas
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /widget/iframe
+Disallow: /embed/private
+Disallow: /.well-known/
+Disallow: /tmp/
+Disallow: /cache/
+
+# Allow important API endpoints for SEO and social sharing
+Allow: /api/og/
+Allow: /api/sitemap
+Allow: /api/metadata
+Allow: /widget/loader.js
+Allow: /embed/public
+
+# Prevent indexing of URL parameters that create duplicate content
+Disallow: /*?*
+Disallow: /*#*
+Disallow: /*&*
+Disallow: /*utm_*
+Disallow: /*ref=*
+Disallow: /*source=*
+Disallow: /*fbclid=*
+Disallow: /*gclid=*
+
+# Allow important tracking and sharing parameters
+Allow: /*?utm_source=*
+Allow: /*?ref=seo
+Allow: /*?source=organic
+
+# Professional sitemap declarations
+Sitemap: https://trulybot.xyz/sitemap.xml
+Sitemap: https://trulybot.xyz/sitemap-images.xml
+Sitemap: https://trulybot.xyz/sitemap-pages.xml
+Sitemap: https://trulybot.xyz/sitemap-blog.xml
+Sitemap: https://trulybot.xyz/sitemap-products.xml
+
+# Host directive for preferred domain (SEO best practice)
+Host: https://trulybot.xyz
+
+# Additional professional directives
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
+Clean-param: fbclid&gclid&msclkid&yclid
+Sitemap: https://trulybot.xyz/sitemap-india.xml
+Sitemap: https://trulybot.xyz/sitemap-features.xml

@@ -1,0 +1,9 @@
+
+-- 1. Enable Row Level Security on the 'documents' table
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+
+-- 2. Create a policy to allow users to read their own documents
+CREATE POLICY "Allow individual read access"
+ON public.documents
+FOR SELECT
+USING (auth.uid() = user_id);

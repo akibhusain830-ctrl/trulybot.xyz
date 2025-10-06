@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trulybot Widget - External Website Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+        }
+        
+        .info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3b82f6;
+        }
+        
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        
+        .warning {
+            background: rgba(251, 191, 36, 0.2);
+            border: 2px solid #fbbf24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        h1 { margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        h2 { margin-top: 30px; opacity: 0.9; }
+        
+        .debug-log {
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Production Widget Test</h1>
+        <p>This simulates your widget embedded on an external customer website.</p>
+        
+        <div id="widget-status" class="status info">
+            ⏳ Loading widget from production server...
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This test loads the widget from your production server at trulybot.xyz. 
+            Make sure your bot ID is valid and your website is live.
+        </div>
+
+        <h2>📋 Integration Code</h2>
+        <p>This is exactly how customers embed your widget:</p>
+        
+        <div class="code">
+&lt;script 
+    src="https://trulybot.xyz/widget.js" 
+    data-bot-id="demo"
+    data-position="right"
+    data-color="#2563eb"
+    async
+&gt;&lt;/script&gt;
+        </div>
+
+        <h2>🔍 Debug Console</h2>
+        <div id="debug-log" class="debug-log">
+            Initializing debug console...<br>
+        </div>
+
+        <h2>✅ What Should Happen</h2>
+        <ol>
+            <li>Widget script loads from trulybot.xyz</li>
+            <li>Chat button appears in bottom-right corner</li>
+            <li>Button shows chat emoji (💬)</li>
+            <li>Clicking opens chat iframe</li>
+            <li>Chat interface loads properly</li>
+        </ol>
+    </div>
+
+    <!-- Load widget from production -->
+    <script 
+        src="https://trulybot.xyz/widget.js" 
+        data-bot-id="demo"
+        data-position="right"
+        data-color="#2563eb"
+        async>
+    </script>
+
+    <script>
+        const debugLog = document.getElementById('debug-log');
+        const status = document.getElementById('widget-status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#74c0fc';
+            debugLog.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span><br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            
+            if (type === 'error') {
+                status.className = 'status error';
+                status.innerHTML = '❌ ' + message;
+            } else if (type === 'success') {
+                status.className = 'status success';
+                status.innerHTML = '✅ ' + message;
+            }
+        }
+        
+        // Monitor widget loading
+        let checkCount = 0;
+        const maxChecks = 100; // Increased for network loading
+        
+        function checkWidget() {
+            checkCount++;
+            const container = document.getElementById('trulybot-widget-container');
+            const button = document.getElementById('trulybot-launcher');
+            
+            if (container && button) {
+                log('Widget loaded successfully! Container and button found.', 'success');
+                
+                // Test click functionality
+                button.addEventListener('click', function() {
+                    log('Chat button clicked!');
+                    setTimeout(function() {
+                        const panel = document.getElementById('trulybot-panel');
+                        if (panel && panel.style.opacity === '1') {
+                            log('Chat panel opened successfully! Widget is fully functional.', 'success');
+                        } else {
+                            log('Chat panel did not open as expected.', 'error');
+                        }
+                    }, 1000);
+                });
+                return;
+            }
+            
+            if (checkCount >= maxChecks) {
+                log('Widget failed to load after ' + maxChecks + ' checks.', 'error');
+                log('Check network tab to see if script loaded from trulybot.xyz', 'error');
+                return;
+            }
+            
+            if (checkCount % 20 === 0) {
+                log(`Still waiting for widget... (attempt ${checkCount}/${maxChecks})`);
+            }
+            
+            setTimeout(checkWidget, 100);
+        }
+        
+        // Start checking after script has time to load
+        setTimeout(() => {
+            log('Starting widget detection...');
+            checkWidget();
+        }, 2000);
+        
+        // Enhanced error logging
+        window.addEventListener('error', function(e) {
+            log(`JavaScript Error: ${e.message} (${e.filename}:${e.lineno})`, 'error');
+        });
+
+        // Monitor network requests
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            log(`Fetch request: ${args[0]}`);
+            return originalFetch.apply(this, arguments)
+                .then(response => {
+                    log(`Fetch response: ${response.status} ${response.url}`, response.ok ? 'success' : 'error');
+                    return response;
+                })
+                .catch(error => {
+                    log(`Fetch error: ${error.message}`, 'error');
+                    throw error;
+                });
+        };
+
+        // Log script loading
+        const scripts = document.querySelectorAll('script[src*="trulybot"]');
+        scripts.forEach((script, index) => {
+            log(`Found Trulybot script ${index + 1}: ${script.src}`);
+            
+            script.addEventListener('load', () => {
+                log(`Script loaded successfully: ${script.src}`, 'success');
+            });
+            
+            script.addEventListener('error', () => {
+                log(`Script failed to load: ${script.src}`, 'error');
+            });
+        });
+
+        if (scripts.length === 0) {
+            log('No Trulybot scripts found on page!', 'error');
+        }
+    </script>
+</body>
+</html>

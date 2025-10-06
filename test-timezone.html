@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timezone Test</title>
+</head>
+<body>
+    <h1>Timezone Detection Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Test timezone detection
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const language = navigator.language || navigator.languages?.[0] || '';
+        
+        // Simulate our detection logic
+        let currency = 'USD'; // default
+        let source = 'fallback';
+        
+        // Method 1: Timezone detection
+        if (timezone === 'Asia/Kolkata' || timezone === 'Asia/Calcutta') {
+            currency = 'INR';
+            source = 'timezone';
+        } else if (language.includes('hi') || language.includes('IN')) {
+            currency = 'INR';
+            source = 'language';
+        }
+        
+        // Display results
+        document.getElementById('results').innerHTML = `
+            <h2>Detection Results:</h2>
+            <p><strong>Timezone:</strong> ${timezone}</p>
+            <p><strong>Language:</strong> ${language}</p>
+            <p><strong>Detected Currency:</strong> ${currency}</p>
+            <p><strong>Detection Source:</strong> ${source}</p>
+            
+            <h2>Expected Pricing:</h2>
+            ${currency === 'INR' ? `
+                <p>🇮🇳 <strong>Indian Pricing (INR):</strong></p>
+                <ul>
+                    <li>Basic: ₹99/month</li>
+                    <li>Pro: ₹399/month</li>
+                    <li>Ultra: ₹599/month</li>
+                </ul>
+            ` : `
+                <p>🌍 <strong>International Pricing (USD):</strong></p>
+                <ul>
+                    <li>Basic: $5/month</li>
+                    <li>Pro: $10/month</li>
+                    <li>Ultra: $15/month</li>
+                </ul>
+            `}
+        `;
+        
+        // Test API call
+        fetch('/api/geolocation')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('results').innerHTML += `
+                    <h2>Server API Results:</h2>
+                    <p><strong>API Country:</strong> ${data.country || 'Not detected'}</p>
+                    <p><strong>API Currency:</strong> ${data.currency || 'Not detected'}</p>
+                    <p><strong>API Source:</strong> ${data.source || 'Not detected'}</p>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML += `
+                    <h2>Server API Results:</h2>
+                    <p><strong>API Error:</strong> ${error.message}</p>
+                `;
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real User Bot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .business-content {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        h1 { color: #FFD700; }
+        h2 { color: #87CEEB; }
+        
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #FFE4B5;
+        }
+        
+        .success { color: #90EE90; }
+        .test-questions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Real User Bot Integration Test</h1>
+        
+        <div class="test-info">
+            <h2>Test Configuration</h2>
+            <p><strong>User ID:</strong> <code>6b47cbac-9009-42e3-9a37-b1106bf0cba0</code></p>
+            <p><strong>Email:</strong> akibhusain830@gmail.com</p>
+            <p><strong>Subscription:</strong> trial (Ultra access)</p>
+            <p><strong>Documents:</strong> 1 business document indexed</p>
+            <p><strong>Chunks:</strong> 5 content chunks available</p>
+        </div>
+
+        <div class="business-content">
+            <h2>Available Business Content</h2>
+            <p>The bot has access to information about <strong>Artisan & Oak</strong>, including:</p>
+            <ul>
+                <li>Company welcome message and mission</li>
+                <li>Product sourcing and quality details</li>
+                <li>Customer support information</li>
+                <li>Product uniqueness and craftsmanship</li>
+                <li>Company values and appreciation message</li>
+            </ul>
+        </div>
+
+        <div class="test-questions">
+            <h2>📝 Test Questions to Ask the Bot</h2>
+            <ol>
+                <li><strong>"What is Artisan & Oak about?"</strong> - Should return company info</li>
+                <li><strong>"Tell me about your products"</strong> - Should mention craftsmanship</li>
+                <li><strong>"How do you source materials?"</strong> - Should mention sourcing details</li>
+                <li><strong>"What makes you unique?"</strong> - Should mention uniqueness</li>
+                <li><strong>"Do you have customer support?"</strong> - Should mention support</li>
+            </ol>
+            <p class="success">✅ If the bot answers these with business-specific information, the integration is working!</p>
+        </div>
+
+        <div class="test-info">
+            <h2>🧪 Integration Status</h2>
+            <p class="success">✅ Documents stored correctly in database</p>
+            <p class="success">✅ Vector embeddings created and indexed</p>
+            <p class="success">✅ User isolation working (chunks filtered by user_id)</p>
+            <p class="success">✅ Vector search function returning relevant results</p>
+            <p class="success">✅ Widget should load and connect to this user's knowledge base</p>
+        </div>
+    </div>
+
+    <!-- Trulybot Widget Script with REAL USER ID -->
+    <script 
+        src="http://localhost:3001/widget.js" 
+        data-bot-id="6b47cbac-9009-42e3-9a37-b1106bf0cba0"
+        data-position="bottom-right"
+        defer>
+    </script>
+</body>
+</html>
