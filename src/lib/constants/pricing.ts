@@ -13,13 +13,8 @@ export interface PricingTier {
   readonly highlight?: boolean;
 }
 
-<<<<<<< HEAD
 // Updated version after INR pricing & yearly addition
 export const PRICING_VERSION = '2025-09-30-3';
-=======
-// Updated version after correct pricing fix
-export const PRICING_VERSION = '2025-10-06-1';
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
 
 // Yearly pricing = monthly * 12 * 0.8 (20% discount)
 export const PRICING_TIERS: readonly PricingTier[] = [
@@ -30,11 +25,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     monthlyUsd: 5,
     monthlyInr: 99,
     yearlyUsd: 5 * 12 * 0.8,   // 48
-<<<<<<< HEAD
     yearlyInr: 99 * 12 * 0.8,  // 950.4 -> round in UI
-=======
-    yearlyInr: 99 * 12 * 0.8,  // 950.4 -> round to 950
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
     messageAllowance: '1,000 conversations/month',
     highlight: false,
     features: [
@@ -51,11 +42,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     monthlyUsd: 10,
     monthlyInr: 399,
     yearlyUsd: 10 * 12 * 0.8,  // 96
-<<<<<<< HEAD
     yearlyInr: 399 * 12 * 0.8, // 3820.8
-=======
-    yearlyInr: 399 * 12 * 0.8, // 3830.4 -> round to 3830
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
     messageAllowance: 'Unlimited conversations',
     highlight: true,
     features: [
@@ -75,11 +62,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     monthlyUsd: 15,
     monthlyInr: 599,
     yearlyUsd: 15 * 12 * 0.8,  // 144
-<<<<<<< HEAD
     yearlyInr: 599 * 12 * 0.8, // 5750.4
-=======
-    yearlyInr: 599 * 12 * 0.8, // 5750.4 -> round to 5750
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
     messageAllowance: 'Unlimited conversations',
     highlight: false,
     features: [

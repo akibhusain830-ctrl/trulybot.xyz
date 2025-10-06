@@ -1,24 +1,14 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
-<<<<<<< HEAD
 import { AuthProvider } from '@/context/AuthContext';
-=======
-import { EnhancedAuthProvider } from '@/context/EnhancedAuthContext';
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
 import { Analytics } from "@vercel/analytics/next";
 import { WebVitals } from '@/components/WebVitals';
 import './globals.css';
 
 const siteUrl = 'https://trulybot.xyz';
-<<<<<<< HEAD
 const siteName = 'TrulyBot - Advanced AI Chatbot Platform';
 const title = 'TrulyBot - #1 AI Chatbot for E-Commerce | 24/7 Customer Support & Lead Generation';
 const description = "Transform your e-commerce customer support with TrulyBot's intelligent AI chatbot. Reduce support tickets by 70%, increase leads by 5X, and provide 24/7 automated support. Free 7-day trial with 5-minute setup.";
-=======
-const siteName = 'TrulyBot - Lightning-Fast AI Chatbot';
-const title = 'TrulyBot - #1 AI Chatbot for E-Commerce | 24/7 Customer Support & Lead Generation';
-const description = "Transform your e-commerce customer support with TrulyBot's lightning-fast AI chatbot. Get 70% fewer tickets, 5X more leads, and 24/7 automated support. Free 7-day trial. Setup in 5 minutes.";
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
 const ogImage = `${siteUrl}/og-image.svg`;
 
 export const metadata: Metadata = {
@@ -130,15 +120,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased bg-black text-white min-h-screen">
         {/* Skip link for accessibility */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-blue-600 text-white px-4 py-2 rounded-md">Skip to main content</a>
-<<<<<<< HEAD
         <AuthProvider>
           <div id="main-content">{children}</div>
         </AuthProvider>
-=======
-        <EnhancedAuthProvider>
-          <div id="main-content">{children}</div>
-        </EnhancedAuthProvider>
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
         {/* Razorpay script removed; will be lazy-loaded only on checkout/start-trial */}
                 <script
           type="application/ld+json"

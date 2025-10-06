@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -300,14 +299,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
     </SubscriptionGuard>
     </NoAccessGuard>
-=======
-import OptimizedDashboardLayout from '@/components/OptimizedDashboardLayout';
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <OptimizedDashboardLayout>
-      {children}
-    </OptimizedDashboardLayout>
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
   );
 }

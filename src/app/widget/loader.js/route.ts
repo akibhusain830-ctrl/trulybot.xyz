@@ -22,21 +22,8 @@ export async function GET(req: NextRequest) {
     chatOpen: false,
     config: null,
     bubble: null,
-<<<<<<< HEAD
     iframe: null,
     closeBtn: null
-=======
-    iframe: null,  return new NextResponse(widgetScript, {
-    headers: {
-      'Content-Type': 'application/javascript',
-      'Cache-Control': 'public, max-age=3600',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
-}Btn: null
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
   };
 
   // Utility functions

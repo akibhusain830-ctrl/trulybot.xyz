@@ -18,15 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-<<<<<<< HEAD
       url: `${baseUrl}/pricing-india`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     },
     {
-=======
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
@@ -135,7 +132,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.7,
-<<<<<<< HEAD
     },
     // India-specific pages for regional SEO
     {
@@ -155,8 +151,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
-=======
->>>>>>> afe65066d37e0367748c163325382d953fb420b4
     }
   ]
 
