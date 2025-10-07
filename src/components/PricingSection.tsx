@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import RazorpayButton from '@/components/RazorpayButton';
 import { PRICING_TIERS } from '@/lib/constants/pricing';
 import { useState } from 'react';
-import { useCurrencyDetection } from '@/hooks/useCurrencyDetection';
+import { useServerSafeCurrency } from '@/hooks/useServerSafeCurrency';
 import { getAllTiersPricing } from '@/lib/utils/geolocation-pricing';
 
 interface PricingSectionProps {
@@ -20,7 +20,7 @@ export default function PricingSection({
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   
   // Use our robust currency detection system
-  const { currency, symbol, isIndia, isLoading: isGeoLoading, country } = useCurrencyDetection();
+  const { currency, symbol, isIndia, country, isLoading: isGeoLoading } = useServerSafeCurrency();
   
   // Get all tiers with appropriate pricing
   const tiersWithPricing = getAllTiersPricing(currency, billingPeriod);

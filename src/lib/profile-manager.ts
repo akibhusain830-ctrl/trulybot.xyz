@@ -375,15 +375,74 @@ export class ProfileManager {
   }
 
   static async activateSubscription(userId: string, tier: SubscriptionTier, paymentId?: string): Promise<UserProfile> {
-    const subscriptionEndDate = new Date();
-    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+    const maxRetries = 3;
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.info(`Activating subscription for user ${userId}, attempt ${attempt}/${maxRetries}`, {
+          userId,
+          tier,
+          paymentId,
+          attempt
+        });
+        
+        const subscriptionEndDate = new Date();
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
-    return this.updateSubscription(userId, {
-      subscription_status: 'active',
-      subscription_tier: tier,
-      subscription_ends_at: subscriptionEndDate.toISOString(),
-      trial_ends_at: null, // Clear trial when subscription starts
-      payment_id: paymentId || null
+        const updatedProfile = await this.updateSubscription(userId, {
+          subscription_status: 'active',
+          subscription_tier: tier,
+          subscription_ends_at: subscriptionEndDate.toISOString(),
+          trial_ends_at: null, // Clear trial when subscription starts
+          payment_id: paymentId || null
+        });
+        
+        // Verify the subscription was actually activated
+        if (updatedProfile.subscription_status !== 'active' || updatedProfile.subscription_tier !== tier) {
+          throw new Error('Subscription activation verification failed');
+        }
+        
+        logger.info('Subscription activated successfully', {
+          userId,
+          tier,
+          paymentId,
+          attempt,
+          subscriptionStatus: updatedProfile.subscription_status,
+          subscriptionTier: updatedProfile.subscription_tier
+        });
+        
+        return updatedProfile;
+        
+      } catch (error: any) {
+        lastError = error;
+        logger.error(`Subscription activation attempt ${attempt} failed`, {
+          userId,
+          tier,
+          paymentId,
+          attempt,
+          error: error.message,
+          maxRetries
+        });
+        
+        // If this isn't the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          logger.info(`Retrying subscription activation in ${delay}ms`, { userId, attempt, delay });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    // If all attempts failed, log critical error and throw
+    logger.error('CRITICAL: Subscription activation failed after all retries', {
+      userId,
+      tier,
+      paymentId,
+      maxRetries,
+      finalError: lastError.message
     });
+    
+    throw new Error(`Failed to activate subscription after ${maxRetries} attempts: ${lastError.message}`);
   }
 }

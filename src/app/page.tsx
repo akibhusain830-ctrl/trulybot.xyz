@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { generateSEOMetadata, seoConfigs } from '@/lib/seo';
 import { faqSchema, serviceSchema, productSchema, reviewSchema, websiteSchema } from '@/lib/schema';
+import { navigationSchema, homeBreadcrumbSchema, enhancedProductSchema, enhancedWebsiteSchema } from '@/lib/enhanced-schema';
 import HomePageContent from './HomePageContent';
 
 // Homepage metadata export for SEO
@@ -30,7 +31,7 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productSchema)
+          __html: JSON.stringify(enhancedProductSchema)
         }}
       />
       <script
@@ -42,7 +43,19 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(websiteSchema)
+          __html: JSON.stringify(enhancedWebsiteSchema)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(navigationSchema)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(homeBreadcrumbSchema)
         }}
       />
       <HomePageContent />

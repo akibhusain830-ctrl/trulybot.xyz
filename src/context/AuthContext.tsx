@@ -39,6 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [lastSubscriptionCheck, setLastSubscriptionCheck] = useState<number>(0);
+  
+  // Cache subscription data for 2 minutes to prevent excessive API calls
+  const SUBSCRIPTION_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
 
   // Fallback method for subscription check using standardized validation
@@ -85,6 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSubscriptionStatus = useCallback(async () => {
     if (!user?.id) return;
 
+    // Check if we have recent cached data
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastSubscriptionCheck;
+    
+    if (timeSinceLastCheck < SUBSCRIPTION_CACHE_DURATION && subscriptionStatus !== 'none') {
+      // Use cached data, don't show loading
+      return;
+    }
+
     try {
       setSubscriptionLoading(true);
       
@@ -119,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTrialInfo(null);
       }
       
+      setLastSubscriptionCheck(Date.now()); // Update cache timestamp
       setSubscriptionLoading(false);
 
     } catch (error) {
@@ -126,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fall back to direct database check
       await fallbackSubscriptionCheck();
     }
-  }, [user?.id, fallbackSubscriptionCheck]);
+  }, [user?.id, lastSubscriptionCheck, subscriptionStatus, SUBSCRIPTION_CACHE_DURATION, fallbackSubscriptionCheck]);
 
   useEffect(() => {
     // Get initial session

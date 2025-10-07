@@ -23,6 +23,7 @@ type Message = {
   sources?: Source[];
   usedDocs?: boolean;
   fallback?: boolean;
+  buttons?: Array<{ text: string; url: string; type: 'primary' | 'secondary' }>;
 };
 
 const INTRO_KEY = 'trulybot_v4_seen_intro';
@@ -32,6 +33,14 @@ const SUGGESTIONS = [
   'What can you help me with?',
   'Tell me about your services',
   'How can I get started?'
+];
+
+// Demo-specific conversion-focused suggestions
+const DEMO_SUGGESTIONS = [
+  'Show me your pricing plans',
+  'How do I start my free trial?',
+  'What features do you offer?',
+  'How quickly can I get started?'
 ];
 
 function uid() {
@@ -52,7 +61,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[] | null>(SUGGESTIONS);
+  const [suggestions, setSuggestions] = useState<string[] | null>(null);
   const [botId, setBotId] = useState<string>('demo');
   const [widgetConfig, setWidgetConfig] = useState<WidgetConfig>({
     tier: 'basic',
@@ -98,7 +107,10 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     if (idFromScript) {
       setBotId(idFromScript);
     }
-  }, []);
+    
+    // Set appropriate suggestions based on bot type
+    setSuggestions(botId === 'demo' ? DEMO_SUGGESTIONS : SUGGESTIONS);
+  }, [botId]);
 
   // Load widget configuration when botId changes
   useEffect(() => {
@@ -182,17 +194,27 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   }, [widgetConfig, botId]);
 
   useEffect(() => {
-    const seen = localStorage.getItem(INTRO_KEY);
+    // Always show welcome message for demo bot, only check localStorage for non-demo bots
+    const seen = botId === 'demo' ? false : localStorage.getItem(INTRO_KEY);
     if (!seen && messages.length === 0) {
+      // Special welcome message for demo bot
+      const demoWelcome = botId === 'demo' 
+        ? "👋 Hi! I'm TrulyBot's AI Assistant - this is exactly what YOUR customers will experience on your website!\n\nI can show you our pricing plans, help you start a free trial, or demonstrate features like lead capture and instant support.\n\nTry me out - your customers will get this same professional, instant experience 24/7! ⚡"
+        : widgetConfig.welcome_message;
+        
       setMessages([{
         id: uid(),
         role: 'bot',
-        text: widgetConfig.welcome_message,
+        text: demoWelcome,
         at: Date.now()
       }]);
-      localStorage.setItem(INTRO_KEY, '1');
+      
+      // Only set localStorage for non-demo bots
+      if (botId !== 'demo') {
+        localStorage.setItem(INTRO_KEY, '1');
+      }
     }
-  }, [messages.length, widgetConfig.welcome_message]);
+  }, [messages.length, widgetConfig.welcome_message, botId]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -304,6 +326,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
                 sources: metadata.sources,
                 usedDocs: metadata.usedDocs,
                 fallback: metadata.meta?.fallback,
+                buttons: metadata.buttons,
               }
             : m
         ));
@@ -399,6 +422,21 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
                 {m.usedDocs === false && m.fallback && !m.error && botId !== 'demo' && (
                   <div className="anemo-fallback-note">
                     No direct document match. Provided a general answer.
+                  </div>
+                )}
+                {m.buttons && m.buttons.length > 0 && (
+                  <div className="anemo-buttons">
+                    {m.buttons.map((button, btnIndex) => (
+                      <a
+                        key={btnIndex}
+                        href={button.url}
+                        target={button.url.startsWith('http') ? '_blank' : '_self'}
+                        rel={button.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className={`anemo-button ${button.type}`}
+                      >
+                        {button.text}
+                      </a>
+                    ))}
                   </div>
                 )}
                 <div className="bubble-time">
@@ -511,6 +549,12 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         .send-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #2563eb; color: white; border: none; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .send-btn:not(:disabled):hover { background: #1744ad; transform: scale(1.05); }
+        @media (min-width: 1024px) {
+          /* Desktop: Larger container only, keep text/buttons original size */
+          .anemo-messages { padding: 26px 18px 18px 18px; }
+          .composer-inner { margin: 12px 10px 10px 10px; }
+          .anemo-card-header { padding: 20px 20px 12px 20px; }
+        }
         .anemo-poweredby { font-size: 0.93rem; color: #a5aebf; text-align: center; padding: 14px 0 7px 0; background: #23272f; letter-spacing: 0.02em; }
         .anemo-poweredby a { color: #2563eb; text-decoration: none; font-weight: 600; }
         .anemo-sources { margin-top: 10px; background: #23272f; border: 1px solid #2f353d; border-radius: 10px; padding: 8px 10px 10px 10px; }
@@ -520,6 +564,12 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         .anemo-sources .source-chip:hover { background: #2563eb22; border-color: #2563ebaa; }
         .anemo-sources .source-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 0 2px #2563eb22; flex-shrink: 0; }
         .anemo-fallback-note { margin-top: 8px; font-size: 0.7rem; color: #9aa3b1; background: #23272f; padding: 6px 8px; border-radius: 8px; border: 1px solid #2d333b; }
+        .anemo-buttons { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .anemo-button { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+        .anemo-button.primary { background: #2563eb; color: #fff; border: 1px solid #2563eb; }
+        .anemo-button.primary:hover { background: #1d4ed8; border-color: #1d4ed8; transform: translateY(-1px); }
+        .anemo-button.secondary { background: #374151; color: #d1d5db; border: 1px solid #4b5563; }
+        .anemo-button.secondary:hover { background: #4b5563; color: #fff; }
       `}</style>
     </div>
   );

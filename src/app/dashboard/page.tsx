@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import KnowledgeBaseManager from '@/components/dashboard/KnowledgeBaseManager';
 import { Toaster, toast } from 'react-hot-toast';
 import { logSupabaseError } from '@/lib/utils/errorLogger';
@@ -10,19 +11,43 @@ import { buildEmbedSnippet } from '@/lib/utils/embedSnippet';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [chatbotName, setChatbotName] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [accentColor, setAccentColor] = useState('#2563EB');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
   const unmountedRef = useRef(false);
+
+  // Check for payment success notification
+  useEffect(() => {
+    const paymentSuccess = searchParams?.get('payment');
+    const plan = searchParams?.get('plan');
+    
+    if (paymentSuccess === 'success' && plan) {
+      toast.success(`🎉 Welcome to your ${plan} plan! You now have access to all premium features.`, {
+        duration: 6000,
+        style: {
+          background: '#1e293b',
+          color: '#f1f5f9',
+          border: '1px solid #334155'
+        }
+      });
+      
+      // Clear URL parameters without reload
+      if (window.history.replaceState) {
+        window.history.replaceState(null, '', '/dashboard');
+      }
+    }
+  }, [searchParams]);
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('chatbot_name, welcome_message, accent_color')
+        .select('chatbot_name, welcome_message, accent_color, subscription_status, subscription_tier, subscription_ends_at, trial_ends_at')
         .eq('id', user.id)
         .maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
@@ -30,6 +55,12 @@ export default function DashboardPage() {
         setChatbotName(data.chatbot_name || '');
         setWelcomeMessage(data.welcome_message || '');
         setAccentColor(data.accent_color || '#2563EB');
+        setSubscriptionStatus({
+          status: data.subscription_status,
+          tier: data.subscription_tier,
+          ends_at: data.subscription_ends_at,
+          trial_ends_at: data.trial_ends_at
+        });
       }
     } catch (error) {
       logSupabaseError('Error fetching profile', error);
@@ -82,8 +113,41 @@ export default function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <Toaster position="top-center" reverseOrder={false} />
-      <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
-      <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tighter">Workbench</h1>
+          <p className="text-slate-400 mt-1">Manage and customize your chatbot.</p>
+        </div>
+        
+        {/* Subscription Status Widget */}
+        {subscriptionStatus && (
+          <div className="mt-4 lg:mt-0">
+            <div className={`px-4 py-2 rounded-lg border ${
+              subscriptionStatus.status === 'active' 
+                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                : subscriptionStatus.status === 'trial'
+                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  subscriptionStatus.status === 'active' ? 'bg-green-400' :
+                  subscriptionStatus.status === 'trial' ? 'bg-blue-400' : 'bg-yellow-400'
+                }`} />
+                <span className="font-medium capitalize">
+                  {subscriptionStatus.status === 'active' ? `${subscriptionStatus.tier} Plan` :
+                   subscriptionStatus.status === 'trial' ? 'Trial Active' : 'No Subscription'}
+                </span>
+              </div>
+              {(subscriptionStatus.ends_at || subscriptionStatus.trial_ends_at) && (
+                <p className="text-xs mt-1 opacity-75">
+                  Expires: {new Date(subscriptionStatus.ends_at || subscriptionStatus.trial_ends_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mt-8 p-4 sm:p-6 bg-slate-900/50 rounded-lg border border-slate-800">
         <h2 className="text-xl font-semibold">Embed Chatbot on Your Website</h2>

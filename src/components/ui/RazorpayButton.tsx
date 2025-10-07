@@ -73,16 +73,20 @@ export default function RazorpayButton({
   const razorpayCurrency = getRazorpayCurrency(currency);
 
   const createOrder = async () => {
+    console.log('Payment button clicked', { plan_id, currency, billingPeriod, user_id });
     setLoading(true);
     try {
       if (typeof window === 'undefined') throw new Error('WINDOW_UNAVAILABLE');
       // Lazy load Razorpay SDK if not already present
       try {
         await loadRazorpay();
+        console.log('Razorpay SDK loaded successfully');
       } catch (e) {
+        console.error('Failed to load Razorpay SDK:', e);
         throw new Error('Failed to load Razorpay SDK');
       }
       // Create a payment order by calling a server-side API endpoint.
+      console.log('Creating order with:', { plan_id, currency: razorpayCurrency, billing_period: billingPeriod, user_id, notes });
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,13 +94,61 @@ export default function RazorpayButton({
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        const code = (err && err.code) ? ` (${err.code})` : '';
-        throw new Error(err.error ? `${err.error}${code}` : 'Failed to create order');
+        let errorMessage = 'Failed to create order';
+        let errorCode = 'UNKNOWN_ERROR';
+        
+        try {
+          const errorData = await res.json();
+          
+          // Handle new API response format
+          if (errorData.error) {
+            if (typeof errorData.error === 'string') {
+              errorMessage = errorData.error;
+            } else if (errorData.error.message) {
+              errorMessage = errorData.error.message;
+              errorCode = errorData.error.code || errorCode;
+            }
+          }
+          
+          // Handle legacy format
+          else if (errorData.message) {
+            errorMessage = errorData.message;
+            errorCode = errorData.code || errorCode;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+        
+        // Provide specific error messages based on status
+        if (res.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (res.status === 403) {
+          throw new Error('You are not authorized to create orders for this user.');
+        } else if (res.status === 400) {
+          throw new Error(`Invalid request: ${errorMessage}`);
+        } else if (res.status === 500) {
+          throw new Error(`Server error: ${errorMessage} (${errorCode})`);
+        } else {
+          throw new Error(`${errorMessage} (${errorCode})`);
+        }
       }
 
-      const { order } = await res.json();
-      if (!order?.id) throw new Error('Invalid server order response');
+      const responseData = await res.json();
+      
+      // Handle new API response format
+      let order;
+      if (responseData.success && responseData.data?.order) {
+        order = responseData.data.order;
+      } else if (responseData.order) {
+        // Legacy format
+        order = responseData.order;
+      } else {
+        throw new Error('Invalid server order response - no order data found');
+      }
+      
+      if (!order?.id) {
+        throw new Error('Invalid server order response - missing order ID');
+      }
 
       const publicKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       if (!publicKey) {

@@ -41,6 +41,196 @@ function uniq<T>(arr: readonly T[]): T[] {
 }
 
 const KNOWLEDGE_BASE: readonly KnowledgeEntry[] = [
+  // Demo-specific entries for conversion
+  {
+    id: 'demo-bot-experience',
+    category: 'demo',
+    tags: ['demo', 'experience', 'customer'],
+    questionPatterns: [
+      'this\\s+is\\s+demo',
+      'demo\\s+bot',
+      'experience',
+      'what\\s+will\\s+customers\\s+get'
+    ],
+    keywords: ['demo', 'experience', 'customers', 'same', 'professional'],
+    answer: `🎯 You're experiencing exactly what YOUR customers will get on your website!
+
+This same professional, instant AI support will:
+✅ Answer questions 24/7 without delays
+✅ Capture leads automatically 
+✅ Reduce your support tickets by 70%
+✅ Increase conversions by 5X
+
+Ready to give your customers this experience? Start your free trial or view our pricing plans!`,
+    short: 'This demo shows exactly what your customers will experience - professional 24/7 AI support.',
+    priority: 5
+  },
+  {
+    id: 'pricing-plans-demo',
+    category: 'pricing',
+    tags: ['pricing', 'plans', 'cost'],
+    questionPatterns: [
+      'pricing\\s+plans?',
+      'how\\s+much',
+      'cost',
+      'price',
+      'plans'
+    ],
+    keywords: ['pricing', 'plans', 'cost', 'price', 'how much', 'rupees', 'dollars'],
+    answer: `💰 TrulyBot Pricing Plans:
+
+**Basic Plan** - ₹99/month ($2/month)
+• Perfect for small businesses
+• Up to 1,000 conversations/month
+• Basic AI responses & email support
+
+**Pro Plan** - ₹999/month ($15/month) ⭐ Most Popular
+• Best for growing businesses  
+• Up to 10,000 conversations/month
+• Advanced AI with custom branding
+
+**Ultra Plan** - ₹2499/month ($40/month)
+• For enterprise & high-volume
+• Unlimited conversations
+• Premium features + API access
+
+🎁 Start with a 7-day FREE trial - no credit card required!
+
+Want me to help you choose the right plan?`,
+    short: 'Plans start at ₹99/month. Basic/Pro/Ultra tiers. 7-day free trial available.',
+    priority: 5
+  },
+  {
+    id: 'free-trial-demo',
+    category: 'trial',
+    tags: ['trial', 'free', 'signup'],
+    questionPatterns: [
+      'free\\s+trial',
+      'trial',
+      'try\\s+free',
+      'start\\s+trial'
+    ],
+    keywords: ['free', 'trial', 'signup', 'start', 'test'],
+    answer: `🚀 Start Your FREE 7-Day Trial!
+
+✅ No credit card required
+✅ Full access to all features
+✅ Cancel anytime
+✅ Setup takes just 5 minutes
+
+During your trial, you'll get:
+• Complete dashboard access
+• Widget customization
+• Real customer conversations
+• Analytics & insights
+
+Over 10,000+ businesses have started with our free trial. Ready to join them?
+
+Click here to start your trial → [Start Free Trial]`,
+    short: '7-day free trial, no credit card needed. Full access to all features.',
+    priority: 5
+  },
+  {
+    id: 'lead-capture-demo',
+    category: 'features',
+    tags: ['leads', 'capture', 'conversion'],
+    questionPatterns: [
+      'lead\\s+capture',
+      'capture\\s+leads',
+      'convert\\s+visitors',
+      'get\\s+customers'
+    ],
+    keywords: ['leads', 'capture', 'conversion', 'visitors', 'customers', 'contact'],
+    answer: `🎯 Lead Capture in Action!
+
+**What just happened:** I detected your interest and could capture your email for follow-up. This is exactly how TrulyBot turns website visitors into customers!
+
+**Real Results:**
+• 5X more leads than contact forms
+• 70% higher conversion rates  
+• Automatic lead scoring & tagging
+• Instant notifications to your team
+
+**Example:** When a visitor asks about pricing, TrulyBot can say: "I'd love to send you a detailed comparison. What's your email?" 
+
+This conversation would be tagged as "Hot Lead - Pricing Interest" in your dashboard.
+
+Want to see how this works for your business?`,
+    short: 'AI automatically captures leads from conversations, 5X better than forms.',
+    priority: 4
+  },
+  {
+    id: 'features-overview-demo',
+    category: 'features',
+    tags: ['features', 'capabilities'],
+    questionPatterns: [
+      'features',
+      'what\\s+can\\s+you\\s+do',
+      'capabilities',
+      'functionality'
+    ],
+    keywords: ['features', 'capabilities', 'what', 'can', 'do', 'functions'],
+    answer: `⚡ TrulyBot Features You're Experiencing:
+
+**🤖 Intelligent Conversations**
+• Natural language understanding
+• Context-aware responses
+• Multi-language support
+
+**📊 Business Intelligence** 
+• Lead capture & scoring
+• Conversation analytics  
+• Customer insights
+
+**🎨 Full Customization**
+• Your brand colors & logo
+• Custom welcome messages
+• Multiple themes
+
+**🔧 Easy Integration**
+• 5-minute setup
+• Works on any website
+• Mobile-optimized
+
+**📈 Growth Tools**
+• 24/7 customer support
+• Automated lead generation
+• Support ticket reduction
+
+Want to see how these features can transform your business?`,
+    short: 'Intelligent chat, lead capture, customization, easy setup, and growth tools.',
+    priority: 4
+  },
+  {
+    id: 'quick-setup-demo',
+    category: 'setup',
+    tags: ['setup', 'easy', 'quick'],
+    questionPatterns: [
+      'how\\s+quickly',
+      'setup\\s+time',
+      'get\\s+started',
+      'installation'
+    ],
+    keywords: ['quickly', 'setup', 'time', 'easy', 'fast', 'minutes', 'start'],
+    answer: `⏱️ Get TrulyBot Running in Just 5 Minutes!
+
+**Step 1:** Sign up for free trial (30 seconds)
+**Step 2:** Customize your bot's appearance (2 minutes)  
+**Step 3:** Copy & paste one line of code (1 minute)
+**Step 4:** Your AI assistant is live! (Instant)
+
+That's it! No complex integrations, no technical expertise needed.
+
+**What you get immediately:**
+✅ 24/7 AI customer support
+✅ Lead capture system  
+✅ Professional chat widget
+✅ Analytics dashboard
+
+Ready to get started? I can help you begin your free trial right now!`,
+    short: '5-minute setup: Sign up, customize, copy code, go live. No technical skills needed.',
+    priority: 4
+  },
   {
     id: 'what-is-trulybot',
     category: 'overview',

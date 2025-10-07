@@ -120,8 +120,8 @@ export const seoConfigs = {
       'how to reduce customer support tickets with AI',
       'which chatbot increases sales the most'
     ],
-    voiceSearchOptimized: true,
-    featuredSnippetTargeting: true,
+    voiceSearchOptimized: false,
+    featuredSnippetTargeting: false,
     userIntent: 'commercial' as const,
     pageType: 'homepage' as const
   },

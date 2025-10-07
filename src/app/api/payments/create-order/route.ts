@@ -186,7 +186,15 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
       logger.error('Database order insert error', { 
         requestId, 
         error: supabaseError.message,
-        orderId: order.id 
+        errorCode: supabaseError.code,
+        errorDetails: supabaseError.details,
+        errorHint: supabaseError.hint,
+        orderId: order.id,
+        insertPayload,
+        // Add more debug info
+        tableName: 'orders',
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY
       });
       
       // Try to cancel the Razorpay order if database insert fails
@@ -203,9 +211,10 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
         });
       }
       
-      return createErrorResponse('Failed to create order', 500, {
+      return createErrorResponse(`Database error: ${supabaseError.message}`, 500, {
         code: 'ORDER_CREATION_FAILED',
         requestId,
+        details: supabaseError.code
       });
     }
 

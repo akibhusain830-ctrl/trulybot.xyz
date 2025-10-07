@@ -16,6 +16,7 @@ interface NoAccessPageProps {
 export default function NoAccessGuard({ children }: NoAccessPageProps) {
   const { user, subscriptionStatus, subscriptionLoading, trialInfo } = useAuth();
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+  const [showLoadingTimeout, setShowLoadingTimeout] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,8 +26,17 @@ export default function NoAccessGuard({ children }: NoAccessPageProps) {
     }
   }, [subscriptionLoading]);
 
-  // Show loading while checking auth and subscription status
-  if (isCheckingAccess || subscriptionLoading) {
+  // Show loading indicator only after a brief delay to avoid flash
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoadingTimeout(true);
+    }, 200); // Only show loading after 200ms
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading while checking auth and subscription status (but only after delay)
+  if ((isCheckingAccess || subscriptionLoading) && showLoadingTimeout) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">

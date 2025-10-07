@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #005a8a;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Razorpay Payment Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>📋 Test 1: Content Security Policy (CSP)</h2>
+        <p>This test verifies that CSP allows Razorpay frames and scripts.</p>
+        <button onclick="testCSP()">Test CSP</button>
+        <div id="csp-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Test 2: Authentication</h2>
+        <p>This test checks if user authentication is working.</p>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="auth-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Test 3: Order Creation API</h2>
+        <p>This test verifies the payment order creation endpoint.</p>
+        <button onclick="testOrderCreation()">Test Order Creation</button>
+        <div id="order-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Test 4: Razorpay SDK Loading</h2>
+        <p>This test checks if Razorpay SDK can be loaded successfully.</p>
+        <button onclick="testRazorpaySDK()">Test Razorpay SDK</button>
+        <div id="sdk-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Test 5: Full Payment Flow</h2>
+        <p>This test simulates the complete payment process.</p>
+        <button onclick="testPaymentFlow()">Test Payment Flow</button>
+        <div id="payment-result" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            element.innerHTML += `[${timestamp}] ${prefix} ${message}\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        async function testCSP() {
+            clearLog('csp-result');
+            log('csp-result', 'Testing Content Security Policy...');
+            
+            try {
+                // Test 1: Check if we can load Razorpay checkout script
+                const script = document.createElement('script');
+                script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                
+                const scriptLoaded = await new Promise((resolve) => {
+                    script.onload = () => resolve(true);
+                    script.onerror = () => resolve(false);
+                    document.head.appendChild(script);
+                });
+                
+                if (scriptLoaded) {
+                    log('csp-result', 'Razorpay checkout script loaded successfully', 'success');
+                } else {
+                    log('csp-result', 'Failed to load Razorpay checkout script', 'error');
+                }
+                
+                // Test 2: Check if we can create iframe
+                const iframe = document.createElement('iframe');
+                iframe.src = 'https://api.razorpay.com/v1/checkout/frame';
+                iframe.style.display = 'none';
+                
+                const iframeLoaded = await new Promise((resolve) => {
+                    iframe.onload = () => resolve(true);
+                    iframe.onerror = () => resolve(false);
+                    document.body.appendChild(iframe);
+                    setTimeout(() => resolve(false), 3000); // 3 second timeout
+                });
+                
+                if (iframeLoaded) {
+                    log('csp-result', 'Razorpay iframe can be created', 'success');
+                } else {
+                    log('csp-result', 'Failed to create Razorpay iframe or timeout', 'error');
+                }
+                
+                // Clean up
+                iframe.remove();
+                
+            } catch (error) {
+                log('csp-result', `CSP test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            clearLog('auth-result');
+            log('auth-result', 'Testing authentication...');
+            
+            try {
+                const response = await fetch('/api/user/profile');
+                const data = await response.json();
+                
+                if (response.ok && data.user) {
+                    log('auth-result', `User authenticated: ${data.user.id}`, 'success');
+                    log('auth-result', `Email: ${data.user.email}`, 'info');
+                    window.testUser = data.user; // Store for other tests
+                } else {
+                    log('auth-result', 'User not authenticated', 'error');
+                    log('auth-result', 'Please log in to continue tests', 'info');
+                }
+            } catch (error) {
+                log('auth-result', `Authentication test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testOrderCreation() {
+            clearLog('order-result');
+            log('order-result', 'Testing order creation...');
+            
+            if (!window.testUser) {
+                log('order-result', 'Please run authentication test first', 'error');
+                return;
+            }
+            
+            try {
+                const orderData = {
+                    plan_id: 'basic',
+                    currency: 'INR',
+                    billing_period: 'monthly',
+                    user_id: window.testUser.id,
+                    notes: { test: 'integration_test' }
+                };
+                
+                log('order-result', `Creating order for user: ${window.testUser.id}`, 'info');
+                
+                const response = await fetch('/api/payments/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData),
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.order) {
+                    log('order-result', `Order created successfully!`, 'success');
+                    log('order-result', `Order ID: ${result.order.id}`, 'info');
+                    log('order-result', `Amount: ${result.order.amount} ${result.order.currency}`, 'info');
+                    window.testOrder = result.order; // Store for payment test
+                } else {
+                    log('order-result', `Order creation failed: ${result.error}`, 'error');
+                    if (result.code) {
+                        log('order-result', `Error code: ${result.code}`, 'error');
+                    }
+                }
+            } catch (error) {
+                log('order-result', `Order creation test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRazorpaySDK() {
+            clearLog('sdk-result');
+            log('sdk-result', 'Testing Razorpay SDK...');
+            
+            try {
+                // Check if Razorpay is available
+                if (typeof window.Razorpay === 'undefined') {
+                    log('sdk-result', 'Razorpay SDK not loaded, loading now...', 'info');
+                    
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    
+                    const loaded = await new Promise((resolve) => {
+                        script.onload = () => resolve(true);
+                        script.onerror = () => resolve(false);
+                        document.head.appendChild(script);
+                    });
+                    
+                    if (!loaded) {
+                        log('sdk-result', 'Failed to load Razorpay SDK', 'error');
+                        return;
+                    }
+                }
+                
+                if (typeof window.Razorpay !== 'undefined') {
+                    log('sdk-result', 'Razorpay SDK loaded successfully', 'success');
+                    log('sdk-result', `Razorpay version available`, 'info');
+                    
+                    // Test creating a Razorpay instance (without opening)
+                    try {
+                        const testInstance = new window.Razorpay({
+                            key: 'test_key',
+                            amount: 100,
+                            currency: 'INR',
+                            name: 'Test',
+                            description: 'Test transaction',
+                        });
+                        log('sdk-result', 'Razorpay instance created successfully', 'success');
+                    } catch (rzpError) {
+                        log('sdk-result', `Razorpay instance creation failed: ${rzpError.message}`, 'error');
+                    }
+                } else {
+                    log('sdk-result', 'Razorpay SDK still not available', 'error');
+                }
+            } catch (error) {
+                log('sdk-result', `SDK test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPaymentFlow() {
+            clearLog('payment-result');
+            log('payment-result', 'Testing full payment flow...');
+            
+            if (!window.testUser) {
+                log('payment-result', 'Please run authentication test first', 'error');
+                return;
+            }
+            
+            if (!window.testOrder) {
+                log('payment-result', 'Please run order creation test first', 'error');
+                return;
+            }
+            
+            try {
+                log('payment-result', 'Initiating payment with test order...', 'info');
+                
+                // Load Razorpay if not already loaded
+                if (typeof window.Razorpay === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    await new Promise((resolve) => {
+                        script.onload = resolve;
+                        script.onerror = resolve;
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                if (typeof window.Razorpay === 'undefined') {
+                    log('payment-result', 'Razorpay SDK not available', 'error');
+                    return;
+                }
+                
+                // Create payment options
+                const options = {
+                    key: 'rzp_live_RLOeIO6WrBQ5Ck', // Your public key
+                    amount: window.testOrder.amount * 100, // Amount in paise
+                    currency: window.testOrder.currency,
+                    name: 'TrulyBot.xyz',
+                    description: 'Test payment',
+                    order_id: window.testOrder.id,
+                    handler: function (response) {
+                        log('payment-result', 'Payment successful!', 'success');
+                        log('payment-result', `Payment ID: ${response.razorpay_payment_id}`, 'info');
+                        log('payment-result', `Order ID: ${response.razorpay_order_id}`, 'info');
+                    },
+                    prefill: {
+                        name: window.testUser.email.split('@')[0],
+                        email: window.testUser.email,
+                    },
+                    theme: {
+                        color: '#3399cc'
+                    }
+                };
+                
+                log('payment-result', 'Opening Razorpay checkout...', 'info');
+                
+                const rzp = new window.Razorpay(options);
+                
+                rzp.on('payment.failed', function (response) {
+                    log('payment-result', 'Payment failed', 'error');
+                    log('payment-result', `Error: ${response.error.description}`, 'error');
+                });
+                
+                // Note: We won't actually open the payment dialog in this test
+                // to avoid triggering real payments
+                log('payment-result', 'Payment flow initialized successfully!', 'success');
+                log('payment-result', 'Razorpay instance created and configured', 'success');
+                log('payment-result', 'Note: Actual payment dialog not opened in test mode', 'info');
+                
+            } catch (error) {
+                log('payment-result', `Payment flow test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run authentication test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testAuth, 1000);
+        });
+    </script>
+</body>
+</html>

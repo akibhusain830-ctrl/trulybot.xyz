@@ -246,14 +246,21 @@ export async function GET(req: NextRequest) {
       widgetUrl.searchParams.set('theme', widgetState.config.chatbot_theme);
       
       iframe.src = widgetUrl.toString();
+      // Check if desktop (min-width: 1024px) for significantly larger chat window
+      const isDesktop = window.innerWidth >= 1024;
+      const width = isDesktop ? 'min(520px, calc(100vw - 40px))' : 'min(400px, calc(100vw - 40px))';
+      const height = isDesktop ? 'min(780px, calc(100vh - 100px))' : 'min(600px, calc(100vh - 140px))';
+      const maxWidth = isDesktop ? '520px' : '400px';
+      const maxHeight = isDesktop ? '780px' : '600px';
+      
       iframe.style.cssText = \`
         position: fixed !important;
         bottom: 90px !important;
         right: 20px !important;
-        width: min(400px, calc(100vw - 40px)) !important;
-        height: min(600px, calc(100vh - 140px)) !important;
-        max-width: 400px !important;
-        max-height: 600px !important;
+        width: \${width} !important;
+        height: \${height} !important;
+        max-width: \${maxWidth} !important;
+        max-height: \${maxHeight} !important;
         border: none !important;
         border-radius: 12px !important;
         box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
@@ -271,9 +278,13 @@ export async function GET(req: NextRequest) {
       closeBtn.setAttribute('aria-label', 'Close chat');
       closeBtn.setAttribute('role', 'button');
       closeBtn.setAttribute('tabindex', '0');
+      
+      // Position close button based on screen size
+      const closeBtnBottom = isDesktop ? '850px' : '670px'; // 780px + 70px for desktop, 600px + 70px for mobile
+      
       closeBtn.style.cssText = \`
         position: fixed !important;
-        bottom: 670px !important;
+        bottom: \${closeBtnBottom} !important;
         right: 30px !important;
         width: 32px !important;
         height: 32px !important;

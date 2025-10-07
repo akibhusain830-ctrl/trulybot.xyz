@@ -102,9 +102,9 @@ export default function ChatWidgetLauncher() {
           position: fixed;
           right: 36px;
           bottom: 36px;
-          width: 400px;
+          width: 442px;
           max-width: 96vw;
-          height: 600px;
+          height: 670px;
           max-height: 94vh;
           background: #23272f;
           border-radius: 16px;

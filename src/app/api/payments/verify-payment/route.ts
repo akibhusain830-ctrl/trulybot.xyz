@@ -120,35 +120,73 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
       });
     }
 
-    // Activate subscription through ProfileManager
-    const profile = await ProfileManager.activateSubscription(
-      user_id, 
-      plan_id,
-      razorpay_payment_id
-    );
+    // Activate subscription through ProfileManager with robust error handling
+    try {
+      const profile = await ProfileManager.activateSubscription(
+        user_id, 
+        plan_id,
+        razorpay_payment_id
+      );
 
-    logger.info('Payment verified and subscription activated', { 
-      requestId, 
-      userId: user_id,
-      planId: plan_id,
-      paymentId: razorpay_payment_id
-    });
-
-    return createSuccessResponse(
-      {
-        profile,
-        subscription: {
-          tier: plan_id,
-          status: 'active',
-          payment_id: razorpay_payment_id,
-          billing_period,
-        }
-      },
-      {
-        message: 'Payment verified and subscription activated successfully!',
-        requestId,
+      // Double-check that subscription was activated
+      if (profile.subscription_status !== 'active' || profile.subscription_tier !== plan_id) {
+        logger.error('Subscription activation verification failed after success', {
+          requestId,
+          userId: user_id,
+          planId: plan_id,
+          paymentId: razorpay_payment_id,
+          actualStatus: profile.subscription_status,
+          actualTier: profile.subscription_tier
+        });
+        
+        return createErrorResponse('Subscription activation failed', 500, {
+          code: 'SUBSCRIPTION_ACTIVATION_FAILED',
+          requestId,
+        });
       }
-    );
+
+      logger.info('Payment verified and subscription activated successfully', { 
+        requestId, 
+        userId: user_id,
+        planId: plan_id,
+        paymentId: razorpay_payment_id,
+        subscriptionStatus: profile.subscription_status,
+        subscriptionTier: profile.subscription_tier
+      });
+
+      return createSuccessResponse(
+        {
+          profile,
+          subscription: {
+            tier: plan_id,
+            status: 'active',
+            payment_id: razorpay_payment_id,
+            billing_period,
+            activated_at: new Date().toISOString()
+          }
+        },
+        {
+          message: 'Payment verified and subscription activated successfully!',
+          requestId,
+        }
+      );
+      
+    } catch (activationError: any) {
+      logger.error('CRITICAL: Subscription activation failed during payment verification', {
+        requestId,
+        userId: user_id,
+        planId: plan_id,
+        paymentId: razorpay_payment_id,
+        error: activationError.message,
+        stack: activationError.stack
+      });
+      
+      return createErrorResponse('Subscription activation failed', 500, {
+        code: 'SUBSCRIPTION_ACTIVATION_FAILED',
+        requestId,
+        details: activationError.message
+      });
+    }
     
   } catch (error: any) {
     logger.error('Payment verification error', { 
