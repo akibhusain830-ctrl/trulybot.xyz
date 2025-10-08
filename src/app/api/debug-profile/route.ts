@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProfileManager } from '@/lib/profile-manager';
 import { calculateSubscriptionAccess } from '@/lib/subscription';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = createServerSupabaseClient();
 
     console.log('🔍 Debug: Starting profile debug...');
 

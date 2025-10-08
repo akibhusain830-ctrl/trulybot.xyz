@@ -1,19 +1,13 @@
-/**
- * Protected route utilities for API endpoints
- * Provides standardized authentication and subscription validation
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { requireValidSubscription, validateUserSubscription } from './subscriptionValidation.server';
-import { SubscriptionTier } from './subscription';
+import { validateSession } from './auth/sessionValidator';
 import { authRateLimit } from './rateLimit';
+import { requireCSRF } from './csrf/protection';
 
 interface AuthResult {
   success: true;
   userId: string;
   userEmail: string;
+  user: any;
 }
 
 interface AuthError {
@@ -22,65 +16,39 @@ interface AuthError {
 }
 
 /**
- * Authenticate request and return user info or error response
+ * Authenticate request with full session validation and CSRF protection
  */
 export async function authenticateRequest(req: NextRequest): Promise<AuthResult | AuthError> {
   try {
-    // Apply auth rate limiting
+    // Apply rate limiting
     const rateLimitResult = await authRateLimit(req);
     if (!rateLimitResult.allowed) {
       return {
         success: false,
         response: NextResponse.json({
-          error: 'Too many authentication attempts. Please try again later.',
+          error: 'Too many authentication attempts',
           resetTime: rateLimitResult.resetTime
         }, { status: 429 })
       };
     }
 
-    // Validate environment
-    const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = process.env;
-    if (!NEXT_PUBLIC_SUPABASE_URL || !NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // Check CSRF protection for state-changing operations
+    const csrfError = requireCSRF(req);
+    if (csrfError) {
       return {
         success: false,
-        response: NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+        response: csrfError
       };
     }
 
-    // Create Supabase client
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      NEXT_PUBLIC_SUPABASE_URL,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          get: (name: string) => cookieStore.get(name)?.value,
-          set: (name: string, value: string, options: any) => {
-            try {
-              cookieStore.set({ name, value, ...options });
-            } catch {
-              // Handle cases where cookies cannot be set
-            }
-          },
-          remove: (name: string, options: any) => {
-            try {
-              cookieStore.set({ name, value: '', ...options });
-            } catch {
-              // Handle cases where cookies cannot be removed
-            }
-          },
-        },
-      }
-    );
-
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Validate session with full checks
+    const sessionResult = await validateSession();
     
-    if (authError || !user) {
+    if (!sessionResult.valid) {
       return {
         success: false,
         response: NextResponse.json({
-          error: 'Authentication required',
+          error: sessionResult.error || 'Authentication required',
           code: 'UNAUTHORIZED'
         }, { status: 401 })
       };
@@ -88,9 +56,11 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthResult 
 
     return {
       success: true,
-      userId: user.id,
-      userEmail: user.email || ''
+      userId: sessionResult.user.id,
+      userEmail: sessionResult.user.email || '',
+      user: sessionResult.user
     };
+    
   } catch (error) {
     console.error('[authenticateRequest] Error:', error);
     return {
@@ -104,41 +74,6 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthResult 
 }
 
 /**
- * Authenticate request and validate subscription access
- */
-export async function authenticateAndValidateSubscription(
-  req: NextRequest,
-  minTier: SubscriptionTier = 'basic'
-): Promise<(AuthResult & { validation: any }) | AuthError> {
-  
-  // First authenticate the user
-  const authResult = await authenticateRequest(req);
-  if (!authResult.success) {
-    return authResult;
-  }
-
-  // Validate subscription
-  const subscriptionResult = await requireValidSubscription(authResult.userId, minTier);
-  if (!subscriptionResult.success) {
-    return {
-      success: false,
-      response: NextResponse.json({
-        error: subscriptionResult.error,
-        details: subscriptionResult.details,
-        code: 'SUBSCRIPTION_REQUIRED'
-      }, { status: subscriptionResult.status })
-    };
-  }
-
-  return {
-    success: true,
-    userId: authResult.userId,
-    userEmail: authResult.userEmail,
-    validation: subscriptionResult.validation
-  };
-}
-
-/**
  * Wrapper for API route handlers that require authentication
  */
 export function withAuth<T extends any[]>(
@@ -146,24 +81,6 @@ export function withAuth<T extends any[]>(
 ) {
   return async (req: NextRequest, ...args: T): Promise<NextResponse> => {
     const authResult = await authenticateRequest(req);
-    
-    if (!authResult.success) {
-      return authResult.response;
-    }
-
-    return handler(req, authResult, ...args);
-  };
-}
-
-/**
- * Wrapper for API route handlers that require subscription
- */
-export function withSubscription<T extends any[]>(
-  handler: (req: NextRequest, auth: AuthResult & { validation: any }, ...args: T) => Promise<NextResponse>,
-  minTier: SubscriptionTier = 'basic'
-) {
-  return async (req: NextRequest, ...args: T): Promise<NextResponse> => {
-    const authResult = await authenticateAndValidateSubscription(req, minTier);
     
     if (!authResult.success) {
       return authResult.response;

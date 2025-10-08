@@ -2,23 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createRequestId } from '../../../lib/requestContext';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/protectedRoute';
 
 export async function GET(req: NextRequest) {
   const reqId = createRequestId();
-  // Add authentication check
-  const supabase = createSupabaseServerClient();
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  
+  // Authentication check using unified system
+  const authResult = await authenticateRequest(req);
+  if (!authResult.success) {
+    return authResult.response;
   }
 
   // Get user's workspace for security filtering
   const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('workspace_id')
-    .eq('id', user.id)
+    .eq('id', authResult.userId)
     .single();
 
   const { searchParams } = new URL(req.url);
@@ -64,17 +63,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const reqId = createRequestId();
   try {
-    // Get auth token from request headers
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Authentication check using unified system
+    const authResult = await authenticateRequest(req);
+    if (!authResult.success) {
+      return authResult.response;
     }
 
     const leadData = await req.json();
@@ -83,7 +75,7 @@ export async function POST(req: NextRequest) {
       .from('leads')
       .insert({
         ...leadData,
-        user_id: user.id // Associate lead with current user
+        user_id: authResult.userId // Associate lead with current user
       })
       .select()
       .single();

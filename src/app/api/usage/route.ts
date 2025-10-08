@@ -5,7 +5,7 @@ import { config } from '@/lib/config/secrets';
 import { withApi } from '@/lib/middleware/apiHandler';
 import { limitIp } from '@/lib/middleware/rateLimiter';
 import { AuthError } from '@/lib/errors';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export const GET = withApi(async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }
     
-    const supabase = createSupabaseServerClient();
+    const supabase = createServerSupabaseClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new AuthError('Not authenticated');

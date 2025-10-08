@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProfileManager } from '@/lib/profile-manager';
 import { calculateSubscriptionAccess, SubscriptionTier } from '@/lib/subscription';
 import { logger } from '@/lib/logger';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
   logger.info('sync-subscription:start');
     
-    const supabase = createSupabaseServerClient();
+    const supabase = createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

@@ -2,21 +2,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateSubscriptionAccess } from '@/lib/subscription';
 import { ProfileManager } from '@/lib/profile-manager';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/protectedRoute';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Authentication check using unified system
+    const authResult = await authenticateRequest(req);
+    if (!authResult.success) {
+      return authResult.response;
     }
 
     // Get or create profile using ProfileManager
-    const profile = await ProfileManager.getOrCreateProfile(user.id, user.email!);
+    const profile = await ProfileManager.getOrCreateProfile(authResult.userId, authResult.userEmail);
     
     // Calculate subscription access
     const subscriptionInfo = calculateSubscriptionAccess(profile);
@@ -24,8 +23,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       user: {
         ...profile,
-        id: user.id,
-        email: user.email
+        id: authResult.userId,
+        email: authResult.userEmail
       },
       subscription: subscriptionInfo,
       profile
