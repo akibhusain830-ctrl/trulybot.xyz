@@ -35,12 +35,25 @@ export interface PaymentEvent {
 }
 
 export class SecurePaymentService {
-  private supabase;
-  private subscriptionService;
+  private supabase: any = null;
+  private subscriptionService: SubscriptionService | null = null;
 
   constructor() {
-    this.supabase = createServerSupabaseClient();
-    this.subscriptionService = new SubscriptionService();
+    // Don't initialize at constructor time - lazy load when needed
+  }
+
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createServerSupabaseClient();
+    }
+    return this.supabase;
+  }
+
+  private getSubscriptionService() {
+    if (!this.subscriptionService) {
+      this.subscriptionService = new SubscriptionService();
+    }
+    return this.subscriptionService;
   }
 
   /**
@@ -178,7 +191,7 @@ export class SecurePaymentService {
   ): Promise<OrderSecurityCheck> {
     try {
       // Fetch order details
-      const { data: order, error } = await this.supabase
+      const { data: order, error } = await this.getSupabase()
         .from('orders')
         .select('user_id, plan_id, amount, currency, status, created_at')
         .eq('razorpay_order_id', orderId)
@@ -262,7 +275,7 @@ export class SecurePaymentService {
   async processPaymentEvent(event: PaymentEvent): Promise<{ success: boolean; error?: string }> {
     try {
       // Check for duplicate payment processing (idempotency)
-      const { data: existingPayment } = await this.supabase
+      const { data: existingPayment } = await this.getSupabase()
         .from('billing_history')
         .select('id')
         .eq('razorpay_payment_id', event.paymentId)
@@ -284,7 +297,7 @@ export class SecurePaymentService {
       }
 
       // Begin transaction for atomic operations
-      const { error: transactionError } = await this.supabase.rpc('process_payment_securely', {
+      const { error: transactionError } = await this.getSupabase().rpc('process_payment_securely', {
         p_user_id: event.userId,
         p_plan_id: event.planId,
         p_payment_id: event.paymentId,
@@ -336,7 +349,7 @@ export class SecurePaymentService {
   ): Promise<{ isValid: boolean; error?: string }> {
     try {
       // Get current subscription status
-      const currentStatus = await this.subscriptionService.getUserSubscriptionStatus(userId);
+      const currentStatus = await this.getSubscriptionService().getUserSubscriptionStatus(userId);
       
       // Validate upgrade path
       const upgradeValidation = this.validateUpgradePath(
@@ -433,7 +446,7 @@ export class SecurePaymentService {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
       // Check for multiple payment attempts in short time
-      const { data: recentAttempts, error } = await this.supabase
+      const { data: recentAttempts, error } = await this.getSupabase()
         .from('orders')
         .select('id, created_at, status')
         .eq('user_id', userId)
@@ -449,7 +462,7 @@ export class SecurePaymentService {
       }
 
       // Check for rapid subscription changes
-      const failedAttempts = recentAttempts?.filter(a => a.status === 'failed') || [];
+      const failedAttempts = recentAttempts?.filter((a: any) => a.status === 'failed') || [];
       if (failedAttempts.length > 3) {
         return {
           isSuspicious: true,

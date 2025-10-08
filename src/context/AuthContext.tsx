@@ -5,25 +5,69 @@ import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
+type SubscriptionTier = 'basic' | 'pro' | 'ultra' | 'trial';
+type SubscriptionStatus = 'active' | 'trialing' | 'none';
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
+  subscriptionLoading: boolean;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  refreshSubscriptionStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  subscriptionStatus: 'none',
+  subscriptionLoading: true,
   signOut: async () => {},
   refreshSession: async () => {},
+  refreshSubscriptionStatus: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+
+  const refreshSubscriptionStatus = useCallback(async () => {
+    if (!user) {
+      setSubscriptionStatus('none');
+      setSubscriptionLoading(false);
+      return;
+    }
+
+    try {
+      setSubscriptionLoading(true);
+      const response = await fetch('/api/subscription/status');
+      if (response.ok) {
+        const data = await response.json();
+        const tier = data.tier || 'basic';
+        
+        // Map subscription tier to status
+        if (tier === 'trial') {
+          setSubscriptionStatus('trialing');
+        } else if (tier === 'basic' || tier === 'pro' || tier === 'ultra') {
+          setSubscriptionStatus('active');
+        } else {
+          setSubscriptionStatus('none');
+        }
+      } else {
+        setSubscriptionStatus('active'); // Default to active for basic
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+      setSubscriptionStatus('active'); // Default to active for basic
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, [user]);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -92,6 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setLoading(false);
+          setSubscriptionStatus('none');
+          setSubscriptionLoading(false);
           router.push('/sign-in');
         } else if (event === 'TOKEN_REFRESHED') {
           setUser(session?.user ?? null);
@@ -110,6 +156,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router, supabase, refreshSession, checkSessionExpiry]);
 
+  // Refresh subscription status when user changes
+  useEffect(() => {
+    if (user) {
+      refreshSubscriptionStatus();
+    }
+  }, [user, refreshSubscriptionStatus]);
+
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
@@ -121,7 +174,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut, refreshSession }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      subscriptionStatus, 
+      subscriptionLoading, 
+      signOut, 
+      refreshSession,
+      refreshSubscriptionStatus 
+    }}>
       {children}
     </AuthContext.Provider>
   );

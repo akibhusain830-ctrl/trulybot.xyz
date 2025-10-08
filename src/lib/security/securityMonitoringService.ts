@@ -68,10 +68,17 @@ export interface SecurityAlert {
 }
 
 export class SecurityMonitoringService {
-  private supabase;
+  private supabase: any = null;
 
   constructor() {
-    this.supabase = createServerSupabaseClient();
+    // Don't initialize at constructor time - lazy load when needed
+  }
+
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createServerSupabaseClient();
+    }
+    return this.supabase;
   }
 
   /**
@@ -355,8 +362,8 @@ export class SecurityMonitoringService {
         },
         authenticationEvents: {
           total: authEvents.data?.length || 0,
-          successful: authEvents.data?.filter(e => e.success).length || 0,
-          failed: authEvents.data?.filter(e => !e.success).length || 0,
+          successful: authEvents.data?.filter((e: any) => e.success).length || 0,
+          failed: authEvents.data?.filter((e: any) => !e.success).length || 0,
           byType: this.groupBy(authEvents.data || [], 'event_type')
         },
         rateLimitViolations: {
@@ -394,7 +401,7 @@ export class SecurityMonitoringService {
 
       if (recentLogins && recentLogins.length > 0) {
         // Check for multiple IP addresses
-        const uniqueIPs = new Set(recentLogins.map(l => l.ip_address));
+        const uniqueIPs = new Set(recentLogins.map((l: any) => l.ip_address));
         if (uniqueIPs.size > 3) {
           anomalies.push({
             type: 'multiple_ip_addresses',
@@ -406,7 +413,7 @@ export class SecurityMonitoringService {
 
         // Check for unusual time patterns
         const hourCounts = new Array(24).fill(0);
-        recentLogins.forEach(login => {
+        recentLogins.forEach((login: any) => {
           const hour = new Date(login.created_at).getHours();
           hourCounts[hour]++;
         });
@@ -488,4 +495,22 @@ export class SecurityMonitoringService {
   }
 }
 
-export const securityMonitoringService = new SecurityMonitoringService();
+// Lazy-loaded singleton to avoid calling cookies() at module level
+let _securityMonitoringService: SecurityMonitoringService | null = null;
+
+export function getSecurityMonitoringService(): SecurityMonitoringService {
+  if (!_securityMonitoringService) {
+    _securityMonitoringService = new SecurityMonitoringService();
+  }
+  return _securityMonitoringService;
+}
+
+// For backward compatibility - use proxy to avoid type issues
+export const securityMonitoringService = new Proxy({} as SecurityMonitoringService, {
+  get(target, prop) {
+    return (...args: any[]) => {
+      const service = getSecurityMonitoringService();
+      return (service as any)[prop](...args);
+    };
+  }
+});

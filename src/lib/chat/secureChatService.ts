@@ -28,12 +28,27 @@ export interface SecureChatRequest {
 }
 
 export class SecureChatService {
-  private supabase;
-  private subscriptionService;
+  private supabase: any = null;
+  private subscriptionService: SubscriptionService | null = null;
 
   constructor() {
-    this.supabase = createServerSupabaseClient();
-    this.subscriptionService = new SubscriptionService();
+    // Don't initialize at constructor time - lazy load when needed
+    this.supabase = null;
+    this.subscriptionService = null;
+  }
+
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createServerSupabaseClient();
+    }
+    return this.supabase;
+  }
+
+  private getSubscriptionService() {
+    if (!this.subscriptionService) {
+      this.subscriptionService = new SubscriptionService();
+    }
+    return this.subscriptionService;
   }
 
   /**
@@ -51,7 +66,7 @@ export class SecureChatService {
       }
 
       // Check if user has access to this workspace (botId = workspace_id)
-      const { data: profile, error } = await this.supabase
+      const { data: profile, error } = await this.getSupabase()
         .from('profiles')
         .select('workspace_id, subscription_tier')
         .eq('id', userId)
@@ -89,7 +104,7 @@ export class SecureChatService {
   ): Promise<MessageLimitCheck> {
     try {
       // Get subscription limits
-      const subscriptionStatus = await this.subscriptionService.getUserSubscriptionStatus(userId);
+      const subscriptionStatus = await this.getSubscriptionService().getUserSubscriptionStatus(userId);
       
       if (!subscriptionStatus.isActive) {
         return {
@@ -113,7 +128,7 @@ export class SecureChatService {
       // Check current usage for the month
       const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
       
-      const { data: usage, error } = await this.supabase
+      const { data: usage, error } = await this.getSupabase()
         .from('usage_counters')
         .select('monthly_conversations')
         .eq('workspace_id', workspaceId)
@@ -152,7 +167,7 @@ export class SecureChatService {
       const currentMonth = new Date().toISOString().substring(0, 7);
       
       // Try to increment existing counter
-      const { data: existing } = await this.supabase
+      const { data: existing } = await this.getSupabase()
         .from('usage_counters')
         .select('id, monthly_conversations')
         .eq('workspace_id', workspaceId)
@@ -160,7 +175,7 @@ export class SecureChatService {
         .single();
 
       if (existing) {
-        await this.supabase
+        await this.getSupabase()
           .from('usage_counters')
           .update({
             monthly_conversations: existing.monthly_conversations + 1,
@@ -169,7 +184,7 @@ export class SecureChatService {
           .eq('id', existing.id);
       } else {
         // Create new counter record
-        await this.supabase
+        await this.getSupabase()
           .from('usage_counters')
           .insert({
             workspace_id: workspaceId,

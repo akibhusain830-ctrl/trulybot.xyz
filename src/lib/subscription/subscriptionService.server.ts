@@ -64,111 +64,146 @@ const TIER_FEATURES = {
   }
 };
 
-export async function getUserSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
-  const supabase = createServerSupabaseClient();
-  
-  try {
-    // Get user profile with trial info
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('trial_ends_at, created_at')
-      .eq('id', userId)
-      .single();
-    
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return getDefaultSubscriptionStatus();
-    }
+export class SubscriptionService {
+  private supabase: any = null;
 
-    // Get active subscription
-    const { data: subscription, error: subError } = await supabase
-      .from('subscriptions')
-      .select('plan_name, status, current_period_end')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    
-    // Check if user has active subscription
-    if (subscription && subscription.status === 'active') {
-      const tier = getTierFromPlanName(subscription.plan_name);
-      const endsAt = new Date(subscription.current_period_end);
-      const now = new Date();
-      const daysRemaining = Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      return {
-        tier,
-        isActive: true,
-        isTrial: false,
-        trialEndsAt: null,
-        subscriptionEndsAt: subscription.current_period_end,
-        daysRemaining,
-        features: TIER_FEATURES[tier]
-      };
-    }
+  constructor() {
+    // Don't initialize at constructor time - lazy load when needed
+  }
 
-    // Check if user is in trial period
-    if (profile?.trial_ends_at) {
-      const trialEnd = new Date(profile.trial_ends_at);
-      const now = new Date();
-      const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createServerSupabaseClient();
+    }
+    return this.supabase;
+  }
+
+  async getUserSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+    try {
+      // Get user profile with trial info
+      const { data: profile, error: profileError } = await this.getSupabase()
+        .from('profiles')
+        .select('trial_ends_at, created_at')
+        .eq('id', userId)
+        .single();
       
-      if (daysRemaining > 0) {
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return this.getDefaultSubscriptionStatus();
+      }
+
+      // Get active subscription
+      const { data: subscription, error: subError } = await this.getSupabase()
+        .from('subscriptions')
+        .select('plan_name, status, current_period_end')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      // Check if user has active subscription
+      if (subscription && subscription.status === 'active') {
+        const tier = this.getTierFromPlanName(subscription.plan_name);
+        const endsAt = new Date(subscription.current_period_end);
+        const now = new Date();
+        const daysRemaining = Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
         return {
-          tier: 'trial',
+          tier,
           isActive: true,
-          isTrial: true,
-          trialEndsAt: profile.trial_ends_at,
-          subscriptionEndsAt: null,
+          isTrial: false,
+          trialEndsAt: null,
+          subscriptionEndsAt: subscription.current_period_end,
           daysRemaining,
-          features: TIER_FEATURES.trial
+          features: TIER_FEATURES[tier]
         };
       }
-    }
 
-    // Default to basic tier
-    return getDefaultSubscriptionStatus();
-    
-  } catch (error) {
-    console.error('Error getting subscription status:', error);
-    return getDefaultSubscriptionStatus();
+      // Check if user is in trial period
+      if (profile?.trial_ends_at) {
+        const trialEnd = new Date(profile.trial_ends_at);
+        const now = new Date();
+        const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysRemaining > 0) {
+          return {
+            tier: 'trial',
+            isActive: true,
+            isTrial: true,
+            trialEndsAt: profile.trial_ends_at,
+            subscriptionEndsAt: null,
+            daysRemaining,
+            features: TIER_FEATURES.trial
+          };
+        }
+      }
+
+      // Default to basic tier
+      return this.getDefaultSubscriptionStatus();
+      
+    } catch (error) {
+      console.error('Error getting subscription status:', error);
+      return this.getDefaultSubscriptionStatus();
+    }
+  }
+
+  async canAccessFeature(
+    userId: string,
+    feature: keyof SubscriptionStatus['features']
+  ): Promise<boolean> {
+    const status = await this.getUserSubscriptionStatus(userId);
+    return status.features[feature] as boolean;
+  }
+
+  async requireFeatureAccess(
+    userId: string,
+    feature: keyof SubscriptionStatus['features']
+  ): Promise<void> {
+    const hasAccess = await this.canAccessFeature(userId, feature);
+    if (!hasAccess) {
+      throw new Error(`Feature '${feature}' requires a higher subscription tier`);
+    }
+  }
+
+  private getTierFromPlanName(planName: string): SubscriptionTier {
+    const name = planName.toLowerCase();
+    if (name.includes('ultra')) return 'ultra';
+    if (name.includes('pro')) return 'pro';
+    return 'basic';
+  }
+
+  private getDefaultSubscriptionStatus(): SubscriptionStatus {
+    return {
+      tier: 'basic',
+      isActive: true,
+      isTrial: false,
+      trialEndsAt: null,
+      subscriptionEndsAt: null,
+      daysRemaining: null,
+      features: TIER_FEATURES.basic
+    };
   }
 }
 
-function getTierFromPlanName(planName: string): SubscriptionTier {
-  const name = planName.toLowerCase();
-  if (name.includes('ultra')) return 'ultra';
-  if (name.includes('pro')) return 'pro';
-  return 'basic';
-}
-
-function getDefaultSubscriptionStatus(): SubscriptionStatus {
-  return {
-    tier: 'basic',
-    isActive: true,
-    isTrial: false,
-    trialEndsAt: null,
-    subscriptionEndsAt: null,
-    daysRemaining: null,
-    features: TIER_FEATURES.basic
-  };
+// For backward compatibility, also export the functions
+export async function getUserSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+  const service = new SubscriptionService();
+  return service.getUserSubscriptionStatus(userId);
 }
 
 export async function canAccessFeature(
   userId: string,
   feature: keyof SubscriptionStatus['features']
 ): Promise<boolean> {
-  const status = await getUserSubscriptionStatus(userId);
-  return status.features[feature] as boolean;
+  const service = new SubscriptionService();
+  return service.canAccessFeature(userId, feature);
 }
 
 export async function requireFeatureAccess(
   userId: string,
   feature: keyof SubscriptionStatus['features']
 ): Promise<void> {
-  const hasAccess = await canAccessFeature(userId, feature);
-  if (!hasAccess) {
-    throw new Error(`Feature '${feature}' requires a higher subscription tier`);
-  }
+  const service = new SubscriptionService();
+  return service.requireFeatureAccess(userId, feature);
 }
