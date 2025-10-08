@@ -151,10 +151,14 @@ export function initializeServiceWorker() {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
-        console.log('SW registered: ', registration);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('SW registered: ', registration);
+        }
       })
       .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('SW registration failed: ', registrationError);
+        }
       });
   });
 }
@@ -227,14 +231,18 @@ export function trackWebVitals() {
 
   // Track Core Web Vitals
   import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
-    onCLS(console.log);
-    onINP(console.log); // INP replaced FID in newer versions
-    onFCP(console.log);
-    onLCP(console.log);
-    onTTFB(console.log);
+    if (process.env.NODE_ENV === 'development') {
+      onCLS(console.log);
+      onINP(console.log); // INP replaced FID in newer versions
+      onFCP(console.log);
+      onLCP(console.log);
+      onTTFB(console.log);
+    }
   }).catch(() => {
     // Fallback if web-vitals package is not available
-    console.log('Web Vitals tracking not available');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Web Vitals tracking not available');
+    }
   });
 }
 
@@ -272,6 +280,8 @@ export function enhanceAnalyticsWithPerformance() {
   // Send performance data to analytics
   window.addEventListener('beforeunload', () => {
     // Send data to your analytics service
-    console.log('Performance Data:', performanceData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Performance Data:', performanceData);
+    }
   });
 }

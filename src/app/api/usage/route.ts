@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { getPlanQuota, currentMonthKey, countWords } from '@/lib/constants/quotas';
 import { config } from '@/lib/config/secrets';
 import { withApi } from '@/lib/middleware/apiHandler';
 import { limitIp } from '@/lib/middleware/rateLimiter';
 import { AuthError } from '@/lib/errors';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 
 export const dynamic = 'force-dynamic';
@@ -16,12 +15,8 @@ export const GET = withApi(async function GET(req: NextRequest) {
     if (rl.limited) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      config.supabase.url,
-      config.supabase.anonKey,
-      { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-    );
+    
+    const supabase = createSupabaseServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new AuthError('Not authenticated');

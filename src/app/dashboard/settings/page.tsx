@@ -114,7 +114,7 @@ export default function SettingsPage() {
         // Fetch profile settings and trial info
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('chatbot_name, welcome_message, accent_color, trial_ends_at, created_at')
+          .select('chatbot_name, welcome_message, accent_color, chatbot_logo_url, chatbot_theme, custom_css, trial_ends_at, created_at')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -125,9 +125,9 @@ export default function SettingsPage() {
             chatbot_name: profileData.chatbot_name || '',
             welcome_message: profileData.welcome_message || '',
             accent_color: profileData.accent_color || '#2563EB',
-            chatbot_logo_url: '', // Will be populated when column is added
-            chatbot_theme: 'default', // Will be populated when column is added
-            custom_css: '' // Will be populated when column is added
+            chatbot_logo_url: profileData.chatbot_logo_url || '', // Load from database
+            chatbot_theme: profileData.chatbot_theme || 'default', // Load from database
+            custom_css: profileData.custom_css || '' // Load from database
           });
 
           // Check for trial information
@@ -195,12 +195,26 @@ export default function SettingsPage() {
         accent_color: settings.accent_color
       };
 
-      console.log('Saving basic settings:', basicSettings);
+      // Add advanced settings if user has access to them
+      const advancedSettings: any = {};
+      if (canAccessFeature('logo')) {
+        advancedSettings.chatbot_logo_url = settings.chatbot_logo_url;
+      }
+      if (canAccessFeature('theme')) {
+        advancedSettings.chatbot_theme = settings.chatbot_theme;
+      }
+      if (canAccessFeature('css')) {
+        advancedSettings.custom_css = settings.custom_css;
+      }
+
+      const allSettings = { ...basicSettings, ...advancedSettings };
+
+      console.log('Saving all settings:', allSettings);
 
       const { error } = await supabase
         .from('profiles')
         .update({
-          ...basicSettings,
+          ...allSettings,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -310,7 +324,24 @@ export default function SettingsPage() {
         chatbot_logo_url: publicUrl
       }));
 
-      toast.success('Logo uploaded successfully!', { id: toastId });
+      // Save logo URL to database immediately
+      if (canAccessFeature('logo') && user?.id) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            chatbot_logo_url: publicUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Error saving logo URL to database:', updateError);
+          toast.error('Logo uploaded but failed to save. Please click "Save Settings".', { id: toastId });
+          return;
+        }
+      }
+
+      toast.success('Logo uploaded and saved successfully!', { id: toastId });
     } catch (error) {
       console.error('Error uploading logo:', error);
       toast.error('Failed to upload logo.', { id: toastId });
@@ -319,11 +350,38 @@ export default function SettingsPage() {
     }
   };
 
-  const handleRemoveLogo = () => {
-    setSettings(prev => ({
-      ...prev,
-      chatbot_logo_url: ''
-    }));
+  const handleRemoveLogo = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Update local state
+      setSettings(prev => ({
+        ...prev,
+        chatbot_logo_url: ''
+      }));
+
+      // Save removal to database immediately if user has access
+      if (canAccessFeature('logo')) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            chatbot_logo_url: '',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('Error removing logo from database:', error);
+          toast.error('Failed to remove logo. Please try again.');
+          return;
+        }
+      }
+
+      toast.success('Logo removed successfully!');
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      toast.error('Failed to remove logo. Please try again.');
+    }
   };
 
   const handleInputChange = (field: keyof ProfileSettings, value: string) => {

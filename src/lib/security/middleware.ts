@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiRateLimit, authRateLimit, chatRateLimit, paymentRateLimit } from './rateLimiting';
-import { defaultSecurityHeaders, embedSecurityHeaders, defaultCors, validateUserAgent, validateReferer } from './headers';
+import { createSecurityHeaders, createCORSHeaders, addRateLimitHeaders } from '../security-headers';
 import { detectSuspiciousPatterns, CSRFProtection } from './validation';
 import { getClientIP, isBlockedIP } from '@/lib/utils/ip';
 import { logger } from '@/lib/logger';
@@ -26,6 +26,42 @@ const ALLOWED_REFERER_DOMAINS = [
   'localhost',
   '127.0.0.1',
 ];
+
+// Validation functions
+function validateUserAgent(userAgent: string): boolean {
+  if (!userAgent || userAgent.length < 10 || userAgent.length > 500) {
+    return false;
+  }
+  // Check for common browser patterns
+  const validPatterns = [
+    /Mozilla/i,
+    /Chrome/i,
+    /Safari/i,
+    /Firefox/i,
+    /Edge/i,
+    /Opera/i
+  ];
+  return validPatterns.some(pattern => pattern.test(userAgent));
+}
+
+function validateReferer(referer: string, allowedDomains: string[]): boolean {
+  try {
+    const url = new URL(referer);
+    return allowedDomains.some(domain => 
+      url.hostname === domain || url.hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Security headers and CORS setup
+const securityHeadersMiddleware = createSecurityHeaders();
+const corsMiddleware = createCORSHeaders([
+  'https://trulybot.xyz',
+  'https://www.trulybot.xyz',
+  'http://localhost:3000'
+]);
 
 export interface SecurityMiddlewareOptions {
   enableRateLimit?: boolean;
@@ -121,29 +157,21 @@ export class SecurityMiddleware {
       }
 
       // 6. CORS handling
-      if (this.options.enableCors) {
-        const corsResponse = defaultCors.handlePreflight(req);
-        if (corsResponse) {
-          return corsResponse;
-        }
+      if (this.options.enableCors && req.method === 'OPTIONS') {
+        return corsMiddleware(req);
       }
 
       // Continue to next middleware/handler
-      const response = NextResponse.next();
+      let response = NextResponse.next();
 
       // Apply security headers
       if (this.options.enableSecurityHeaders) {
-        // Use embed-specific headers for embeddable routes
-        if (path.startsWith('/embed') || path.startsWith('/widget')) {
-          embedSecurityHeaders.apply(response);
-        } else {
-          defaultSecurityHeaders.apply(response);
-        }
+        response = securityHeadersMiddleware(req);
       }
 
-      // Apply CORS headers
-      if (this.options.enableCors) {
-        defaultCors.apply(req, response);
+      // Apply CORS headers for non-preflight requests
+      if (this.options.enableCors && req.method !== 'OPTIONS') {
+        response = corsMiddleware(req);
       }
 
       // Log successful processing

@@ -1,4 +1,4 @@
-export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'past_due' | 'canceled' | 'expired';
+export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'past_due' | 'canceled' | 'expired' | 'eligible';
 export type SubscriptionTier = 'basic' | 'pro' | 'ultra';
 
 export interface UserSubscription {
@@ -20,6 +20,7 @@ export interface UserProfile {
   trial_ends_at: string | null;
   subscription_ends_at: string | null;
   payment_id: string | null;
+  stripe_customer_id?: string | null;
   has_used_trial: boolean;
   created_at: string;
   updated_at: string;
@@ -65,25 +66,59 @@ export function calculateSubscriptionAccess(profile: Partial<UserProfile> | null
     };
   }
   
-  // Check for active trial (second priority)
-  if (profile.trial_ends_at) {
-    const trialEndDate = new Date(profile.trial_ends_at);
-    const isTrialActive = trialEndDate > now;
-    const daysRemaining = isTrialActive ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
+  // ROBUST TRIAL LOGIC: Check both subscription_status and trial_ends_at
+  const trialEndDate = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+  const isTrialStatus = profile.subscription_status === 'trial';
+  const hasValidTrialDate = trialEndDate && trialEndDate > now;
+  
+  // Active trial - both status and date must be valid for access
+  if (isTrialStatus && hasValidTrialDate) {
+    const daysRemaining = Math.ceil((trialEndDate!.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
     
     return {
-      status: isTrialActive ? 'trial' : 'expired',
-      tier: isTrialActive ? 'ultra' : 'basic',
-      trial_ends_at: profile.trial_ends_at,
+      status: 'trial',
+      tier: 'ultra',
+      trial_ends_at: profile.trial_ends_at || null,
       subscription_ends_at: null,
-      is_trial_active: isTrialActive,
-      has_access: isTrialActive,
-      days_remaining: daysRemaining,
-      features: isTrialActive ? TIER_FEATURES.ultra : [] // No access after trial expires
+      is_trial_active: true,
+      has_access: true,
+      days_remaining: Math.max(0, daysRemaining),
+      features: TIER_FEATURES.ultra
     };
   }
   
-  // No active subscription or trial - no access
+  // Check if user is eligible for a new trial (hasn't used trial yet)
+  const hasNotUsedTrial = !profile.has_used_trial;
+  const hasNoStripeCustomer = !profile.stripe_customer_id || profile.stripe_customer_id === '';
+  
+  if (hasNotUsedTrial && hasNoStripeCustomer) {
+    return {
+      status: 'eligible',  // Changed from 'none' to indicate trial eligibility
+      tier: 'basic',
+      trial_ends_at: null,
+      subscription_ends_at: null,
+      is_trial_active: false,
+      has_access: false, // No access until they start trial
+      days_remaining: 7, // Available trial days
+      features: [] // Must start trial to get access
+    };
+  }
+  
+  // Handle expired trial or used trial cases
+  if (isTrialStatus || profile.has_used_trial) {
+    return {
+      status: 'expired',
+      tier: 'basic',
+      trial_ends_at: profile.trial_ends_at || null,
+      subscription_ends_at: null,
+      is_trial_active: false,
+      has_access: false,
+      days_remaining: 0,
+      features: [] // No access - expired
+    };
+  }
+  
+  // Final fallback - no subscription, no trial
   return {
     status: 'none',
     tier: 'basic',
@@ -102,6 +137,8 @@ export function formatSubscriptionStatus(subscription: UserSubscription): string
       return `Active ${subscription.tier.toUpperCase()} plan (${subscription.days_remaining} days remaining)`;
     case 'trial':
       return `Free trial active (${subscription.days_remaining} days remaining)`;
+    case 'eligible':
+      return `Eligible for ${subscription.days_remaining}-day free trial`;
     case 'expired':
       return 'Subscription expired';
     case 'past_due':

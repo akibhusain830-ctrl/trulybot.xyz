@@ -6,8 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { BRAND } from '@/lib/branding';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import SubscriptionGuard from '@/components/SubscriptionGuard';
-import NoAccessGuard from '@/components/NoAccessGuard';
 
 // --- Icons ---
 const HomeIcon = () => (
@@ -71,13 +69,21 @@ const BaseModal = ({ children, onClose, labelledBy }: BaseModalProps) => {
 const SubscriptionModal = ({ subscriptionStatus, onClose }: { subscriptionStatus: string | null, onClose: () => void }) => (
   <BaseModal labelledBy="sub-modal-title" onClose={onClose}>
     <div className="mx-auto w-14 h-14 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 mb-4"><LockIcon /></div>
-    <h2 id="sub-modal-title" className="text-2xl font-bold">Access Restricted</h2>
+    <h2 id="sub-modal-title" className="text-2xl font-bold">Start Your Free Trial</h2>
     <p className="text-slate-400 mt-3">
-      Your subscription status is <span className="font-bold text-white">{subscriptionStatus ?? 'unknown'}</span>.<br />
-      Please upgrade to access all dashboard features.
+      {subscriptionStatus === 'none' ? (
+        <>Welcome! Get started with a 7-day free trial to access all dashboard features.</>
+      ) : (
+        <>Your subscription status is <span className="font-bold text-white">{subscriptionStatus ?? 'unknown'}</span>.<br />
+        Please upgrade to access all dashboard features.</>
+      )}
     </p>
     <div className="mt-6 flex gap-3">
-      <Link href="/pricing" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-colors">View Plans</Link>
+      {subscriptionStatus === 'none' ? (
+        <Link href="/start-trial" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-colors">🚀 Start Free Trial</Link>
+      ) : (
+        <Link href="/pricing" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-colors">View Plans</Link>
+      )}
       <button onClick={onClose} className="px-5 py-2.5 rounded-full bg-slate-700/70 hover:bg-slate-600 text-sm font-medium">Close</button>
     </div>
   </BaseModal>
@@ -209,8 +215,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
   }, [showSignIn, showSubscription]);
 
-  // Defer modal decisions until subscriptionStatus is known to avoid flash for trialing users.
-  const subscriptionResolved = !subscriptionLoading && subscriptionStatus !== undefined && subscriptionStatus !== null;
+  // Immediate decision on subscription - no waiting or loading delays
+  const [forceResolve, setForceResolve] = useState(false);
+  const subscriptionResolved = !subscriptionLoading || subscriptionStatus !== 'none' || forceResolve;
+  
+  // Force resolve after just 500ms - much faster resolution
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceResolve(true);
+    }, 500); // Reduced from 1500ms to 500ms
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   useEffect(() => {
     if (loading) return;
     // Auth not present -> sign in modal
@@ -219,21 +236,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setShowSubscription(false);
       return;
     }
-    // User present but subscription not resolved yet: do nothing (prevents flash)
+    // User present but subscription not resolved yet: wait only briefly
     if (!subscriptionResolved) return;
     // Allowed tiers include active + trialing
     if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing') {
       setShowSubscription(false);
     } else {
+      // Show subscription modal for 'none', 'expired', and other non-active statuses
       setShowSubscription(true);
     }
-  }, [user, loading, subscriptionResolved, subscriptionStatus]);
+  }, [user, loading, subscriptionResolved, subscriptionStatus, forceResolve]);
 
-  // Prevent hydration mismatch by showing loading until mounted
-  if (!mounted || loading) {
+  // Prevent hydration mismatch by showing loading until mounted, but with shorter loading states
+  if (!mounted || (loading && !user)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black p-4" aria-busy="true" aria-live="polite">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -247,9 +265,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // If we have a user, render the full dashboard layout with access control.
   return (
-    <NoAccessGuard>
-      <SubscriptionGuard redirectTo="/subscription-required">
-        <div className="h-screen w-full bg-black text-white flex font-sans overflow-hidden">
+    <div className="h-screen w-full bg-black text-white flex font-sans overflow-hidden">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-blue-600 text-white px-4 py-2 rounded-md z-50">Skip to main content</a>
       {/* --- Desktop Sidebar --- */}
       <aside className="w-64 flex-shrink-0 bg-[#111] border-r border-slate-800 flex-col hidden lg:flex">
@@ -293,11 +309,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main id="main-content" className="min-h-full p-4 sm:p-6 lg:p-8" role="main" aria-label="Dashboard main content">{children}</main>
         </div>
       </div>
-      {showSubscription && subscriptionResolved && user && !isAllowed && (
+      {showSubscription && subscriptionResolved && user && (
         <SubscriptionModal subscriptionStatus={subscriptionStatus} onClose={() => setShowSubscription(false)} />
       )}
     </div>
-    </SubscriptionGuard>
-    </NoAccessGuard>
   );
 }

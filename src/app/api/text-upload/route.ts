@@ -1,6 +1,4 @@
 import { embed } from '@/lib/embedding';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { simpleTextSplitter } from '@/lib/textSplitter';
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,6 +9,7 @@ import { config } from '@/lib/config/secrets';
 import { limitIp } from '@/lib/middleware/rateLimiter';
 import { withApi } from '@/lib/middleware/apiHandler';
 import { PlanLimitError, ValidationError, UnifiedRateLimitError, AuthError } from '@/lib/errors';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 // Admin client (server role) via centralized config
 const supabaseAdmin = createClient(
@@ -32,12 +31,8 @@ export const POST = withApi(async function POST(req: NextRequest) {
   if (rl.limited) {
     throw new UnifiedRateLimitError('Upload rate limit exceeded');
   }
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    config.supabase.url,
-    config.supabase.anonKey,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-  );
+  
+  const supabase = createSupabaseServerClient();
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -1,4 +1,5 @@
 import { PRICING_TIERS } from './constants/pricing';
+import { generatePricingContent, generateShortPricingSummary, detectCurrencyFromBrowser } from './location-aware-pricing';
 
 export const KNOWLEDGE_VERSION = '2025-09-21-1';
 
@@ -79,17 +80,17 @@ Ready to give your customers this experience? Start your free trial or view our 
     keywords: ['pricing', 'plans', 'cost', 'price', 'how much', 'rupees', 'dollars'],
     answer: `💰 TrulyBot Pricing Plans:
 
-**Basic Plan** - ₹99/month ($2/month)
+**Basic Plan** - ₹99/month ($5/month)
 • Perfect for small businesses
 • Up to 1,000 conversations/month
 • Basic AI responses & email support
 
-**Pro Plan** - ₹999/month ($15/month) ⭐ Most Popular
+**Pro Plan** - ₹399/month ($10/month) ⭐ Most Popular
 • Best for growing businesses  
 • Up to 10,000 conversations/month
 • Advanced AI with custom branding
 
-**Ultra Plan** - ₹2499/month ($40/month)
+**Ultra Plan** - ₹599/month ($15/month)
 • For enterprise & high-volume
 • Unlimited conversations
 • Premium features + API access
@@ -97,7 +98,7 @@ Ready to give your customers this experience? Start your free trial or view our 
 🎁 Start with a 7-day FREE trial - no credit card required!
 
 Want me to help you choose the right plan?`,
-    short: 'Plans start at ₹99/month. Basic/Pro/Ultra tiers. 7-day free trial available.',
+    short: 'Plans: Basic ₹99/$5, Pro ₹399/$10, Ultra ₹599/$15. 7-day free trial available.',
     priority: 5
   },
   {

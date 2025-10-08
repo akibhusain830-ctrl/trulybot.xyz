@@ -107,7 +107,10 @@ interface SecurityTestSuite {
 
 export class TrulyBotSecurityTester implements SecurityTestSuite {
   private baseUrl: string;
-  private testUsers: { tenantA: any, tenantB: any } = { tenantA: null, tenantB: null };
+  private testUsers: { 
+    tenantA: { id: string; email: string; token?: string; workspaceId?: string; userId?: string } | null; 
+    tenantB: { id: string; email: string; token?: string; workspaceId?: string; userId?: string } | null; 
+  } = { tenantA: null, tenantB: null };
 
   constructor(baseUrl = TEST_CONFIG.baseUrl) {
     this.baseUrl = baseUrl;
@@ -473,12 +476,16 @@ export class TrulyBotSecurityTester implements SecurityTestSuite {
     // In a real implementation, this would create test tenants
     // For now, we'll simulate the setup
     this.testUsers.tenantA = {
+      id: 'user-a-id',
+      email: 'tenant-a@test.com',
       token: 'test-token-a',
       workspaceId: 'workspace-a-id',
       userId: 'user-a-id'
     };
     
     this.testUsers.tenantB = {
+      id: 'user-b-id',
+      email: 'tenant-b@test.com',
       token: 'test-token-b',
       workspaceId: 'workspace-b-id',
       userId: 'user-b-id'

@@ -1,8 +1,7 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { currentMonthKey } from '@/lib/constants/quotas';
 import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 // ADD THESE MISSING IMPORTS
 import { simpleTextSplitter } from '@/lib/textSplitter';
@@ -20,12 +19,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { docId: string } }
 ) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-  );
+  const supabase = createSupabaseServerClient();
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -164,12 +158,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { docId: string } }
 ) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-  );
+  const supabase = createSupabaseServerClient();
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();

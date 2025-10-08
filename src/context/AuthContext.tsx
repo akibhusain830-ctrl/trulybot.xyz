@@ -5,7 +5,6 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
 import { logger } from '@/lib/logger';
-import { validateSubscriptionFromProfile, toAuthContextStatus } from '@/lib/subscriptionValidation';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'none';
 
@@ -28,193 +27,220 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   subscriptionStatus: 'none',
-  subscriptionLoading: true,
+  subscriptionLoading: false,
   trialInfo: null,
   signOut: async () => {},
   refreshSubscriptionStatus: async () => {},
 });
 
+// Persistent cache in localStorage
+const CACHE_KEY = 'auth_subscription_cache';
+const CACHE_DURATION = 60 * 1000; // 1 minute cache
+
+interface CacheData {
+  status: SubscriptionStatus;
+  trialInfo: TrialInfo | null;
+  timestamp: number;
+  userId: string;
+}
+
+function getCachedSubscription(userId: string): CacheData | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const data: CacheData = JSON.parse(cached);
+    const now = Date.now();
+    
+    // Check if cache is valid and for the right user
+    if (data.userId === userId && (now - data.timestamp) < CACHE_DURATION) {
+      return data;
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedSubscription(userId: string, status: SubscriptionStatus, trialInfo: TrialInfo | null) {
+  try {
+    const cacheData: CacheData = {
+      status,
+      trialInfo,
+      timestamp: Date.now(),
+      userId
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
-  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
-  const [lastSubscriptionCheck, setLastSubscriptionCheck] = useState<number>(0);
-  
-  // Cache subscription data for 2 minutes to prevent excessive API calls
-  const SUBSCRIPTION_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
 
-  // Fallback method for subscription check using standardized validation
-  const fallbackSubscriptionCheck = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      // Check profile for subscription info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profile) {
-        // Use standardized subscription validation
-        const validation = validateSubscriptionFromProfile(profile);
-        const authStatus = toAuthContextStatus(validation.status, validation.isTrialActive);
-        
-        setSubscriptionStatus(authStatus);
-        
-        // Set trial info if user has active trial
-        if (validation.isTrialActive && profile.trial_ends_at) {
-          const trial = calculateTrialInfo(profile.trial_ends_at);
-          setTrialInfo(trial);
-        } else {
-          setTrialInfo(null);
-        }
-      } else {
-        setSubscriptionStatus('none');
-        setTrialInfo(null);
-      }
-      
-      setSubscriptionLoading(false);
-
-    } catch (error) {
-      logger.error('Error in fallback subscription check:', error);
-      setSubscriptionStatus('none');
-      setTrialInfo(null);
-      setSubscriptionLoading(false);
-    }
-  }, [user?.id]);
-
-  const refreshSubscriptionStatus = useCallback(async () => {
-    if (!user?.id) return;
-
-    // Check if we have recent cached data
-    const now = Date.now();
-    const timeSinceLastCheck = now - lastSubscriptionCheck;
-    
-    if (timeSinceLastCheck < SUBSCRIPTION_CACHE_DURATION && subscriptionStatus !== 'none') {
-      // Use cached data, don't show loading
+  // Fast subscription check with simple logic
+  const checkSubscriptionStatus = useCallback(async (userId: string) => {
+    // Check cache first for instant response
+    const cached = getCachedSubscription(userId);
+    if (cached) {
+      setSubscriptionStatus(cached.status);
+      setTrialInfo(cached.trialInfo);
       return;
     }
 
     try {
-      setSubscriptionLoading(true);
+      // Quick database check with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 1500)
+      );
       
-      // Use the profile API endpoint which ensures profile exists and calculates subscription
-      const response = await fetch('/api/user/profile');
-      
-      if (!response.ok) {
-        // If profile API fails, fall back to direct database check
-        console.warn('Profile API failed, falling back to direct database check');
-        await fallbackSubscriptionCheck();
-        return;
-      }
-      
-      const data = await response.json();
-      
-      if (data.subscription) {
-        // Use standardized subscription validation
-        const validation = validateSubscriptionFromProfile(data.profile || {});
-        const authStatus = toAuthContextStatus(validation.status, validation.isTrialActive);
-        
-        setSubscriptionStatus(authStatus);
-        
-        // Set trial info if user has active trial
-        if (validation.isTrialActive && data.subscription.trial_ends_at) {
-          const trial = calculateTrialInfo(data.subscription.trial_ends_at);
-          setTrialInfo(trial);
+      const dbPromise = supabase
+        .from('profiles')
+        .select('subscription_status, trial_ends_at')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const { data: profile, error } = await Promise.race([dbPromise, timeoutPromise]) as {
+        data: any;
+        error: any;
+      };
+
+      if (profile) {
+        // Simple subscription logic
+        let status: SubscriptionStatus = 'none';
+        let trial: TrialInfo | null = null;
+
+        if (profile.subscription_status === 'active') {
+          status = 'active';
+        } else if (profile.subscription_status === 'trial' || profile.subscription_status === 'trialing') {
+          if (profile.trial_ends_at) {
+            const trialEnd = new Date(profile.trial_ends_at);
+            const now = new Date();
+            
+            if (trialEnd > now) {
+              status = 'trialing';
+              trial = calculateTrialInfo(profile.trial_ends_at);
+            } else {
+              status = 'expired';
+            }
+          } else {
+            status = 'expired';
+          }
         } else {
-          setTrialInfo(null);
+          status = 'none';
         }
+
+        setSubscriptionStatus(status);
+        setTrialInfo(trial);
+        setCachedSubscription(userId, status, trial);
       } else {
+        // No profile = no access
         setSubscriptionStatus('none');
         setTrialInfo(null);
+        setCachedSubscription(userId, 'none', null);
       }
-      
-      setLastSubscriptionCheck(Date.now()); // Update cache timestamp
-      setSubscriptionLoading(false);
-
     } catch (error) {
-      logger.error('Error refreshing subscription status:', error);
-      // Fall back to direct database check
-      await fallbackSubscriptionCheck();
+      logger.warn('Subscription check failed, using cache or defaults', { error: String(error) });
+      // On error, default to no access to prevent infinite loading
+      setSubscriptionStatus('none');
+      setTrialInfo(null);
     }
-  }, [user?.id, lastSubscriptionCheck, subscriptionStatus, SUBSCRIPTION_CACHE_DURATION, fallbackSubscriptionCheck]);
+  }, []);
 
+  const refreshSubscriptionStatus = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setSubscriptionLoading(true);
+    await checkSubscriptionStatus(user.id);
+    setSubscriptionLoading(false);
+  }, [user?.id, checkSubscriptionStatus]);
+
+  const signOut = useCallback(async () => {
+    try {
+      localStorage.removeItem(CACHE_KEY); // Clear cache
+      await supabase.auth.signOut();
+      setUser(null);
+      setSubscriptionStatus('none');
+      setTrialInfo(null);
+    } catch (error) {
+      logger.error('Sign out error:', error);
+    }
+  }, []);
+
+  // Initialize authentication
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        logger.info('Initial session found:', { userId: session.user.id, email: session.user.email });
-        setUser(session.user as UserProfile);
-      } else {
-        logger.info('No initial session found');
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        
+        if (!mounted) return;
+
+        if (error || !currentUser) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        setUser(currentUser as UserProfile);
+        
+        // Check subscription immediately (with cache)
+        await checkSubscriptionStatus(currentUser.id);
+        
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        logger.error('Auth initialization error:', error);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        logger.info('Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
-        
-        if (session?.user) {
-          logger.info('User authenticated:', { userId: session.user.id, email: session.user.email, provider: session.user.app_metadata?.provider });
-          setUser(session.user as UserProfile);
-        } else {
-          logger.info('User signed out');
-          setUser(null);
-          setSubscriptionStatus('none');
-          setTrialInfo(null);
-        }
-        setLoading(false);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
 
-    // Listen for manual auth refresh events (e.g., after OAuth callback)
-    const handleAuthRefresh = async () => {
-      logger.info('Manual auth refresh requested');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        logger.info('Auth refresh found new session:', { userId: session.user.id });
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        setUser(null);
+        setSubscriptionStatus('none');
+        setTrialInfo(null);
+        localStorage.removeItem(CACHE_KEY);
+      } else if (event === 'SIGNED_IN' && session.user) {
         setUser(session.user as UserProfile);
-        setLoading(false);
+        await checkSubscriptionStatus(session.user.id);
       }
-    };
-
-    window.addEventListener('auth-state-refresh', handleAuthRefresh);
+    });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
-      window.removeEventListener('auth-state-refresh', handleAuthRefresh);
     };
-  }, []); // Remove user dependency to avoid infinite loops
+  }, [checkSubscriptionStatus]);
 
-  // Refresh subscription status when user changes
-  useEffect(() => {
-    if (user && !loading) {
-      refreshSubscriptionStatus();
-    }
-  }, [user, loading, refreshSubscriptionStatus]);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSubscriptionStatus('none');
-    setTrialInfo(null);
+  const value: AuthContextType = {
+    user,
+    loading,
+    subscriptionStatus,
+    subscriptionLoading,
+    trialInfo,
+    signOut,
+    refreshSubscriptionStatus,
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      subscriptionStatus, 
-      subscriptionLoading,
-      trialInfo,
-      signOut, 
-      refreshSubscriptionStatus 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

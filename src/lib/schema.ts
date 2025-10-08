@@ -45,7 +45,7 @@ export const faqSchema = {
       name: 'What pricing plans does TrulyBot offer?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'TrulyBot offers flexible pricing starting at ₹99/$5/month for the Basic plan, ₹399/$10/month for Pro, and ₹599/$15/month for Ultra. All plans include a free 7-day trial with no credit card required.'
+        text: 'TrulyBot offers flexible regional pricing. For Indian users: ₹99/month Basic, ₹399/month Pro, ₹599/month Ultra. For international users: $5/month Basic, $10/month Pro, $15/month Ultra. All plans include a free 7-day trial with no credit card required.'
       }
     },
     {

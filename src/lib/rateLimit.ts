@@ -17,17 +17,41 @@ interface RateLimitStore {
 // In-memory store for development (use Redis in production)
 const store: RateLimitStore = {};
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  Object.keys(store).forEach(key => {
-    if (store[key].resetTime < now) {
-      delete store[key];
-    }
-  });
-}, 5 * 60 * 1000);
+// Cleanup old entries every 5 minutes - with proper cleanup management
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+function startCleanup() {
+  if (cleanupInterval) return; // Prevent multiple intervals
+  
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    Object.keys(store).forEach(key => {
+      if (store[key].resetTime < now) {
+        delete store[key];
+      }
+    });
+  }, 5 * 60 * 1000);
+}
+
+// Initialize cleanup on first use
+function ensureCleanupRunning() {
+  if (!cleanupInterval) {
+    startCleanup();
+  }
+}
+
+// Export cleanup function for testing/shutdown
+export function stopCleanup() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
 
 export function createRateLimit(config: RateLimitConfig) {
+  // Ensure cleanup is running when rate limiting is used
+  ensureCleanupRunning();
+  
   return async (req: NextRequest): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
     const key = config.keyGenerator 
       ? config.keyGenerator(req)

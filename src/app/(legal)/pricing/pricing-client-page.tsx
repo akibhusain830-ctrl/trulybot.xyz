@@ -13,7 +13,7 @@ import { getAllTiersPricing } from '@/lib/utils/geolocation-pricing';
 export const dynamic = 'force-dynamic';
 
 // Helper function to build structured data for pricing
-function buildPricingJsonLd() {
+function buildPricingJsonLd(currency: 'USD' | 'INR') {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -35,20 +35,12 @@ function buildPricingJsonLd() {
         operatingSystem: 'Any',
         description: tier.description,
       },
-      priceSpecification: [
-        {
-          '@type': 'UnitPriceSpecification',
-          priceCurrency: 'INR',
-          price: tier.monthlyInr,
-          billingPeriod: 'P1M'
-        },
-        {
-          '@type': 'UnitPriceSpecification',
-          priceCurrency: 'USD',
-          price: tier.monthlyUsd,
-          billingPeriod: 'P1M'
-        }
-      ],
+      priceSpecification: {
+        '@type': 'UnitPriceSpecification',
+        priceCurrency: currency,
+        price: currency === 'INR' ? tier.monthlyInr : tier.monthlyUsd,
+        billingPeriod: 'P1M'
+      },
       availability: 'https://schema.org/InStock',
       validFrom: new Date().toISOString(),
     }))
@@ -97,7 +89,7 @@ export default function PricingClientPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPricingJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPricingJsonLd(currency === 'INR' ? 'INR' : 'USD')) }}
       />
       <div className="relative min-h-screen bg-black py-12 overflow-hidden">
         {/* Subtle Background Elements */}

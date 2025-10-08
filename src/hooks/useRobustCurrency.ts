@@ -30,7 +30,10 @@ function getGeoBasedCurrencyInfo(): CurrencyInfo {
   const symbol = getCookie('currency-symbol') as CurrencyInfo['symbol'] || '₹';
   const isIndia = getCookie('is-india') === 'true' || country === 'IN';
   
-  console.log(`🎯 Currency detection - Country: ${country}, Currency: ${currency}, IsIndia: ${isIndia}`);
+  // Development only logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🎯 Currency detection - Country: ${country}, Currency: ${currency}, IsIndia: ${isIndia}`);
+  }
   
   // ROBUST RULE: If India, always INR - if not India, respect geolocation
   if (country === 'IN' || isIndia) {
@@ -73,7 +76,10 @@ export function useRobustCurrency(): CurrencyInfo {
     const info = getGeoBasedCurrencyInfo();
     setCurrencyInfo(info);
     
-    console.log(`💰 Final currency set:`, info);
+    // Development only logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`💰 Final currency set:`, info);
+    }
   }, []);
 
   return currencyInfo;

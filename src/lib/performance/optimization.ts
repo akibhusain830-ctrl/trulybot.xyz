@@ -200,6 +200,7 @@ export class PerformanceMiddleware {
 export class MemoryMonitor {
   private warningThreshold: number;
   private criticalThreshold: number;
+  private monitoringInterval: NodeJS.Timeout | null = null;
 
   constructor(warningThreshold: number = 0.8, criticalThreshold: number = 0.9) {
     this.warningThreshold = warningThreshold;
@@ -244,7 +245,10 @@ export class MemoryMonitor {
   }
 
   startMonitoring(intervalMs: number = 30000) {
-    setInterval(() => {
+    // Clean up existing interval if any
+    this.stopMonitoring();
+    
+    this.monitoringInterval = setInterval(() => {
       const status = this.checkMemoryPressure();
       const usage = this.getMemoryUsage();
 
@@ -268,11 +272,18 @@ export class MemoryMonitor {
       }
     }, intervalMs);
   }
+
+  stopMonitoring() {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+  }
 }
 
 // Database query optimization helpers
 export class DatabaseOptimizer {
-  private queryCache = new Map<string, { result: any; timestamp: number; ttl: number }>();
+  private queryCache = new Map<string, { result: unknown; timestamp: number; ttl: number }>();
   private slowQueryThreshold: number;
 
   constructor(slowQueryThreshold: number = 1000) {

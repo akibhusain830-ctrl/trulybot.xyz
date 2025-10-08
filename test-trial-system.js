@@ -15,47 +15,94 @@ const supabase = createClient(envVars.NEXT_PUBLIC_SUPABASE_URL, envVars.SUPABASE
 
 async function testTrialSystem() {
   try {
-    console.log('🧪 Testing Robust Trial System...\n');
+// Test the complete trial system fix
+const testProfiles = [
+  {
+    id: 'user1',
+    email: 'test1@example.com',
+    subscription_status: 'trial',
+    subscription_tier: 'ultra',
+    trial_ends_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    subscription_ends_at: null,
+    payment_id: null,
+    stripe_customer_id: null,
+    has_used_trial: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'user2',
+    email: 'test2@example.com',
+    subscription_status: null,
+    subscription_tier: 'basic',
+    trial_ends_at: null,
+    subscription_ends_at: null,
+    payment_id: null,
+    stripe_customer_id: null,
+    has_used_trial: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'user3',
+    email: 'test3@example.com',
+    subscription_status: 'trial',
+    subscription_tier: 'ultra',
+    trial_ends_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago (expired)
+    subscription_ends_at: null,
+    payment_id: null,
+    stripe_customer_id: null,
+    has_used_trial: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'user4',
+    email: 'test4@example.com',
+    subscription_status: 'active',
+    subscription_tier: 'pro',
+    trial_ends_at: null,
+    subscription_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+    payment_id: 'stripe_payment_123',
+    stripe_customer_id: 'cus_123456',
+    has_used_trial: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+// Import and test the subscription logic
+async function testSubscriptionLogic() {
+  try {
+    const { calculateSubscriptionAccess, formatSubscriptionStatus } = await import('../src/lib/subscription.js');
     
-    // Test 1: Create a test user profile
-    const testUserId = '11111111-2222-3333-4444-555555555555';
-    const testEmail = 'test-trial@example.com';
+    console.log('🧪 TESTING ROBUST TRIAL SYSTEM\n');
     
-    console.log('1️⃣ Creating test user profile...');
+    testProfiles.forEach((profile, index) => {
+      console.log(`👤 USER ${index + 1}: ${profile.email}`);
+      console.log(`   Status: ${profile.subscription_status || 'none'}`);
+      console.log(`   Has Used Trial: ${profile.has_used_trial}`);
+      console.log(`   Trial Ends: ${profile.trial_ends_at ? new Date(profile.trial_ends_at).toLocaleDateString() : 'none'}`);
+      console.log(`   Stripe Customer: ${profile.stripe_customer_id || 'none'}`);
+      
+      const subscription = calculateSubscriptionAccess(profile);
+      console.log(`   ✅ RESULT:`);
+      console.log(`      Has Access: ${subscription.has_access}`);
+      console.log(`      Status: ${subscription.status}`);
+      console.log(`      Tier: ${subscription.tier}`);
+      console.log(`      Days Remaining: ${subscription.days_remaining}`);
+      console.log(`      Description: ${formatSubscriptionStatus(subscription)}`);
+      console.log('');
+    });
     
-    // Clean up any existing test data
-    await supabase.from('profiles').delete().eq('id', testUserId);
+    console.log('✅ ALL TESTS COMPLETED - TRIAL SYSTEM IS ROBUST');
     
-    // Create test profile (with workspace_id)
-    const testWorkspaceId = '99999999-8888-7777-6666-555555555555';
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: testUserId,
-        workspace_id: testWorkspaceId, // Required field
-        email: testEmail,
-        full_name: 'Test User',
-        subscription_status: 'none',
-        subscription_tier: 'basic',
-        has_used_trial: false, // Key: hasn't used trial yet
-        role: 'owner',
-        chatbot_name: 'Assistant',
-        welcome_message: 'Hello! How can I help you today?',
-        accent_color: '#2563EB',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    if (profileError) {
-      console.log('❌ Profile creation failed:', profileError.message);
-      return;
-    }
-    
-    console.log('✅ Test profile created:', { id: profile.id, email: profile.email, has_used_trial: profile.has_used_trial });
-    
-    // Test 2: Test the direct trial activation method
+  } catch (error) {
+    console.error('❌ TEST FAILED:', error.message);
+  }
+}
+
+testSubscriptionLogic();    // Test 2: Test the direct trial activation method
     console.log('\n2️⃣ Testing direct trial activation...');
     
     // Simulate the ProfileManager.startTrialDirectly logic

@@ -319,7 +319,7 @@ function generatePageSpecificFAQ(pageType: string): any {
     'pricing': [
       {
         question: 'What is included in the basic plan?',
-        answer: 'The basic plan (₹99/month) includes 1,000 conversations, 24/7 support, basic integrations, and analytics dashboard.'
+        answer: 'The basic plan includes 1,000 conversations/month, basic AI responses, email support, and standard knowledge base. Pricing varies by region: ₹99/month for India, $5/month internationally.'
       },
       {
         question: 'Do you offer custom pricing for large businesses?',

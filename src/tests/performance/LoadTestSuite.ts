@@ -471,7 +471,7 @@ ${passed ? '✅ Performance targets met' : '❌ Performance targets not met'}
     `.trim();
   }
 
-  private selectWeightedEndpoint(endpoints: any[]): any {
+  private selectWeightedEndpoint(endpoints: Array<{ path: string; method: string; weight: number; body?: any }>): { path: string; method: string; weight: number; body?: any } {
     const random = Math.random();
     let cumulativeWeight = 0;
     
