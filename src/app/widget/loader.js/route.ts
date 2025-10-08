@@ -491,8 +491,7 @@ export async function GET(req: NextRequest) {
     }
   }).observe(document, { subtree: true, childList: true });
 
-})();
-`;
+})();`;
 
   return new NextResponse(widgetScript, {
     headers: {
