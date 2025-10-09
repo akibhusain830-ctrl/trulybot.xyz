@@ -70,9 +70,76 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     accent_color: '#2563EB'
   });
 
+  // Storage keys
+  const CHAT_HISTORY_KEY = 'trulybot_chat_history';
+  const MAX_SAVED_MESSAGES = 50; // Limit to prevent localStorage overflow
+  
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null); // Ref for the textarea
   const isMounted = useRef(true);
+  
+  // Save chat history to localStorage
+  const saveChatHistory = useCallback((chatMessages: Message[]) => {
+    try {
+      // Don't save if there are no messages to save
+      if (!chatMessages || chatMessages.length === 0) return;
+      
+      // Save regardless of message count to ensure consistency
+      // Limit the number of saved messages to prevent localStorage overflow
+      const messagesToSave = chatMessages.slice(-MAX_SAVED_MESSAGES);
+      
+      // Use botId as part of the key to ensure each bot has its own history
+      const storageKey = `${CHAT_HISTORY_KEY}_${botId}`;
+      localStorage.setItem(storageKey, JSON.stringify(messagesToSave));
+      console.log('Chat history saved', { count: messagesToSave.length, botId, key: storageKey });
+      logger.info('Chat history saved', { count: messagesToSave.length, botId });
+    } catch (e) {
+      console.error('Failed to save chat history', e);
+      logger.error('Failed to save chat history', { error: e });
+    }
+  }, [CHAT_HISTORY_KEY, botId]);
+  
+  // Load chat history from localStorage
+  const loadChatHistory = useCallback(() => {
+    try {
+      // Use botId as part of the key to ensure each bot has its own history
+      const storageKey = `${CHAT_HISTORY_KEY}_${botId}`;
+      const savedHistory = localStorage.getItem(storageKey);
+      
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory) as Message[];
+        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+          console.log('Chat history loaded successfully', { count: parsedHistory.length, botId, key: storageKey });
+          logger.info('Chat history loaded', { count: parsedHistory.length, botId });
+          return parsedHistory;
+        } else {
+          console.log('Chat history was empty or invalid', { savedHistory });
+        }
+      } else {
+        // Try the old key as fallback (for backward compatibility)
+        const oldSavedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+        if (oldSavedHistory) {
+          try {
+            const parsedHistory = JSON.parse(oldSavedHistory) as Message[];
+            if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+              console.log('Chat history loaded from legacy key', { count: parsedHistory.length });
+              // Migrate it to the new key
+              localStorage.setItem(storageKey, oldSavedHistory);
+              localStorage.removeItem(CHAT_HISTORY_KEY);
+              return parsedHistory;
+            }
+          } catch (err) {
+            console.error('Failed to parse legacy chat history', err);
+          }
+        }
+        console.log('No saved chat history found', { botId, key: storageKey });
+      }
+    } catch (e) {
+      console.error('Failed to load chat history', e);
+      logger.error('Failed to load chat history', { error: e, botId });
+    }
+    return null;
+  }, [CHAT_HISTORY_KEY, botId]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -194,27 +261,59 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   }, [widgetConfig, botId]);
 
   useEffect(() => {
-    // Always show welcome message for demo bot, only check localStorage for non-demo bots
-    const seen = botId === 'demo' ? false : localStorage.getItem(INTRO_KEY);
-    if (!seen && messages.length === 0) {
-      // Special welcome message for demo bot
-      const demoWelcome = botId === 'demo' 
-        ? "👋 Hi! I'm TrulyBot's AI Assistant - this is exactly what YOUR customers will experience on your website!\n\nI can show you our pricing plans, help you start a free trial, or demonstrate features like lead capture and instant support.\n\nTry me out - your customers will get this same professional, instant experience 24/7! ⚡"
-        : widgetConfig.welcome_message;
+    // This useEffect should run when botId and widgetConfig are ready
+    console.log('Loading chat history on mount');
+    
+    // Only proceed if botId is set and widgetConfig is loaded
+    if (!botId) return;
+    
+    // Check for saved chat history
+    const savedHistory = loadChatHistory();
+    
+    if (savedHistory && savedHistory.length > 0) {
+      // Use the saved chat history
+      setMessages(savedHistory);
+      setSuggestions(null); // Don't show suggestions when restoring chat
+      console.log('Successfully restored chat history', { messageCount: savedHistory.length });
+      logger.info('Restored chat history', { messageCount: savedHistory.length });
+    } else {
+      console.log('No valid chat history found, showing welcome message');
+      // No saved history, show welcome message
+      const seen = botId === 'demo' ? false : localStorage.getItem(INTRO_KEY);
+      if (!seen) {
+        // Special welcome message for demo bot
+        const demoWelcome = botId === 'demo' 
+          ? "👋 Hi! I'm TrulyBot's AI Assistant - this is exactly what YOUR customers will experience on your website!\n\nI can show you our pricing plans, help you start a free trial, or demonstrate features like lead capture and instant support.\n\nTry me out - your customers will get this same professional, instant experience 24/7! ⚡"
+          : widgetConfig.welcome_message;
+          
+        // Add demo buttons to welcome message for demo mode
+        const demoButtons = botId === 'demo' ? [
+          { text: 'Start Free Trial', url: '/start-trial', type: 'primary' as const },
+          { text: 'Go to Dashboard', url: '/dashboard', type: 'secondary' as const }
+        ] : undefined;
         
-      setMessages([{
-        id: uid(),
-        role: 'bot',
-        text: demoWelcome,
-        at: Date.now()
-      }]);
-      
-      // Only set localStorage for non-demo bots
-      if (botId !== 'demo') {
-        localStorage.setItem(INTRO_KEY, '1');
+        setMessages([{
+          id: uid(),
+          role: 'bot',
+          text: demoWelcome,
+          at: Date.now(),
+          buttons: demoButtons
+        }]);
+        
+        // Only set localStorage for non-demo bots
+        if (botId !== 'demo') {
+          localStorage.setItem(INTRO_KEY, '1');
+        }
       }
     }
-  }, [messages.length, widgetConfig.welcome_message, botId]);
+  }, [botId, widgetConfig.welcome_message, loadChatHistory]); // Include necessary dependencies
+
+  // Save messages when they change
+  useEffect(() => {
+    // Always save messages, even if there's just one welcome message
+    saveChatHistory(messages);
+    console.log('Messages saved to localStorage:', messages.length);
+  }, [messages, saveChatHistory]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -262,7 +361,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     const botMessagePlaceholder: Message = {
       id: botMessageId,
       role: 'bot',
-      text: '', // Start with empty text
+      text: '', // Start with empty text,
       at: Date.now(),
       sources: [],
     };
@@ -287,46 +386,91 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let fullReply = '';
+      let fullResponse = ''; // Collect the entire response first
       let metadata: any = null;
 
+      // Read all chunks first
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-
-        // The backend will send metadata as a special prefixed line
-        if (chunk.startsWith('___meta:')) {
-          try {
-            metadata = JSON.parse(chunk.substring(8));
-          } catch (e) {
-            logger.error('Failed to parse metadata chunk:', chunk);
-          }
-          continue; // Don't append metadata to the visible reply
-        }
-
-        fullReply += chunk;
-
-        if (isMounted.current) {
-          setMessages(prev => prev.map(m =>
-            m.id === botMessageId
-              ? { ...m, text: fullReply }
-              : m
-          ));
-        }
+        fullResponse += chunk;
       }
 
-      // After the stream is complete, update the message with final metadata
-      if (isMounted.current && metadata) {
+      // Now process the complete response
+      logger.info('Complete response received:', { fullResponse });
+      console.log('RAW RESPONSE:', fullResponse);
+      console.log('CONTAINS __BUTTONS__:', fullResponse.includes('__BUTTONS__'));
+
+      const buttonMarker = '__BUTTONS__';
+      const buttonLegacyMarker = '___BUTTONS___';
+      const buttonStart = fullResponse.indexOf(buttonMarker);
+      const buttonLegacyStart = fullResponse.indexOf(buttonLegacyMarker);
+
+      let finalText = fullResponse;
+      let parsedButtons = null;
+      
+      // Look for button data in the complete response
+      if (buttonStart !== -1) {
+        finalText = fullResponse.substring(0, buttonStart).trim();
+        const buttonData = fullResponse.substring(buttonStart + buttonMarker.length);
+        
+        console.log('BUTTON PARSING:', { finalText, buttonData });
+        logger.info('Processing button data:', { finalText, buttonData });
+        
+        try {
+          // Parse the button data from JSON string
+          parsedButtons = JSON.parse(buttonData.trim());
+          metadata = { buttons: parsedButtons };
+          console.log('PARSED BUTTONS SUCCESS:', parsedButtons);
+          logger.info('Successfully parsed buttons:', { buttons: parsedButtons });
+        } catch (e) {
+          console.error('BUTTON PARSE ERROR:', e, buttonData);
+          logger.error('Failed to parse buttons:', { error: e, buttonData });
+          // If parsing fails, just use the text without the button data
+        }
+      } else if (buttonLegacyStart !== -1) {
+        finalText = fullResponse.substring(0, buttonLegacyStart).trim();
+        const buttonData = fullResponse.substring(buttonLegacyStart + buttonLegacyMarker.length);
+        
+        console.log('LEGACY BUTTON PARSING:', { finalText, buttonData });
+        logger.info('Processing legacy button data:', { finalText, buttonData });
+        
+        try {
+          // Parse the button data from JSON string for legacy format
+          parsedButtons = JSON.parse(buttonData.trim());
+          metadata = { buttons: parsedButtons };
+          console.log('PARSED LEGACY BUTTONS SUCCESS:', parsedButtons);
+          logger.info('Successfully parsed legacy buttons:', { buttons: parsedButtons });
+        } catch (e) {
+          console.error('LEGACY BUTTON PARSE ERROR:', e, buttonData);
+          logger.error('Failed to parse legacy buttons:', { error: e, buttonData });
+        }
+      } else {
+        console.log('NO BUTTONS FOUND IN RESPONSE');
+      }
+      
+      // Check the parsed buttons structure before including it in metadata
+      if (parsedButtons) {
+        console.log('BUTTON STRUCTURE CHECK:');
+        console.log('- Type:', typeof parsedButtons);
+        console.log('- Is Array:', Array.isArray(parsedButtons));
+        console.log('- Length:', Array.isArray(parsedButtons) ? parsedButtons.length : 'N/A');
+        console.log('- Sample Item:', Array.isArray(parsedButtons) && parsedButtons.length > 0 ? parsedButtons[0] : 'None');
+      }
+
+      // Update the message with the final text and metadata
+      if (isMounted.current) {
         setMessages(prev => prev.map(m =>
           m.id === botMessageId
             ? {
                 ...m,
-                text: fullReply.trim() || '(No reply text returned)',
-                sources: metadata.sources,
-                usedDocs: metadata.usedDocs,
-                fallback: metadata.meta?.fallback,
-                buttons: metadata.buttons,
+                text: finalText.trim() || '(No reply text returned)',
+                sources: metadata?.sources,
+                usedDocs: metadata?.usedDocs,
+                fallback: metadata?.meta?.fallback,
+                // Ensure buttons are properly structured
+                buttons: Array.isArray(metadata?.buttons) ? metadata.buttons : undefined,
               }
             : m
         ));
@@ -358,10 +502,30 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const handleSuggestionClick = (suggestion: string) => {
     handleSubmit(suggestion);
   };
+  
+  // Update textarea height as user types (autoresize)
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    
+    // Auto-resize the textarea
+    const target = e.target;
+    target.style.height = 'auto'; // Reset height to calculate scroll height
+    target.style.height = target.scrollHeight + 'px';
+  };
+
+  // On Shift+Enter, add a new line instead of submitting
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent default to avoid adding new line
+      if (input.trim()) {
+        handleSubmit(input);
+      }
+    }
+  };
 
   return (
     <div className="anemo-card-widget">
-      <div className="anemo-card-header">
+              <div className="anemo-card-header">
         <div className="anemo-bot-avatar">
           {widgetConfig.chatbot_logo_url ? (
             <Image 
@@ -396,9 +560,54 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
           <div className="anemo-bot-title">{widgetConfig.chatbot_name}</div>
           <div className="anemo-bot-desc">{botId === 'demo' ? 'Demo' : 'AI'}</div>
         </div>
-        {onClose && (
-          <button className="anemo-card-header-close" onClick={onClose} aria-label="Close chat">×</button>
-        )}
+        <div className="anemo-card-header-actions">
+          {/* Clear history button - always show it */}
+          <button 
+            className="anemo-clear-history-btn" 
+            onClick={() => {
+              console.log('Clearing chat history');
+              // Clear the saved chat history using bot-specific key
+              const storageKey = `${CHAT_HISTORY_KEY}_${botId}`;
+              localStorage.removeItem(storageKey);
+              
+              // Also clear the legacy key for good measure
+              localStorage.removeItem(CHAT_HISTORY_KEY);
+              
+              // Reset to welcome message
+              const demoWelcome = botId === 'demo' 
+                ? "👋 Hi! I'm TrulyBot's AI Assistant - this is exactly what YOUR customers will experience on your website!\n\nI can show you our pricing plans, help you start a free trial, or demonstrate features like lead capture and instant support.\n\nTry me out - your customers will get this same professional, instant experience 24/7! ⚡"
+                : widgetConfig.welcome_message;
+              
+              const demoButtons = botId === 'demo' ? [
+                { text: 'Start Free Trial', url: '/start-trial', type: 'primary' as const },
+                { text: 'Go to Dashboard', url: '/dashboard', type: 'secondary' as const }
+              ] : undefined;
+              
+              setMessages([{
+                id: uid(),
+                role: 'bot',
+                text: demoWelcome,
+                at: Date.now(),
+                buttons: demoButtons
+              }]);
+              
+              // Reset suggestions
+              setSuggestions(botId === 'demo' ? DEMO_SUGGESTIONS : SUGGESTIONS);
+              
+              // Provide visual feedback
+              alert('Chat history cleared!');
+            }}
+            aria-label="Delete all conversation history"
+            title="Delete all conversation history"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+          </button>
+          {onClose && (
+            <button className="anemo-card-header-close" onClick={onClose} aria-label="Close chat">×</button>
+          )}
+        </div>
       </div>
       <div className="anemo-card-body">
         <div className="anemo-messages" ref={listRef}>
@@ -424,19 +633,48 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
                     No direct document match. Provided a general answer.
                   </div>
                 )}
-                {m.buttons && m.buttons.length > 0 && (
+                {/* Check if text contains a button marker (for debugging only) */}
+                {m.text && (m.text.includes('__BUTTONS__') || m.text.includes('___BUTTONS___')) ? (
+                  <div className="anemo-error-note">
+                    Error: Button data is showing as text. Please contact support.
+                  </div>
+                ) : null}
+                
+                {/* Proper button rendering */}
+                {m.buttons && Array.isArray(m.buttons) && m.buttons.length > 0 && (
                   <div className="anemo-buttons">
-                    {m.buttons.map((button, btnIndex) => (
-                      <a
-                        key={btnIndex}
-                        href={button.url}
-                        target={button.url.startsWith('http') ? '_blank' : '_self'}
-                        rel={button.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        className={`anemo-button ${button.type}`}
-                      >
-                        {button.text}
-                      </a>
-                    ))}
+                    {m.buttons.map((button, btnIndex) => {
+                      // Handle null or undefined button
+                      if (!button) return null;
+                      
+                      // For string buttons (legacy format)
+                      if (typeof button === 'string') {
+                        try {
+                          button = JSON.parse(button);
+                        } catch (e) {
+                          return null;
+                        }
+                      }
+                      
+                      // Ensure button is properly structured
+                      if (typeof button !== 'object') return null;
+                      
+                      const buttonText = typeof button.text === 'string' ? button.text : 'Click here';
+                      const buttonUrl = typeof button.url === 'string' ? button.url : '#';
+                      const buttonType = typeof button.type === 'string' ? button.type : 'secondary';
+                      
+                      return (
+                        <a
+                          key={btnIndex}
+                          href={buttonUrl}
+                          target={buttonUrl.startsWith('http') ? '_blank' : '_self'}
+                          rel={buttonUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className={`anemo-button ${buttonType}`}
+                        >
+                          {buttonText}
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
                 <div className="bubble-time">
@@ -466,19 +704,14 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
           <div className="composer-inner">
             <textarea
               ref={textareaRef}
+              className="anemo-textarea"
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(input); } }}
-              placeholder={`Message ${widgetConfig.chatbot_name}...`}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
               rows={1}
               disabled={isLoading}
               aria-label="Chat message input"
-              style={{ height: 'auto', overflowY: 'hidden' }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${target.scrollHeight}px`;
-              }}
             />
             <button type="submit" className="send-btn" disabled={isLoading || !input.trim()}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -500,7 +733,10 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         .anemo-bot-titlebox { flex: 1; display: flex; align-items: center; gap: 7px; }
         .anemo-bot-title { color: #fff; font-weight: 700; font-size: 1.16rem; letter-spacing: 0.01em; }
         .anemo-bot-desc { color: #fff; background: #2563eb; font-size: 0.81rem; font-weight: 600; padding: 2px 9px; border-radius: 8px; margin-left: 5px; letter-spacing: 0.01em; }
-        .anemo-card-header-close { position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #a5aebf; font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0; border-radius: 50%; width: 30px; height: 30px; transition: background 0.16s; }
+        .anemo-card-header-actions { display: flex; align-items: center; gap: 2px; /* Reduced spacing between buttons */ }
+        .anemo-clear-history-btn { background: transparent; border: none; color: #a5aebf; cursor: pointer; line-height: 1; padding: 0; border-radius: 50%; width: 30px; height: 30px; transition: background 0.16s; display: flex; align-items: center; justify-content: center; }
+        .anemo-clear-history-btn:hover { background: #292f35; color: #fff; }
+        .anemo-card-header-close { background: transparent; border: none; color: #a5aebf; font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0; border-radius: 50%; width: 30px; height: 30px; transition: background 0.16s; }
         .anemo-card-header-close:hover { background: #292f35; color: #fff; }
         .anemo-card-body { display: flex; flex-direction: column; flex: 1; min-height: 0; background: #23272f; position: relative; }
         .anemo-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 22px 14px 14px 14px; background: #23272f; scroll-behavior: smooth; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }

@@ -6,9 +6,6 @@ import { BytesOutputParser } from '@langchain/core/output_parsers';
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { cache, KnowledgeCache } from '@/lib/cache/manager';
 import { performanceMonitor } from '@/lib/performance/optimization';
-import { authenticateRequest } from '@/lib/protectedRoute';
-import { secureChatService } from '@/lib/chat/secureChatService';
-import { chatRateLimiter } from '@/lib/chat/rateLimiter';
 
 // All imports from your lib directory
 import { findKnowledgeAnswer } from '@/lib/productKnowledge';
@@ -91,15 +88,10 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
 
   try {
-    // 1. Authentication check
-    const authResult = await authenticateRequest(req);
-    if (!authResult.success) {
-      return authResult.response;
-    }
-
-    const { user } = authResult;
-
-    // 2. Parse and validate request body
+    // Performance monitoring
+    const perfStart = performance.now();
+    
+    // 1. Parse with caching consideration
     let body: ChatBody;
     try {
       body = await req.json();
@@ -107,98 +99,100 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid JSON body');
     }
 
-    const { botId } = body || {};
-    if (!botId) return jsonError('botId is required');
+    // Generate cache key for repeated queries
+    const cacheKey = `chat:${JSON.stringify({
+      botId: body.botId,
+      query: body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text,
+    })}`;
 
-    // 3. Rate limiting check
-    const rateLimitResult = await chatRateLimiter.checkChatRateLimit(req, user.id, botId);
-    if (!rateLimitResult.allowed) {
-      return new NextResponse(
-        JSON.stringify({ 
-          error: rateLimitResult.reason || 'Rate limit exceeded',
-          retryAfter: rateLimitResult.retryAfter 
-        }),
-        { 
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            ...rateLimitResult.headers
-          }
-        }
-      );
-    }
-
-    // 4. Validate bot access and ownership
-    const botAccess = await secureChatService.validateBotAccess(user.id, botId);
-    if (!botAccess.isValid) {
-      return jsonError(botAccess.error || 'Bot access denied', 403);
-    }
-
-    // 5. Validate and sanitize messages
-    const { messages: raw } = body;
-    const messageValidation = secureChatService.validateMessages(raw || []);
-    if (!messageValidation.valid) {
-      return jsonError(messageValidation.error || 'Invalid messages', 400);
-    }
-
-    const messages = messageValidation.sanitized!;
-    const lastUser = [...messages].reverse().find(m => m.role === 'user');
-    if (!lastUser) return jsonError('No user message found');
-    
-    const userText = secureChatService.sanitizeInput(lastUser.content);
-    if (!userText) return jsonError('Empty user message');
-
-    log('start', { 
-      botId, 
-      userId: user.id,
-      workspaceId: botAccess.workspace_id,
-      msgLen: messages.length, 
-      userText: safeSlice(userText) 
-    });
-
-    // 6. Check message limits (skip for demo mode)
-    const mode: 'demo' | 'subscriber' = botId === 'demo' ? 'demo' : 'subscriber';
-    
-    if (mode === 'subscriber') {
-      const limitCheck = await secureChatService.checkMessageLimits(
-        user.id, 
-        botAccess.workspace_id!,
-        botAccess.subscription_tier!
-      );
-      
-      if (!limitCheck.allowed) {
-        return jsonError(limitCheck.error || 'Message limit exceeded', 429);
-      }
-    }
-
-    // Performance monitoring
-    const perfStart = performance.now();
-
-    // 7. Try cache first for repeated queries
-    const cachedResponse = await KnowledgeCache.getAnswer(userText, botId);
+    // Try cache first for repeated queries
+    const cachedResponse = await KnowledgeCache.getAnswer(
+      body.messages?.slice(-1)[0]?.content || body.messages?.slice(-1)[0]?.text || '',
+      body.botId || 'default'
+    );
 
     if (cachedResponse) {
       const responseTime = performance.now() - perfStart;
-      return new NextResponse(
-        JSON.stringify({
-          success: true,
-          message: cachedResponse,
-          cached: true,
-          responseTime: Math.round(responseTime),
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...rateLimitResult.headers
-          }
-        }
-      );
+      return NextResponse.json({
+        success: true,
+        message: cachedResponse,
+        cached: true,
+        responseTime: Math.round(responseTime),
+      });
     }
-    // 8. Conversation window (for style continuity in fallback)
+
+  const { botId, messages: raw } = body || {};
+    if (!botId) return jsonError('botId is required');
+    if (!raw || !Array.isArray(raw) || raw.length === 0) {
+      return jsonError('messages array required');
+    }
+
+  const mode: 'demo' | 'subscriber' = botId === 'demo' ? 'demo' : 'subscriber';
+    const messages = normalizeMessages(raw);
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUser) return jsonError('No user message found');
+    const userText = lastUser.content.trim();
+    if (!userText) return jsonError('Empty user message');
+
+    log('start', { botId, mode, msgLen: messages.length, userText: safeSlice(userText) });
+
+    // Conversation quota enforcement (only for subscriber bots)
+    if (mode === 'subscriber') {
+      try {
+        const supabaseAdmin = createSupabaseAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        // Get workspace (botId acts as workspace_id here)
+        const workspaceId = botId;
+        const monthKey = currentMonthKey();
+        // Fetch subscription tier from any profile in workspace (simplest heuristic)
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('workspace_id', workspaceId)
+          .limit(1)
+          .maybeSingle();
+
+        const tier = profile?.subscription_tier || 'basic';
+        const quota = getPlanQuota(tier);
+        if (quota?.monthlyConversationCap) {
+          const { data: usage } = await supabaseAdmin
+            .from('usage_counters')
+            .select('id, monthly_conversations')
+            .eq('workspace_id', workspaceId)
+            .eq('month', monthKey)
+            .maybeSingle();
+
+            const convs = usage?.monthly_conversations || 0;
+            if (convs + 1 > quota.monthlyConversationCap) {
+              return jsonError('Conversation limit reached for plan. Upgrade to Pro for unlimited.', 429);
+            }
+            // Increment afterwards (fire and forget)
+            const updates = {
+              monthly_conversations: convs + 1,
+              workspace_id: workspaceId,
+              user_id: null,
+              month: monthKey
+            } as any;
+            if (usage?.id) {
+              await supabaseAdmin.from('usage_counters').update(updates).eq('id', usage.id);
+            } else {
+              await supabaseAdmin.from('usage_counters').insert(updates);
+            }
+        }
+      } catch (quotaErr) {
+        console.error('[chat:quota-check-error]', quotaErr);
+        // Continue silently; do not block chat if quota check fails unexpectedly.
+      }
+    }
+
+    // 2. Conversation window (for style continuity in fallback)
     const conversationWindow = messages
       .slice(-8)
-      .map(m => `${m.role === 'assistant' ? 'assistant' : 'user'}: ${m.content}`)
+      .map(m => `${m.role === 'bot' ? 'assistant' : m.role}: ${m.content}`)
       .join('\n');
 
     // 3. Lead / intent signals (before orchestration)
@@ -258,8 +252,76 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Finalize
-    const finalReply = brandify(reply);
+    let finalReply = brandify(reply);
     const finalSources = sources.map(s => ({ ...s, snippet: safeSlice(s.snippet) }));
+
+    // 5.5. Parse buttons from response text
+    const buttons: Array<{ text: string; url: string; type: 'primary' | 'secondary' }> = [];
+    
+    // Parse [Start Free Trial] pattern
+    if (finalReply.includes('[Start Free Trial]')) {
+      buttons.push({
+        text: 'Start Free Trial',
+        url: '/start-trial',
+        type: 'primary'
+      });
+      // Remove the button text from the final reply
+      finalReply = finalReply.replace(/\s*→?\s*\[Start Free Trial\]/g, '');
+    }
+
+    // Parse [View Pricing] pattern
+    if (finalReply.includes('[View Pricing]')) {
+      buttons.push({
+        text: 'View Pricing',
+        url: '/pricing',
+        type: 'secondary'
+      });
+      finalReply = finalReply.replace(/\s*→?\s*\[View Pricing\]/g, '');
+    }
+
+    // Parse [Contact Sales] pattern
+    if (finalReply.includes('[Contact Sales]')) {
+      buttons.push({
+        text: 'Contact Sales',
+        url: '/contact',
+        type: 'secondary'
+      });
+      finalReply = finalReply.replace(/\s*→?\s*\[Contact Sales\]/g, '');
+    }
+
+    // Parse [Dashboard] pattern
+    if (finalReply.includes('[Dashboard]')) {
+      buttons.push({
+        text: 'Go to Dashboard',
+        url: '/dashboard',
+        type: 'secondary'
+      });
+      finalReply = finalReply.replace(/\s*→?\s*\[Dashboard\]/g, '');
+    }
+
+    // Parse [Features] pattern
+    if (finalReply.includes('[Features]')) {
+      buttons.push({
+        text: 'View Features',
+        url: '/ai-chatbot-for-ecommerce',
+        type: 'secondary'
+      });
+      finalReply = finalReply.replace(/\s*→?\s*\[Features\]/g, '');
+    }
+
+    // Clean up any remaining arrows at the end
+    finalReply = finalReply.replace(/\s*→\s*$/, '').trim();
+
+    // Create metadata object
+    const metadata = {
+      sources: finalSources,
+      usedDocs,
+      buttons: buttons.length > 0 ? buttons : undefined,
+      meta: {
+        fallback,
+        knowledgeSource
+      }
+    };
 
     // 6. Lead persistence (if any)
     if (leadDetection) {
@@ -276,16 +338,18 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 7. Increment usage counter for subscriber bots
-    if (mode === 'subscriber') {
-      await secureChatService.incrementMessageUsage(botAccess.workspace_id!);
-    }
-
-    // 8. Response (streaming-like using native Response)
+    // 7. Response (streaming-like using native Response)
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(encoder.encode(finalReply));
+        
+        // Send metadata after content if we have buttons
+        if (buttons.length > 0) {
+          // Add an extra newline for clarity in the output
+          controller.enqueue(encoder.encode(`\n\n__BUTTONS__${JSON.stringify(buttons)}`));
+        }
+        
         controller.close();
       }
     });
@@ -295,10 +359,7 @@ export async function POST(req: NextRequest) {
         'x-knowledge-source': knowledgeSource || 'none',
         'x-used-docs': usedDocs.toString(),
         'x-fallback': fallback.toString(),
-        'x-response-time': `${Date.now() - started}ms`,
-        'x-user-id': user.id,
-        'x-workspace-id': botAccess.workspace_id || 'unknown',
-        ...rateLimitResult.headers
+        'x-response-time': `${Date.now() - started}ms`
       }
     });
 
@@ -307,9 +368,7 @@ export async function POST(req: NextRequest) {
       fallback,
       usedDocs,
       responseTime: `${Date.now() - started}ms`,
-      msgLen: finalReply.length,
-      userId: user.id,
-      workspaceId: botAccess.workspace_id
+      msgLen: finalReply.length
     });
 
     return response;

@@ -4,6 +4,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { Analytics } from "@vercel/analytics/next";
 import { WebVitals } from '@/components/WebVitals';
 import './globals.css';
+import './chat-widget-styles.css';
 
 const siteUrl = 'https://trulybot.xyz';
 const siteName = 'TrulyBot - Advanced AI Chatbot Platform';
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: siteName,
     title: 'TrulyBot - #1 AI Chatbot That Transforms E-Commerce Support',
-    description: 'Join 10,000+ businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads, and provide 24/7 automated customer service. Start free trial today.',
+    description: 'Join businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads, and provide 24/7 automated customer service. Start free trial today.',
     images: [
       { 
         url: ogImage, 
@@ -66,7 +67,7 @@ export const metadata: Metadata = {
     site: '@trulybot',
     creator: '@trulybot', 
     title: 'TrulyBot - Lightning-Fast AI Chatbot That Converts Visitors Into Customers',
-    description: 'See how TrulyBot AI chatbot helped 10,000+ e-commerce businesses reduce support load by 70% and increase leads by 5X. Free 7-day trial.',
+    description: 'See how TrulyBot AI chatbot helps e-commerce businesses reduce support load by 70% and increase leads by 5X. Free 7-day trial.',
     images: [ogImage]
   },
   icons: {

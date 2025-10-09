@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { config } from './config/secrets';
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -39,7 +40,7 @@ ${userMessage}
 If answerable from context, answer. Otherwise output the exact fallback sentence.`;
 
   const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: config.openai.chatModel,
     temperature: 0.2,
     messages: [
       { role: 'system', content: system },

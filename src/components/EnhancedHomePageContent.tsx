@@ -201,7 +201,7 @@ export default function EnhancedHomePageContent() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Trusted by 10,000+ E-Commerce Businesses
+                Trusted by E-Commerce Businesses
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400">
                 See how TrulyBot AI chatbot has transformed customer support operations worldwide
@@ -279,7 +279,7 @@ export default function EnhancedHomePageContent() {
               Ready to Transform Your Customer Support?
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join 10,000+ businesses already using TrulyBot AI chatbot to reduce support costs and increase sales.
+              Join businesses already using TrulyBot AI chatbot to reduce support costs and increase sales.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

@@ -298,7 +298,7 @@ Final Response
 - **Performance:** Sub-100ms retrieval
 
 #### **3. AI Generation**
-- **Provider:** OpenAI GPT-4
+- **Provider:** OpenAI GPT-4o Mini
 - **Context:** Workspace-specific knowledge
 - **Safety:** Content filtering enabled
 - **Cost:** Usage tracking per workspace
@@ -307,7 +307,7 @@ Final Response
 ```typescript
 // AI Request Validation
 const aiRequest = {
-  model: 'gpt-4-turbo',
+  model: 'gpt-4o-mini',
   messages: sanitizedMessages,
   max_tokens: 500,
   temperature: 0.7,

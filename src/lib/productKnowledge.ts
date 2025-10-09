@@ -97,7 +97,7 @@ Ready to give your customers this experience? Start your free trial or view our 
 
 🎁 Start with a 7-day FREE trial - no credit card required!
 
-Want me to help you choose the right plan?`,
+Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
     short: 'Plans: Basic ₹99/$5, Pro ₹399/$10, Ultra ₹599/$15. 7-day free trial available.',
     priority: 5
   },
@@ -125,9 +125,9 @@ During your trial, you'll get:
 • Real customer conversations
 • Analytics & insights
 
-Over 10,000+ businesses have started with our free trial. Ready to join them?
+Lots of businesses are already using TrulyBot to improve their customer support. Ready to join them?
 
-Click here to start your trial → [Start Free Trial]`,
+Start your free trial → [Start Free Trial]`,
     short: '7-day free trial, no credit card needed. Full access to all features.',
     priority: 5
   },
@@ -198,7 +198,7 @@ Want to see how this works for your business?`,
 • Automated lead generation
 • Support ticket reduction
 
-Want to see how these features can transform your business?`,
+Ready to explore more? → [Start Free Trial] [View Pricing] [Features]`,
     short: 'Intelligent chat, lead capture, customization, easy setup, and growth tools.',
     priority: 4
   },
@@ -228,8 +228,46 @@ That's it! No complex integrations, no technical expertise needed.
 ✅ Professional chat widget
 ✅ Analytics dashboard
 
-Ready to get started? I can help you begin your free trial right now!`,
+Ready to get started? → [Start Free Trial] [Dashboard]`,
     short: '5-minute setup: Sign up, customize, copy code, go live. No technical skills needed.',
+    priority: 4
+  },
+  {
+    id: 'dashboard-access',
+    category: 'dashboard',
+    tags: ['dashboard', 'analytics', 'access'],
+    questionPatterns: [
+      'dashboard',
+      'analytics',
+      'control\\s+panel',
+      'admin',
+      'account',
+      'manage',
+      'settings'
+    ],
+    keywords: ['dashboard', 'analytics', 'admin', 'control', 'manage', 'account', 'settings'],
+    answer: `📊 Your TrulyBot Dashboard - Complete Control Center!
+
+**Real-time Analytics:**
+• Live conversation tracking
+• Lead capture statistics  
+• Performance metrics
+• Customer satisfaction scores
+
+**Management Tools:**
+• Customize bot appearance
+• Update knowledge base
+• Manage team access
+• Export conversation data
+
+**Business Insights:**
+• Most asked questions
+• Peak usage times
+• Conversion analytics
+• Revenue attribution
+
+Ready to see your dashboard? → [Dashboard] [Start Free Trial]`,
+    short: 'Full dashboard with analytics, customization, and business insights.',
     priority: 4
   },
   {

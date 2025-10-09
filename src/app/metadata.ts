@@ -37,7 +37,7 @@ export const homepageMetadata: Metadata = {
   ],
   openGraph: {
     title: 'TrulyBot - #1 AI Chatbot That Transforms E-Commerce Support',
-    description: 'Join 10,000+ businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads, and provide 24/7 automated customer service.',
+    description: 'Join businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads, and provide 24/7 automated customer service.',
     url: 'https://trulybot.xyz',
     siteName: 'TrulyBot',
     images: [
@@ -54,7 +54,7 @@ export const homepageMetadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'TrulyBot - #1 AI Chatbot That Transforms E-Commerce Support',
-    description: 'Join 10,000+ businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads.',
+    description: 'Join businesses using TrulyBot AI chatbot. Reduce support tickets by 70%, capture 5X more leads.',
     images: ['https://trulybot.xyz/og-image.svg'],
   },
   alternates: {

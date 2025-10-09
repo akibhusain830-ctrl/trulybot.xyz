@@ -1,0 +1,56 @@
+/* Add this CSS to your styles to support the new clear history button */
+.anemo-card-header-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.anemo-clear-history-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 7px;
+  margin-right: 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.anemo-clear-history-btn:hover {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+/* Modify existing CSS for the close button to align with new structure */
+.anemo-card-header-close {
+  font-size: 24px;
+  line-height: 24px;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.anemo-card-header-close:hover {
+  color: #64748b;
+  background-color: rgba(148, 163, 184, 0.1);
+}
+
+.anemo-error-note {
+  font-size: 12px;
+  color: #ef4444;
+  padding: 4px 8px;
+  margin-top: 4px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}

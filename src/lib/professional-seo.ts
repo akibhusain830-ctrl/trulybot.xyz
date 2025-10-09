@@ -74,7 +74,7 @@ const PROFESSIONAL_SITELINKS = {
 const PROFESSIONAL_PAGE_SEO: Record<string, ProfessionalPageConfig> = {
   'start-trial': {
     title: 'Start Free Trial - TrulyBot AI Chatbot | Setup in 5 Minutes',
-    description: 'Start your TrulyBot free trial today. Transform customer support in 5 minutes. No credit card required, cancel anytime. Join 10,000+ successful businesses.',
+    description: 'Start your TrulyBot free trial today. Transform customer support in 5 minutes. No credit card required, cancel anytime. Join successful businesses.',
     keywords: [
       'AI chatbot free trial',
       'start chatbot trial',
@@ -132,7 +132,7 @@ const PROFESSIONAL_PAGE_SEO: Record<string, ProfessionalPageConfig> = {
 
   'success-stories': {
     title: 'Customer Success Stories - TrulyBot AI Chatbot Case Studies & Results',
-    description: 'Discover how 10,000+ businesses transformed customer support with TrulyBot. Real case studies showing 70% ticket reduction and 5X lead increase.',
+    description: 'Discover how businesses transformed customer support with TrulyBot. Real case studies showing 70% ticket reduction and 5X lead increase.',
     keywords: [
       'AI chatbot success stories',
       'customer support automation case studies',

@@ -110,7 +110,7 @@ export default function AboutPage() {
         <div className="mt-8 space-y-6 text-slate-400">
           <div>
             <h3 className="text-xl font-semibold text-white mb-2">Industry-Leading Performance</h3>
-            <p>Join 10,000+ businesses using TrulyBot to reduce support tickets by 70% and increase leads by 5X with lightning-fast AI responses.</p>
+            <p>Join businesses using TrulyBot to reduce support tickets by 70% and increase leads by 5X with lightning-fast AI responses.</p>
           </div>
           <div>
             <h3 className="text-xl font-semibold text-white mb-2">⚡ Thunderbolt-Speed Deployment</h3>

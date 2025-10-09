@@ -1,0 +1,31 @@
+/* Chat widget clear history button styles */
+.anemo-clear-history-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #282c34;
+  border: none;
+  border-radius: 50%;
+  color: #a5aebf;
+  cursor: pointer;
+  margin-right: 2px; /* Reduced spacing between buttons */
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.anemo-clear-history-btn:hover {
+  background: #353a45;
+  color: #ffffff;
+}
+
+.anemo-clear-history-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.anemo-card-header-actions {
+  display: flex;
+  align-items: center;
+}

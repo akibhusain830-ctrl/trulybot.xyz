@@ -54,8 +54,8 @@ function buildPricingJsonLd() {
         },
         {
           '@type': 'UnitPriceSpecification',
-          priceCurrency: 'USD',
-          price: tier.monthlyUsd,
+          priceCurrency: 'INR',
+          price: tier.monthlyInr,
           billingPeriod: 'P1M'
         }
       ],

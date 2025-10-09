@@ -7,7 +7,6 @@ import { getPricingTier } from '@/lib/constants/pricing';
 import { logger } from '@/lib/logger';
 import { orderRateLimit } from '@/lib/redisRateLimit';
 import { validateRequest, createOrderSchema } from '@/lib/validation';
-import { securePaymentService } from '@/lib/payment/securePaymentService';
 import { 
   createErrorResponse, 
   createSuccessResponse, 
@@ -119,9 +118,9 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
     // Calculate amount based on billing period and currency
     let numericAmount = 0;
     if (billing_period === 'yearly') {
-      numericAmount = currency === 'INR' ? tier.yearlyInr : tier.yearlyUsd;
+      numericAmount = tier.yearlyInr;
     } else {
-      numericAmount = currency === 'INR' ? tier.monthlyInr : tier.monthlyUsd;
+      numericAmount = tier.monthlyInr;
     }
 
     if (currency === 'INR') {
@@ -135,55 +134,6 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
         code: 'PRICING_ERROR',
         requestId,
       });
-    }
-
-    // Validate subscription upgrade eligibility
-    const subscriptionValidation = await securePaymentService.validateSubscriptionUpgrade(
-      user.id,
-      plan_id,
-      numericAmount
-    );
-
-    if (!subscriptionValidation.isValid) {
-      logger.warn('Subscription upgrade validation failed', { 
-        requestId, 
-        userId: user.id,
-        planId: plan_id,
-        error: subscriptionValidation.error
-      });
-      
-      return createErrorResponse(
-        subscriptionValidation.error || 'Subscription upgrade not allowed',
-        400,
-        {
-          code: 'UPGRADE_VALIDATION_FAILED',
-          requestId,
-        }
-      );
-    }
-
-    // Validate payment flow security
-    const paymentFlowValidation = await securePaymentService.validatePaymentFlow(
-      user.id,
-      '', // Order ID not yet available
-      { user } // Session data
-    );
-
-    if (!paymentFlowValidation.isValid) {
-      logger.warn('Payment flow validation failed', { 
-        requestId, 
-        userId: user.id,
-        error: paymentFlowValidation.error
-      });
-      
-      return createErrorResponse(
-        'Payment validation failed',
-        400,
-        {
-          code: 'PAYMENT_FLOW_INVALID',
-          requestId,
-        }
-      );
     }
 
     // Create Razorpay order

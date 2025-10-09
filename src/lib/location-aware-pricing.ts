@@ -1,6 +1,6 @@
 import { PRICING_TIERS } from '@/lib/constants/pricing';
 
-export type Currency = 'USD' | 'INR';
+export type Currency = 'INR';
 
 export interface LocationAwarePricing {
   currency: Currency;
@@ -20,38 +20,34 @@ export interface LocationAwarePricing {
 }
 
 /**
- * Get pricing information based on user's location/currency
+ * Get pricing information - now simplified to INR only
  */
-export function getLocationAwarePricing(currency: Currency = 'USD'): LocationAwarePricing {
-  const isINR = currency === 'INR';
-  
+export function getLocationAwarePricing(currency: Currency = 'INR'): LocationAwarePricing {
   return {
-    currency,
-    symbol: isINR ? '₹' : '$',
+    currency: 'INR',
+    symbol: '₹',
     basic: {
-      monthly: isINR ? PRICING_TIERS[0].monthlyInr : PRICING_TIERS[0].monthlyUsd,
-      yearly: isINR ? PRICING_TIERS[0].yearlyInr : PRICING_TIERS[0].yearlyUsd,
+      monthly: PRICING_TIERS[0].monthlyInr,
+      yearly: PRICING_TIERS[0].yearlyInr,
     },
     pro: {
-      monthly: isINR ? PRICING_TIERS[1].monthlyInr : PRICING_TIERS[1].monthlyUsd,
-      yearly: isINR ? PRICING_TIERS[1].yearlyInr : PRICING_TIERS[1].yearlyUsd,
+      monthly: PRICING_TIERS[1].monthlyInr,
+      yearly: PRICING_TIERS[1].yearlyInr,
     },
     ultra: {
-      monthly: isINR ? PRICING_TIERS[2].monthlyInr : PRICING_TIERS[2].monthlyUsd,
-      yearly: isINR ? PRICING_TIERS[2].yearlyInr : PRICING_TIERS[2].yearlyUsd,
+      monthly: PRICING_TIERS[2].monthlyInr,
+      yearly: PRICING_TIERS[2].yearlyInr,
     },
   };
 }
 
 /**
- * Generate pricing content for chatbot based on user's currency
+ * Generate pricing content for chatbot - simplified to INR only
  */
-export function generatePricingContent(currency: Currency = 'USD', includeYearly: boolean = false): string {
+export function generatePricingContent(currency: Currency = 'INR', includeYearly: boolean = false): string {
   const pricing = getLocationAwarePricing(currency);
-  const isINR = currency === 'INR';
-  const regionText = isINR ? 'Indian market' : 'international market';
   
-  let content = `💰 TrulyBot Pricing Plans (${regionText}):
+  let content = `💰 TrulyBot Pricing Plans (Indian Market):
 
 **Basic Plan** - ${pricing.symbol}${pricing.basic.monthly}/month`;
   
@@ -94,71 +90,31 @@ Want me to help you choose the right plan?`;
 }
 
 /**
- * Generate short pricing summary for quick responses
+ * Generate short pricing summary - simplified to INR only
  */
-export function generateShortPricingSummary(currency: Currency = 'USD'): string {
+export function generateShortPricingSummary(currency: Currency = 'INR'): string {
   const pricing = getLocationAwarePricing(currency);
   return `Plans start at ${pricing.symbol}${pricing.basic.monthly}/month. Basic/Pro/Ultra tiers. 7-day free trial available.`;
 }
 
 /**
- * Generate FAQ pricing text for schema
+ * Generate FAQ pricing text for schema - simplified to INR only
  */
-export function generateFAQPricingText(currency: Currency = 'USD'): string {
+export function generateFAQPricingText(currency: Currency = 'INR'): string {
   const pricing = getLocationAwarePricing(currency);
   return `TrulyBot offers flexible pricing starting at ${pricing.symbol}${pricing.basic.monthly}/month for the Basic plan, ${pricing.symbol}${pricing.pro.monthly}/month for Pro, and ${pricing.symbol}${pricing.ultra.monthly}/month for Ultra. All plans include a free 7-day trial with no credit card required.`;
 }
 
 /**
- * Detect currency from request headers or context
+ * Always returns INR currency - no geolocation needed
  */
 export function detectCurrencyFromContext(request?: Request): Currency {
-  if (!request) return 'USD';
-  
-  // Try to get country from various headers
-  const country = 
-    request.headers.get('x-vercel-ip-country') ||
-    request.headers.get('cf-ipcountry') ||
-    request.headers.get('x-forwarded-geo') ||
-    request.headers.get('x-country-code');
-  
-  return country === 'IN' ? 'INR' : 'USD';
+  return 'INR';
 }
 
 /**
- * Detect currency from browser/client-side context
+ * Always returns INR currency - no browser detection needed
  */
 export function detectCurrencyFromBrowser(): Currency {
-  if (typeof window === 'undefined') return 'USD';
-  
-  // Check for testing parameter first
-  const urlParams = new URLSearchParams(window.location.search);
-  const testCurrency = urlParams.get('currency');
-  if (testCurrency === 'INR' || testCurrency === 'USD') {
-    return testCurrency;
-  }
-  
-  // Check localStorage first
-  try {
-    const cached = localStorage.getItem('user_currency');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      return parsed.currency || 'USD';
-    }
-  } catch (error) {
-    // Ignore parsing errors
-  }
-  
-  // Fallback to timezone/language detection
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const language = navigator.language;
-  
-  if (timezone.includes('Asia/Kolkata') || 
-      timezone.includes('Asia/Calcutta') || 
-      language.startsWith('hi') || 
-      language.includes('IN')) {
-    return 'INR';
-  }
-  
-  return 'USD';
+  return 'INR';
 }

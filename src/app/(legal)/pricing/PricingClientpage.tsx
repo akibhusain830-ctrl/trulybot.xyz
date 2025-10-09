@@ -64,9 +64,8 @@ export default function PricingClientPage() {
       </div>
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {PRICING_TIERS.map((plan) => {
-          const price = currency === 'INR' ? plan.monthlyInr : plan.monthlyUsd;
-          // THE FIX IS ON THIS LINE:
-          const symbol = currency === 'INR' ? '₹' : '$';
+          const price = plan.monthlyInr;
+          const symbol = '₹';
 
           return (
             <div

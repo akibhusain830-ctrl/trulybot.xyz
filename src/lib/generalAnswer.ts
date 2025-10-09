@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { PRODUCT_PROFILE } from './productProfile';
+import { config } from './config/secrets';
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -96,7 +97,7 @@ Output only the final user-facing answer.
   messages.push({ role: 'user', content: userMessage });
 
   const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: config.openai.chatModel,
     temperature: 0.3,
     max_tokens: 450,
     messages

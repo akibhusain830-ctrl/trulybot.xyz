@@ -55,7 +55,7 @@ export default function EcommerceChatbotPage() {
               #1 AI Chatbot for E-Commerce Businesses
             </h1>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              Join 10,000+ e-commerce businesses using TrulyBot to automate customer support, 
+              Join e-commerce businesses using TrulyBot to automate customer support, 
               capture leads, and increase sales. Get 70% fewer support tickets and 5X more conversions.
             </p>
           </header>

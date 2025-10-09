@@ -101,7 +101,7 @@ export function generateSEOMetadata({
 export const seoConfigs = {
   home: {
     title: 'TrulyBot - #1 AI Chatbot for E-Commerce | 24/7 Customer Support',
-    description: 'Transform your e-commerce with TrulyBot AI chatbot. Reduce support tickets 70%, increase leads 5X. Free 7-day trial, 5-minute setup. Join 10,000+ businesses.',
+    description: 'Transform your e-commerce with TrulyBot AI chatbot. Reduce support tickets 70%, increase leads 5X. Free 7-day trial, 5-minute setup. Join businesses worldwide.',
     keywords: [
       'AI chatbot for ecommerce',
       'automated customer support',
@@ -248,7 +248,7 @@ export const seoConfigs = {
 
   features: {
     title: 'TrulyBot Features - Comprehensive AI Chatbot Capabilities',
-    description: 'Discover TrulyBot\'s powerful features: 24/7 support, advanced lead capture, multi-language support, detailed analytics, and seamless integrations. See why 10,000+ businesses choose us.',
+    description: 'Discover TrulyBot\'s powerful features: 24/7 support, advanced lead capture, multi-language support, detailed analytics, and seamless integrations. See why businesses choose us.',
     keywords: [
       'chatbot features',
       'AI customer support features',

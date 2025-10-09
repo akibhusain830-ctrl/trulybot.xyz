@@ -146,7 +146,7 @@ export function generateIntelligentMetaDescription(config: SEOIntelligenceConfig
     homepage: {
       informational: "Discover how TrulyBot's AI chatbot revolutionizes ecommerce customer support. Reduce tickets by 70%, increase leads 5X, and automate 24/7 support. See the difference AI makes.",
       commercial: "Compare TrulyBot with other AI chatbots - #1 rated for ecommerce. 70% fewer support tickets, 5X more leads, 99.9% uptime. Free trial, 5-minute setup.",
-      transactional: "Start your TrulyBot AI chatbot free trial today! Reduce support workload 70%, boost sales 5X. Setup in 5 minutes. Join 10,000+ successful businesses."
+      transactional: "Start your TrulyBot AI chatbot free trial today! Reduce support workload 70%, boost sales 5X. Setup in 5 minutes. Join successful businesses."
     },
     product: {
       informational: "Learn how TrulyBot's advanced AI technology delivers lightning-fast customer support automation. Smart responses, lead capture, and seamless ecommerce integration.",

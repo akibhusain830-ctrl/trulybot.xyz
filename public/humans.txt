@@ -32,7 +32,7 @@ Doctype: HTML5
 Standards: W3C, WCAG 2.1, Schema.org
 Components: React, Next.js 14, TypeScript
 Backend: Supabase, PostgreSQL
-AI: OpenAI GPT-4, Custom Models
+AI: OpenAI GPT-4o Mini, Custom Models
 Performance: Lightning-fast optimization
 SEO: Thunderbolt-speed implementation
 
@@ -60,7 +60,7 @@ Making AI accessible, efficient, and incredibly fast for everyone.
 ⚡ Lightning-fast response times < 500ms
 🚀 70% reduction in support tickets
 📈 5X increase in lead generation
-⭐ 10,000+ businesses served
+⭐ Businesses served worldwide
 🔥 99.9% uptime guarantee
 
 Built with ⚡ lightning speed in Guwahati, India
