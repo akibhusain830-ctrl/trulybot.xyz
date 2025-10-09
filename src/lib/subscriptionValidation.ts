@@ -38,6 +38,7 @@ export function validateSubscriptionFromProfile(profile: Partial<UserProfile>): 
  */
 export function hasAccessToTier(userTier: SubscriptionTier, requiredTier: SubscriptionTier): boolean {
   const tierHierarchy: Record<SubscriptionTier, number> = {
+    'free': 0,
     'basic': 1,
     'pro': 2,
     'ultra': 3

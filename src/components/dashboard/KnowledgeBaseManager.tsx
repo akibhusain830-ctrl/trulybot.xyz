@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetchDocuments, uploadTextDocument, deleteDocument, updateDocument, Document } from '@/lib/api/dashboard';
 import toast from 'react-hot-toast';
+import { calculateSubscriptionAccess } from '@/lib/subscription';
+import { getFeatureRestrictions, getUpgradeMessage } from '@/lib/featureRestrictions';
 
 export default function KnowledgeBaseManager() {
   const { user } = useAuth();
@@ -15,6 +17,9 @@ export default function KnowledgeBaseManager() {
 
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+
+  // User tier and restrictions
+  const [userTier, setUserTier] = useState<string>('free');
 
   // Quota state
   const [loadingUsage, setLoadingUsage] = useState(true);
@@ -29,6 +34,9 @@ export default function KnowledgeBaseManager() {
   const [conversationCap, setConversationCap] = useState<number | null>(null);
 
   const warned80Ref = useRef(false);
+
+  // Get user restrictions
+  const restrictions = getFeatureRestrictions(userTier as any);
 
   const wordCount = useMemo(() => {
     const trimmed = pastedText.trim();
@@ -82,6 +90,13 @@ export default function KnowledgeBaseManager() {
   }, [user?.id]);
 
   useEffect(() => {
+    // Get user subscription tier
+    if (user) {
+      const userProfile = { id: user.id };
+      const access = calculateSubscriptionAccess(userProfile);
+      setUserTier(access.tier);
+    }
+
     // Hydrate from lastUsage first (optimistic) then fetch fresh
     try {
       const raw = localStorage.getItem('lastUsage');
@@ -102,7 +117,7 @@ export default function KnowledgeBaseManager() {
     } catch {}
     loadDocuments();
     loadUsage();
-  }, [loadDocuments, loadUsage]);
+  }, [loadDocuments, loadUsage, user]);
 
   // 80% usage toast (total words)
   useEffect(() => {
@@ -357,6 +372,21 @@ export default function KnowledgeBaseManager() {
             {uploading ? 'Uploading...' : 'Add to Knowledge Base'}
           </button>
         </div>
+        
+        {/* Free Plan Upgrade Notice */}
+        {userTier === 'free' && (
+          <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <div className="flex items-center gap-2 text-amber-400">
+              <span>⚡</span>
+              <span className="font-medium">Free Plan Limitations</span>
+            </div>
+            <div className="text-sm text-amber-300/80 mt-2 space-y-1">
+              <p>• Maximum {restrictions.maxKnowledgeWords} words total</p>
+              <p>• Only {restrictions.maxKnowledgeUploads} knowledge upload allowed</p>
+              <p>• Upgrade to Basic plan for {getFeatureRestrictions('basic' as any).maxKnowledgeWords} words and {getFeatureRestrictions('basic' as any).maxKnowledgeUploads} uploads</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-8">

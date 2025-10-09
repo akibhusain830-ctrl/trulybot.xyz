@@ -213,7 +213,24 @@ export default function PricingClientPage() {
                         
                         {/* CTA Button */}
                         <div className="mt-auto">
-                          {user ? (
+                          {tier.id === 'free' ? (
+                            // Free tier - direct to dashboard
+                            user ? (
+                              <Link
+                                href="/dashboard"
+                                className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                              >
+                                Get Started Free
+                              </Link>
+                            ) : (
+                              <button
+                                onClick={() => setIsSignInModalOpen(true)}
+                                className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                              >
+                                Start Free
+                              </button>
+                            )
+                          ) : user ? (
                             <RazorpayButton
                               amount={pricing.amount}
                               currency={pricing.currency}

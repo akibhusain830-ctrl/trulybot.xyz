@@ -1,5 +1,5 @@
 export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'past_due' | 'canceled' | 'expired' | 'eligible';
-export type SubscriptionTier = 'basic' | 'pro' | 'ultra';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'ultra';
 
 export interface UserSubscription {
   status: SubscriptionStatus;
@@ -27,6 +27,7 @@ export interface UserProfile {
 }
 
 const TIER_FEATURES = {
+  free: ['Core AI Chatbot', '100 Conversations/month', 'Basic Knowledge Base (500 words)', '1 Knowledge Upload', 'Website Embedding'],
   basic: ['Core AI Chatbot', 'Unlimited Conversations', '1,000 Messages/month'],
   pro: ['Core AI Chatbot', 'Unlimited Conversations', 'Maximum Knowledge Base', 'Basic Customization'],
   ultra: ['Core AI Chatbot', 'Unlimited Conversations', 'Maximum Knowledge Base', 'Full Brand Customization', 'Enhanced Lead Capture', 'Priority Support Queue']
@@ -38,13 +39,13 @@ export function calculateSubscriptionAccess(profile: Partial<UserProfile> | null
   if (!profile) {
     return {
       status: 'none',
-      tier: 'basic',
+      tier: 'free',
       trial_ends_at: null,
       subscription_ends_at: null,
       is_trial_active: false,
-      has_access: false,
+      has_access: true, // Free tier has basic access
       days_remaining: 0,
-      features: [] // No access - empty features
+      features: TIER_FEATURES.free
     };
   }
   
@@ -118,16 +119,16 @@ export function calculateSubscriptionAccess(profile: Partial<UserProfile> | null
     };
   }
   
-  // Final fallback - no subscription, no trial
+  // Final fallback - no subscription, no trial - default to free tier
   return {
     status: 'none',
-    tier: 'basic',
+    tier: 'free',
     trial_ends_at: null,
     subscription_ends_at: null,
     is_trial_active: false,
-    has_access: false,
+    has_access: true, // Free tier has basic access
     days_remaining: 0,
-    features: [] // No access - empty features
+    features: TIER_FEATURES.free
   };
 }
 

@@ -1,10 +1,15 @@
 import { PRICING_TIERS } from '@/lib/constants/pricing';
 
 export type Currency = 'INR';
+export type CurrencySymbol = '₹';
 
 export interface LocationAwarePricing {
   currency: Currency;
-  symbol: string;
+  symbol: CurrencySymbol;
+  free: {
+    monthly: number;
+    yearly: number;
+  };
   basic: {
     monthly: number;
     yearly: number;
@@ -26,17 +31,21 @@ export function getLocationAwarePricing(currency: Currency = 'INR'): LocationAwa
   return {
     currency: 'INR',
     symbol: '₹',
-    basic: {
+    free: {
       monthly: PRICING_TIERS[0].monthlyInr,
       yearly: PRICING_TIERS[0].yearlyInr,
     },
-    pro: {
+    basic: {
       monthly: PRICING_TIERS[1].monthlyInr,
       yearly: PRICING_TIERS[1].yearlyInr,
     },
-    ultra: {
+    pro: {
       monthly: PRICING_TIERS[2].monthlyInr,
       yearly: PRICING_TIERS[2].yearlyInr,
+    },
+    ultra: {
+      monthly: PRICING_TIERS[3].monthlyInr,
+      yearly: PRICING_TIERS[3].yearlyInr,
     },
   };
 }
@@ -48,6 +57,12 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   const pricing = getLocationAwarePricing(currency);
   
   let content = `💰 TrulyBot Pricing Plans (Indian Market):
+
+**Free Plan** - ${pricing.symbol}0/month
+• Perfect for testing our AI chatbot
+• Up to 100 conversations/month
+• Basic knowledge base (500 words)
+• 1 knowledge upload only
 
 **Basic Plan** - ${pricing.symbol}${pricing.basic.monthly}/month`;
   

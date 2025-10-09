@@ -17,6 +17,23 @@ export const PRICING_VERSION = '2025-10-09-INR-ONLY';
 // Yearly pricing = monthly * 12 * 0.8 (20% discount), rounded to avoid floating point issues
 export const PRICING_TIERS: readonly PricingTier[] = [
   {
+    id: 'free',
+    name: 'Free',
+    description: 'Perfect for testing our AI chatbot with your content.',
+    monthlyInr: 0,
+    yearlyInr: 0,
+    messageAllowance: '100 conversations/month',
+    highlight: false,
+    features: [
+      'Core AI Chatbot',
+      '100 Conversations / Month',
+      'Basic Knowledge Base (500 words)',
+      '1 Knowledge Upload',
+      'Website Embedding',
+      'No Customization Available',
+    ],
+  },
+  {
     id: 'basic',
     name: 'Basic',
     description: 'For emerging businesses and startups.',
