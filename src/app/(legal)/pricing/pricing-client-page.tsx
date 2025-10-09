@@ -12,8 +12,8 @@ import { getAllTiersPricing } from '@/lib/utils/geolocation-pricing';
 
 export const dynamic = 'force-dynamic';
 
-// Helper function to build structured data for pricing
-function buildPricingJsonLd(currency: 'USD' | 'INR') {
+// Helper function to build structured data for pricing - INR only
+function buildPricingJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -37,8 +37,8 @@ function buildPricingJsonLd(currency: 'USD' | 'INR') {
       },
       priceSpecification: {
         '@type': 'UnitPriceSpecification',
-        priceCurrency: currency,
-        price: currency === 'INR' ? tier.monthlyInr : tier.monthlyUsd,
+        priceCurrency: 'INR',
+        price: tier.monthlyInr,
         billingPeriod: 'P1M'
       },
       availability: 'https://schema.org/InStock',
@@ -55,8 +55,9 @@ export default function PricingClientPage() {
   const [purchasedPlan, setPurchasedPlan] = useState<string | null>(null);
   const { user } = useAuth();
   
-  // Use server-safe currency detection to prevent hydration issues
-  const { currency, symbol, isIndia, country, isLoading } = useServerSafeCurrency();
+  // Use simplified currency - always INR
+  const { currency, symbol, isLoading } = useServerSafeCurrency();
+  const isIndia = true; // Always true now
   
   // Track when component is mounted to prevent hydration mismatches
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function PricingClientPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPricingJsonLd(currency === 'INR' ? 'INR' : 'USD')) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPricingJsonLd()) }}
       />
       <div className="relative min-h-screen bg-black py-12 overflow-hidden">
         {/* Subtle Background Elements */}
@@ -123,8 +124,7 @@ export default function PricingClientPage() {
                   <span>Detecting your location...</span>
                 ) : (
                   <span>
-                    Pricing shown in {currency}. 
-                    {isIndia ? ' Detected India region.' : ` Detected ${country} region.`}
+                    Pricing shown in {currency}.
                   </span>
                 )}
               </p>
@@ -193,7 +193,7 @@ export default function PricingClientPage() {
                         {/* Price */}
                         <div className="text-center mb-8">
                           <div className="flex items-baseline justify-center gap-2">
-                            <span className="text-5xl font-bold text-white">{pricing.symbol}{pricing.amount}</span>
+                            <span className="text-5xl font-bold text-white">{pricing.symbol}{Math.round(pricing.amount)}</span>
                             <span className="text-xl text-gray-400">{periodLabel}</span>
                           </div>
                           {billingPeriod === 'yearly' && (

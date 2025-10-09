@@ -2,9 +2,7 @@ export interface PricingTier {
   readonly id: string;
   readonly name: string;
   readonly monthlyInr: number;
-  readonly monthlyUsd: number;
-  readonly yearlyInr: number; // new
-  readonly yearlyUsd: number; // new
+  readonly yearlyInr: number;
   readonly description: string;
   readonly messageAllowance: string;
   readonly features: readonly string[];
@@ -13,19 +11,17 @@ export interface PricingTier {
   readonly highlight?: boolean;
 }
 
-// Updated version after INR pricing & yearly addition
-export const PRICING_VERSION = '2025-09-30-3';
+// Updated version - INR only pricing
+export const PRICING_VERSION = '2025-10-09-INR-ONLY';
 
-// Yearly pricing = monthly * 12 * 0.8 (20% discount)
+// Yearly pricing = monthly * 12 * 0.8 (20% discount), rounded to avoid floating point issues
 export const PRICING_TIERS: readonly PricingTier[] = [
   {
     id: 'basic',
     name: 'Basic',
     description: 'For emerging businesses and startups.',
-    monthlyUsd: 5,
     monthlyInr: 99,
-    yearlyUsd: 5 * 12 * 0.8,   // 48
-    yearlyInr: 99 * 12 * 0.8,  // 950.4 -> round in UI
+    yearlyInr: Math.round(99 * 12 * 0.8),  // 950
     messageAllowance: '1,000 conversations/month',
     highlight: false,
     features: [
@@ -39,10 +35,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     id: 'pro',
     name: 'Pro',
     description: 'The most popular choice for growing e-commerce brands.',
-    monthlyUsd: 10,
     monthlyInr: 399,
-    yearlyUsd: 10 * 12 * 0.8,  // 96
-    yearlyInr: 399 * 12 * 0.8, // 3820.8
+    yearlyInr: Math.round(399 * 12 * 0.8), // 3831
     messageAllowance: 'Unlimited conversations',
     highlight: true,
     features: [
@@ -59,10 +53,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     id: 'ultra',
     name: 'Ultra',
     description: 'The ultimate toolkit for established businesses ready to maximize their growth.',
-    monthlyUsd: 15,
     monthlyInr: 599,
-    yearlyUsd: 15 * 12 * 0.8,  // 144
-    yearlyInr: 599 * 12 * 0.8, // 5750.4
+    yearlyInr: Math.round(599 * 12 * 0.8), // 5750
     messageAllowance: 'Unlimited conversations',
     highlight: false,
     features: [

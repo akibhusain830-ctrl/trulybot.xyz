@@ -348,10 +348,13 @@ export function formatPrice(
   const symbol = currency === 'INR' ? '₹' : '$';
   const periodText = period === 'yearly' ? '/year' : '/month';
   
+  // Always round to fix floating point issues
+  const roundedAmount = Math.round(amount);
+  
   if (currency === 'INR') {
-    return `${symbol}${Math.round(amount)}${periodText}`;
+    return `${symbol}${roundedAmount}${periodText}`;
   } else {
-    return `${symbol}${amount}${periodText}`;
+    return `${symbol}${roundedAmount}${periodText}`;
   }
 }
 
@@ -371,9 +374,10 @@ export function getTierPricing(
   let amount: number;
   
   if (period === 'yearly') {
-    amount = currency === 'INR' ? tier.yearlyInr : tier.yearlyUsd;
+    // Fix floating point precision issues with yearlyInr
+    amount = Math.round(tier.yearlyInr);
   } else {
-    amount = currency === 'INR' ? tier.monthlyInr : tier.monthlyUsd;
+    amount = tier.monthlyInr;
   }
   
   return {
