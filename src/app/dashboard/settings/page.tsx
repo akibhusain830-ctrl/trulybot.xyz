@@ -471,6 +471,34 @@ export default function SettingsPage() {
                 className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base text-slate-400 cursor-not-allowed"
               />
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                TrulyBot User ID
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={user.id || ''}
+                  disabled
+                  className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-base text-slate-400 cursor-not-allowed font-mono text-sm"
+                />
+                <button
+                  onClick={() => {
+                    if (user?.id) {
+                      navigator.clipboard.writeText(user.id);
+                      toast.success('User ID copied to clipboard!');
+                    }
+                  }}
+                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Use this ID when connecting stores to TrulyBot. Keep it private.
+              </p>
+            </div>
           </div>
         </div>
 

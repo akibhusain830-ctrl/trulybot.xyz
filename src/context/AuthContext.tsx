@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
 import { logger } from '@/lib/logger';
 
-export type SubscriptionStatus = 'active' | 'trialing' | 'expired' | 'none';
+export type SubscriptionStatus = 'active' | 'trialing' | 'trial' | 'expired' | 'none';
 
 interface UserProfile extends User {
   trial_ends_at?: string | null;

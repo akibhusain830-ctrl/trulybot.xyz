@@ -14,6 +14,9 @@ const HomeIcon = () => (
 const LeadsIcon = () => (
   <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 );
+const IntegrationsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+);
 const SettingsIcon = () => (
   <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.82l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1 0-2.82l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15-.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
 );
@@ -132,6 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { name: 'Dashboard', icon: <HomeIcon />, href: '/dashboard' },
     { name: 'Leads', icon: <LeadsIcon />, href: '/dashboard/leads' },
+    { name: 'Integrations', icon: <IntegrationsIcon />, href: '/dashboard/integrations' },
     { name: 'Settings', icon: <SettingsIcon />, href: '/dashboard/settings' },
   ];
 
@@ -214,38 +218,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       document.documentElement.style.overflow = original || '';
     };
   }, [showSignIn, showSubscription]);
-
-  // Immediate decision on subscription - no waiting or loading delays
-  const [forceResolve, setForceResolve] = useState(false);
-  const subscriptionResolved = !subscriptionLoading || subscriptionStatus !== 'none' || forceResolve;
   
-  // Force resolve after just 500ms - much faster resolution
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setForceResolve(true);
-    }, 500); // Reduced from 1500ms to 500ms
+    if (loading || subscriptionLoading) return;
     
-    return () => clearTimeout(timer);
-  }, []);
-  
-  useEffect(() => {
-    if (loading) return;
     // Auth not present -> sign in modal
     if (!user) {
       setShowSignIn(true);
       setShowSubscription(false);
       return;
     }
-    // User present but subscription not resolved yet: wait only briefly
-    if (!subscriptionResolved) return;
-    // Allowed tiers include active + trialing
-    if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing') {
+    
+    // Clear sign in modal if user is present
+    setShowSignIn(false);
+    
+    // Only show subscription modal if user is confirmed NOT to have access
+    // Allow 'active', 'trialing', and 'trial' status to access dashboard
+    if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing' || subscriptionStatus === 'trial') {
       setShowSubscription(false);
-    } else {
-      // Show subscription modal for 'none', 'expired', and other non-active statuses
+    } else if (subscriptionStatus === 'expired' || subscriptionStatus === 'none') {
+      // Only show modal for explicitly non-access statuses
       setShowSubscription(true);
     }
-  }, [user, loading, subscriptionResolved, subscriptionStatus, forceResolve]);
+    // For any other status (including null/undefined), don't show modal until resolved
+  }, [user, loading, subscriptionLoading, subscriptionStatus]);
 
   // Prevent hydration mismatch by showing loading until mounted, but with shorter loading states
   if (!mounted || (loading && !user)) {
@@ -309,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main id="main-content" className="min-h-full p-4 sm:p-6 lg:p-8" role="main" aria-label="Dashboard main content">{children}</main>
         </div>
       </div>
-      {showSubscription && subscriptionResolved && user && (
+      {showSubscription && user && !subscriptionLoading && !['active', 'trialing', 'trial'].includes(subscriptionStatus) && (
         <SubscriptionModal subscriptionStatus={subscriptionStatus} onClose={() => setShowSubscription(false)} />
       )}
     </div>

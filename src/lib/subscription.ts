@@ -95,13 +95,13 @@ export function calculateSubscriptionAccess(profile: Partial<UserProfile> | null
   if (hasNotUsedTrial && hasNoStripeCustomer) {
     return {
       status: 'eligible',  // Changed from 'none' to indicate trial eligibility
-      tier: 'basic',
+      tier: 'free', // Give free tier access by default
       trial_ends_at: null,
       subscription_ends_at: null,
       is_trial_active: false,
-      has_access: false, // No access until they start trial
+      has_access: true, // ✅ AUTOMATIC FREE ACCESS for new users
       days_remaining: 7, // Available trial days
-      features: [] // Must start trial to get access
+      features: TIER_FEATURES.free // ✅ Give free features immediately
     };
   }
   
@@ -109,13 +109,13 @@ export function calculateSubscriptionAccess(profile: Partial<UserProfile> | null
   if (isTrialStatus || profile.has_used_trial) {
     return {
       status: 'expired',
-      tier: 'basic',
+      tier: 'free', // Fall back to free tier
       trial_ends_at: profile.trial_ends_at || null,
       subscription_ends_at: null,
       is_trial_active: false,
-      has_access: false,
+      has_access: true, // ✅ FALL BACK TO FREE ACCESS 
       days_remaining: 0,
-      features: [] // No access - expired
+      features: TIER_FEATURES.free // ✅ Give free features after trial expires
     };
   }
   
