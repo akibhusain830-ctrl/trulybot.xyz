@@ -26,27 +26,44 @@ export default function PricingSection({
   const tiersWithPricing = getAllTiersPricing(currency, billingPeriod);
 
   const pricingFeatures = {
+    free: [
+      '100 Conversations / Month',
+      'Basic Knowledge Base (500 words)',
+      '1 Knowledge Upload',
+      'Basic AI Chatbot',
+      'Website Embedding',
+    ],
     basic: [
-      'Core AI Chatbot',
       '1,000 Conversations / Month',
-      'Standard Knowledge Base',
+      'Standard Knowledge Base (2,000 words)',
+      '4 Knowledge Uploads',
+      'Basic AI Chatbot',
+      'Website Embedding',
     ],
     pro: [
       'Unlimited Conversations',
-      'Limited Chatbot Customization',
+      'Expanded Knowledge Base (15,000 words)',
+      '10 Knowledge Uploads',
+      'Basic Chatbot Customization',
       'Automated Lead Capture',
+      'Priority Support',
     ],
     ultra: [
-      'Full Chatbot Customization',
-      'Maximum Knowledge Base',
-      'Advanced Automated Lead Capture',
+      'Everything in Pro',
+      'Maximum Knowledge Base (50,000 words)', 
+      '25 Knowledge Uploads',
+      'Full Brand Customization',
+      'Advanced Lead Capture',
+      'Priority Support Queue',
     ],
   } as const;
 
   const CheckIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-blue-400 flex-shrink-0">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
+    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white">
+        <path d="M20 6L9 17l-5-5" />
+      </svg>
+    </div>
   );
 
   const periodLabel = billingPeriod === 'monthly' ? '/month' : '/year';
@@ -55,63 +72,102 @@ export default function PricingSection({
   ) : null;
 
   return (
-    <section id="pricing" className="relative py-40 bg-black">
-      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+    <section id="pricing" className="relative py-20 lg:py-32 bg-black overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-950/10 via-transparent to-purple-950/10" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16 pt-8"
+          className="text-center mb-16"
         >
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-5xl md:text-6xl font-bold mb-6 leading-tight md:leading-[1.15] bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent pb-2"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent"
           >
-            Fair pricing for every stage
+            Choose Your Perfect Plan
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8"
           >
-            Start free, scale as you grow. No hidden fees, no surprises.
+            Transform your customer support with AI-powered chatbots. Start free, then scale with transparent pricing.
           </motion.p>
-          <div className="mt-8 inline-flex items-center gap-4 bg-gray-800/40 border border-white/10 px-2 py-2 rounded-2xl">
+          
+          {/* Billing Toggle */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="inline-flex items-center gap-1 bg-gray-900/60 backdrop-blur-sm border border-gray-700/50 px-1 py-1 rounded-2xl shadow-lg"
+          >
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition ${billingPeriod === 'monthly' ? 'bg-blue-600 text-white shadow' : 'text-gray-300 hover:text-white'}`}
-            >Monthly</button>
+              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                billingPeriod === 'monthly' 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              Monthly
+            </button>
             <button
               onClick={() => setBillingPeriod('yearly')}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition ${billingPeriod === 'yearly' ? 'bg-blue-600 text-white shadow' : 'text-gray-300 hover:text-white'}`}
-            >Yearly <span className="hidden sm:inline">(Save 20%)</span></button>
-          </div>
-          <div className="mt-4 text-sm text-gray-500">
-            {isGeoLoading ? (
-              <span>Detecting your location...</span>
-            ) : (
-              <span>
-                Pricing shown in {currency}. 
-                {isIndia ? ' Detected India region.' : ` Detected ${country} region.`}
-                {currency === 'INR' && !isIndia && ' (Using INR as fallback)'}
+              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 relative ${
+                billingPeriod === 'yearly' 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              Yearly
+              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                20% OFF
               </span>
+            </button>
+          </motion.div>
+          
+          {/* Currency Info */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mt-6 text-sm text-gray-400"
+          >
+            {isGeoLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span>Detecting your location...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span>
+                  Pricing in {currency} • {isIndia ? 'India region detected' : `${country} region`}
+                  {currency === 'INR' && !isIndia && ' (INR fallback)'}
+                </span>
+              </div>
             )}
-          </div>
+          </motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch pb-12">
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {tiersWithPricing.map((tierWithPricing, index) => {
             const { pricing, ...plan } = tierWithPricing;
             const features = pricingFeatures[plan.id as keyof typeof pricingFeatures] || [];
             const isPopular = plan.id === 'pro';
-            const isPremium = plan.id === 'pro' || plan.id === 'ultra';
+            const isFree = plan.id === 'free';
+            const isEnterprise = plan.id === 'ultra';
             const equivalentMonthlyInr = (billingPeriod === 'yearly' && currency === 'INR') ? Math.round((pricing.amount / 12)) : null;
 
             return (
@@ -120,67 +176,118 @@ export default function PricingSection({
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.15 }}
-                className="flex justify-center"
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className={`relative ${isPopular ? 'lg:scale-105' : ''}`}
               >
-                <div className={`relative w-full max-w-sm flex flex-col ${isPopular ? 'lg:-mt-4 lg:mb-4' : 'my-4'}`}>
-                  {isPopular && (
-                    <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} className="mb-6 text-center">
-                      <span className="inline-block bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-2xl shadow-blue-500/25">
-                        Most Popular
-                      </span>
-                    </motion.div>
-                  )}
-                  <div
-                    className={[
-                      'flex flex-col rounded-3xl px-7 pt-7 pb-6 border h-full transition-all duration-300 group',
-                      'bg-[#0B0B10]',
-                      isPremium ? 'bg-gradient-to-br from-[#0B0F1A] via-[#0B0B10] to-[#06070A] border-blue-500/40' : 'border-white/5 hover:border-white/10',
-                      isPopular ? 'shadow-xl shadow-blue-800/30' : 'shadow-lg',
-                      'hover:shadow-blue-500/20 hover:-translate-y-1',
-                    ].join(' ')}
+                {/* Popular Badge */}
+                {isPopular && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10"
                   >
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md border border-blue-400/20">
+                      Most Popular
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Card */}
+                <div
+                  className={`relative h-full rounded-2xl border transition-all duration-300 group hover:scale-[1.02] ${
+                    isPopular
+                      ? 'bg-gradient-to-br from-blue-950/50 via-gray-900/90 to-purple-950/50 border-blue-500/50 shadow-xl shadow-blue-500/20'
+                      : isFree
+                      ? 'bg-gradient-to-br from-gray-900/80 to-gray-800/80 border-gray-600/30 hover:border-gray-500/50'
+                      : isEnterprise
+                      ? 'bg-gradient-to-br from-purple-950/50 via-gray-900/90 to-indigo-950/50 border-purple-500/40 hover:border-purple-400/60'
+                      : 'bg-gradient-to-br from-gray-900/90 to-gray-800/90 border-gray-600/40 hover:border-blue-400/60'
+                  } backdrop-blur-sm hover:shadow-2xl`}
+                >
+                  <div className="p-6 lg:p-8 h-full flex flex-col">
+                    {/* Header */}
                     <div className="text-center mb-6">
-                      <h3 className="text-2xl font-bold text-white mb-4">{plan.name}</h3>
-                      <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-5xl font-bold text-white">{pricing.symbol}{pricing.amount}</span>
-                        <span className="text-gray-400 text-xl">{periodLabel}</span>
-                        {discountBadge && billingPeriod === 'yearly' && discountBadge}
+                      <h3 className={`text-2xl font-bold mb-2 ${
+                        isPopular ? 'text-white' : 
+                        isFree ? 'text-green-400' : 
+                        isEnterprise ? 'text-purple-300' : 'text-white'
+                      }`}>
+                        {plan.name}
+                      </h3>
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        {plan.description || 'Perfect for your needs'}
+                      </p>
+                    </div>
+                    
+                    {/* Pricing */}
+                    <div className="text-center mb-8">
+                      <div className="flex items-baseline justify-center gap-1 mb-2">
+                        {isFree ? (
+                          <span className="text-4xl lg:text-5xl font-bold text-green-400">FREE</span>
+                        ) : (
+                          <>
+                            <span className="text-2xl font-semibold text-gray-400">{pricing.symbol}</span>
+                            <span className="text-4xl lg:text-5xl font-bold text-white">{pricing.amount}</span>
+                            <span className="text-gray-400 text-lg">{periodLabel}</span>
+                          </>
+                        )}
                       </div>
+                      {!isFree && billingPeriod === 'yearly' && (
+                        <div className="text-xs text-green-400 font-medium">
+                          Save 20% annually
+                        </div>
+                      )}
                       {equivalentMonthlyInr && (
-                        <div className="mt-2 text-xs text-gray-500">≈ ₹{equivalentMonthlyInr}/mo effective</div>
+                        <div className="text-xs text-gray-500">
+                          Effective: ₹{equivalentMonthlyInr}/month
+                        </div>
                       )}
                     </div>
-                    <ul className="space-y-4 mb-6">
-                      {features.map((feature, fIndex) => (
-                        <motion.li
-                          key={fIndex}
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ delay: fIndex * 0.1 }}
-                          className="flex items-start gap-3"
-                        >
-                          <CheckIcon />
-                          <span className="text-gray-300 text-base leading-relaxed">{feature}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                    <div className="pt-4 border-t border-white/5">
+                    
+                    {/* Features */}
+                    <div className="flex-1 mb-8">
+                      <ul className="space-y-3">
+                        {features.map((feature, fIndex) => (
+                          <motion.li
+                            key={fIndex}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: fIndex * 0.1 }}
+                            className="flex items-start gap-3"
+                          >
+                            <CheckIcon />
+                            <span className="text-gray-300 text-sm leading-relaxed flex-1">{feature}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {/* CTA Button */}
+                    <div className="mt-auto">
                       {user && user.id ? (
                         <RazorpayButton
                           amount={pricing.amount}
                           currency={pricing.currency}
                           billingPeriod={billingPeriod}
-                          label={isPopular ? 'Get Started' : `Choose ${plan.name}`}
+                          label={
+                            isFree ? 'Start Free' :
+                            isPopular ? 'Get Started' : 
+                            `Choose ${plan.name}`
+                          }
                           notes={{ plan: plan.id }}
                           user_id={user.id}
                           plan_id={plan.id}
                           disabled={loading || isGeoLoading}
-                          className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isPremium
-                              ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
-                              : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
-                          }`}
+                          className={`w-full py-4 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isFree
+                              ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg shadow-green-500/25'
+                              : isPopular
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-500/25'
+                              : isEnterprise
+                              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25'
+                              : 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white border border-gray-500/30'
+                          } transform hover:scale-[1.02] active:scale-[0.98]`}
                           onSuccess={() => { window.location.href = '/dashboard'; }}
                           onFailure={(e) => { 
                             console.log('Payment failed:', e);
@@ -191,13 +298,20 @@ export default function PricingSection({
                         <button
                           onClick={() => setShowSignInModal(true)}
                           disabled={loading || isGeoLoading}
-                          className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isPremium
-                              ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:brightness-110 text-white shadow-md'
-                              : 'bg-gray-700/60 hover:bg-gray-600/60 text-white border border-white/5 hover:border-white/10'
-                          }`}
+                          className={`w-full py-4 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isFree
+                              ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg shadow-green-500/25'
+                              : isPopular
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-500/25'
+                              : isEnterprise
+                              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25'
+                              : 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white border border-gray-500/30'
+                          } transform hover:scale-[1.02] active:scale-[0.98]`}
                         >
-                          {loading ? 'Loading...' : (isPopular ? 'Get Started' : `Choose ${plan.name}`)}
+                          {loading ? 'Loading...' : 
+                           isFree ? 'Start Free' :
+                           isPopular ? 'Get Started' : 
+                           `Choose ${plan.name}`}
                         </button>
                       )}
                     </div>
@@ -207,16 +321,39 @@ export default function PricingSection({
             );
           })}
         </div>
+        
+        {/* Trust Indicators */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-center mt-20 pb-8"
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="mt-16 text-center"
         >
-          <p className="text-gray-400 text-lg rounded-2xl py-4 px-8 inline-block">
-            We also offer a 7-day free trial of Ultra plan. No credit card required.
-          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gray-900/40 border border-gray-700/30 backdrop-blur-sm">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-gray-300 text-sm font-medium">Setup in 5 minutes</span>
+            </div>
+            <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gray-900/40 border border-gray-700/30 backdrop-blur-sm">
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
+              <span className="text-gray-300 text-sm font-medium">24/7 AI support</span>
+            </div>
+            <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gray-900/40 border border-gray-700/30 backdrop-blur-sm">
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" />
+              <span className="text-gray-300 text-sm font-medium">Cancel anytime</span>
+            </div>
+          </div>
+          
+          <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="text-gray-400 text-sm mt-8 max-w-2xl mx-auto"
+          >
+            Join thousands of businesses already using TrulyBot to automate customer support and increase sales. 
+            Start with our Ultra plan free trial - no commitment required.
+          </motion.p>
         </motion.div>
       </div>
     </section>
