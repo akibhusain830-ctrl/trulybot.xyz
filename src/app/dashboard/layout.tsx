@@ -107,7 +107,7 @@ const SignInModal = ({ onClose }: { onClose: () => void }) => (
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut, subscriptionStatus, subscriptionLoading, loading, refreshSubscriptionStatus } = useAuth();
+  const { user, signOut, subscriptionStatus, subscriptionLoading, loading, hasAccess, refreshSubscriptionStatus } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Modal visibility states MUST be declared before any conditional return to avoid hook order variation.
   const [showSignIn, setShowSignIn] = useState(false);
@@ -130,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // --- THIS IS THE FIX ---
   // The logic now correctly checks for 'active' OR 'trialing' status.
-  const isAllowed = subscriptionStatus === 'active' || subscriptionStatus === 'trialing';
+  const isAllowed = subscriptionStatus === 'active' || subscriptionStatus === 'trial';
 
   const navItems = [
     { name: 'Dashboard', icon: <HomeIcon />, href: '/dashboard' },
@@ -233,15 +233,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setShowSignIn(false);
     
     // Only show subscription modal if user is confirmed NOT to have access
-    // Allow 'active', 'trialing', and 'trial' status to access dashboard
-    if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing' || subscriptionStatus === 'trial') {
+    // Use hasAccess to determine if user can use the dashboard
+    if (hasAccess) {
       setShowSubscription(false);
-    } else if (subscriptionStatus === 'expired' || subscriptionStatus === 'none') {
-      // Only show modal for explicitly non-access statuses
+    } else {
+      // Only show modal for users who don't have access
       setShowSubscription(true);
     }
     // For any other status (including null/undefined), don't show modal until resolved
-  }, [user, loading, subscriptionLoading, subscriptionStatus]);
+  }, [user, loading, subscriptionLoading, subscriptionStatus, hasAccess]);
 
   // Prevent hydration mismatch by showing loading until mounted, but with shorter loading states
   if (!mounted || (loading && !user)) {
@@ -305,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main id="main-content" className="min-h-full p-4 sm:p-6 lg:p-8" role="main" aria-label="Dashboard main content">{children}</main>
         </div>
       </div>
-      {showSubscription && user && !subscriptionLoading && !['active', 'trialing', 'trial'].includes(subscriptionStatus) && (
+      {showSubscription && user && !subscriptionLoading && !hasAccess && (
         <SubscriptionModal subscriptionStatus={subscriptionStatus} onClose={() => setShowSubscription(false)} />
       )}
     </div>

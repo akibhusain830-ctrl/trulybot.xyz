@@ -9,8 +9,8 @@ import {
 } from '@/lib/utils/geolocation-pricing';
 
 export interface UseCurrencyDetectionResult {
-  currency: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
-  symbol: '$' | '₹' | '€' | '£' | 'C$' | 'A$';
+  currency: 'INR';
+  symbol: '₹';
   isIndia: boolean;
   isLoading: boolean;
   country: string;
@@ -20,8 +20,7 @@ export interface UseCurrencyDetectionResult {
 }
 
 /**
- * React hook for automatic currency detection based on user's location
- * Returns INR for Indian visitors, USD for international visitors
+ * React hook for automatic currency detection - always returns INR
  */
 export function useCurrencyDetection(): UseCurrencyDetectionResult {
   const [result, setResult] = useState<GeolocationResult | null>(null);
@@ -49,10 +48,10 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
         
       } catch (error) {
         console.error('Currency detection failed:', error);
-        // Fallback to USD
+        // Fallback to INR
         const fallback: GeolocationResult = {
-          currency: 'USD',
-          symbol: '$',
+          currency: 'INR',
+          symbol: '₹',
           country: 'Unknown',
           isIndia: false,
           region: 'Unknown',
@@ -72,8 +71,8 @@ export function useCurrencyDetection(): UseCurrencyDetectionResult {
   // Default loading state
   if (isLoading || !result) {
     return {
-      currency: 'USD',
-      symbol: '$',
+      currency: 'INR',
+      symbol: '₹',
       isIndia: false,
       isLoading: true,
       country: 'Unknown',

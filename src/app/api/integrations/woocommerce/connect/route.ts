@@ -100,6 +100,35 @@ export async function POST(req: NextRequest) {
       });
     }
     
+    // Check store connection limit (1 store per user for all plans)
+    const { data: allConnections, error: connectionsError } = await supabaseAdmin
+      .from('store_integrations')
+      .select('id, platform, store_name, status')
+      .eq('user_id', user_id)
+      .eq('status', 'active');
+    
+    if (connectionsError) {
+      logger.error('Error checking existing connections', { reqId, user_id, error: connectionsError });
+      throw connectionsError;
+    }
+    
+    const activeConnections = allConnections || [];
+    
+    // If there are already active connections and this is not an update to existing connection
+    if (activeConnections.length > 0 && !existingConnection) {
+      const connectedStore = activeConnections[0];
+      logger.warn('Store connection limit reached', { 
+        reqId, 
+        user_id, 
+        existing_store: connectedStore.store_name,
+        platform: connectedStore.platform
+      });
+      return NextResponse.json({
+        success: false,
+        message: `You can only connect one store per account. You currently have "${connectedStore.store_name}" (${connectedStore.platform}) connected. Please disconnect your current store first if you want to connect a different one.`
+      }, { status: 400 });
+    }
+    
     // Encrypt API credentials before storing
     const encryptedApiKey = await encryptCredential(api_key);
     const encryptedApiSecret = await encryptCredential(api_secret);
@@ -120,7 +149,7 @@ export async function POST(req: NextRequest) {
       connected_at: new Date().toISOString(),
       last_sync_at: new Date().toISOString(),
       config: {
-        currency: apiTestResult.storeInfo?.currency || 'USD',
+        currency: apiTestResult.storeInfo?.currency || 'INR',
         timezone: apiTestResult.storeInfo?.timezone || 'UTC',
         version: apiTestResult.storeInfo?.version || 'unknown'
       }
@@ -223,7 +252,7 @@ async function testWooCommerceAPI(storeUrl: string, apiKey: string, apiSecret: s
     
     // Extract store information
     const storeInfo = {
-      currency: data.settings?.currency?.value || 'USD',
+      currency: data.settings?.currency?.value || 'INR',
       timezone: data.settings?.timezone?.value || 'UTC',
       version: data.environment?.wp_version || 'unknown',
       wc_version: data.environment?.wc_version || 'unknown'

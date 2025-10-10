@@ -95,7 +95,7 @@ export default function WooCommerceSetupPage() {
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl">
             Follow this step-by-step guide to integrate TrulyBot AI chatbot with your WooCommerce store. 
-            The entire process takes about 10-15 minutes.
+            The entire process takes less than 5 minutes.
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function WooCommerceSetupPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckIcon />
-                  5-10 minutes of your time
+                  Less than 5 minutes of your time
                 </li>
               </ul>
             </div>

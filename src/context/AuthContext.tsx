@@ -4,9 +4,8 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateTrialInfo, TrialInfo } from '@/lib/trial';
+import { calculateSubscriptionAccess, type UserSubscription, type SubscriptionStatus } from '@/lib/subscription';
 import { logger } from '@/lib/logger';
-
-export type SubscriptionStatus = 'active' | 'trialing' | 'trial' | 'expired' | 'none';
 
 interface UserProfile extends User {
   trial_ends_at?: string | null;
@@ -19,6 +18,7 @@ interface AuthContextType {
   subscriptionStatus: SubscriptionStatus;
   subscriptionLoading: boolean;
   trialInfo: TrialInfo | null;
+  hasAccess: boolean;
   signOut: () => Promise<void>;
   refreshSubscriptionStatus: () => Promise<void>;
 }
@@ -29,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   subscriptionStatus: 'none',
   subscriptionLoading: false,
   trialInfo: null,
+  hasAccess: true, // Default to free access
   signOut: async () => {},
   refreshSubscriptionStatus: async () => {},
 });
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
+  const [hasAccess, setHasAccess] = useState(true); // Default to free tier access
 
   // Fast subscription check with simple logic
   const checkSubscriptionStatus = useCallback(async (userId: string) => {
@@ -112,38 +114,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       if (profile) {
-        // Simple subscription logic
-        let status: SubscriptionStatus = 'none';
+        // Use the proper subscription calculation that provides automatic free access
+        const subscription = calculateSubscriptionAccess(profile);
+        
+        // Map the calculated status to our AuthContext status
+        let status: SubscriptionStatus = subscription.status;
         let trial: TrialInfo | null = null;
 
-        if (profile.subscription_status === 'active') {
-          status = 'active';
-        } else if (profile.subscription_status === 'trial' || profile.subscription_status === 'trialing') {
-          if (profile.trial_ends_at) {
-            const trialEnd = new Date(profile.trial_ends_at);
-            const now = new Date();
-            
-            if (trialEnd > now) {
-              status = 'trialing';
-              trial = calculateTrialInfo(profile.trial_ends_at);
-            } else {
-              status = 'expired';
-            }
-          } else {
-            status = 'expired';
-          }
-        } else {
-          status = 'none';
+        // Handle trial information if applicable
+        if (subscription.is_trial_active && subscription.trial_ends_at) {
+          trial = calculateTrialInfo(subscription.trial_ends_at);
         }
 
         setSubscriptionStatus(status);
+        setHasAccess(subscription.has_access);
         setTrialInfo(trial);
         setCachedSubscription(userId, status, trial);
       } else {
-        // No profile = no access
-        setSubscriptionStatus('none');
+        // No profile - use automatic free access
+        const subscription = calculateSubscriptionAccess(null);
+        setSubscriptionStatus(subscription.status); // This will be 'none' but with has_access: true
+        setHasAccess(subscription.has_access); // This will be true for free tier
         setTrialInfo(null);
-        setCachedSubscription(userId, 'none', null);
+        setCachedSubscription(userId, subscription.status, null);
       }
     } catch (error) {
       logger.warn('Subscription check failed, using cache or defaults', { error: String(error) });
@@ -235,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     subscriptionStatus,
     subscriptionLoading,
     trialInfo,
+    hasAccess,
     signOut,
     refreshSubscriptionStatus,
   };

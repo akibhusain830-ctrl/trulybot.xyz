@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import RazorpayButton from '@/components/RazorpayButton';
 import { PRICING_TIERS } from '@/lib/constants/pricing';
 import { useState } from 'react';
-import { useServerSafeCurrency } from '@/hooks/useServerSafeCurrency';
 import { getAllTiersPricing } from '@/lib/utils/geolocation-pricing';
 
 interface PricingSectionProps {
@@ -19,11 +18,11 @@ export default function PricingSection({
 }: PricingSectionProps) {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   
-  // Use our robust currency detection system
-  const { currency, symbol, isIndia, country, isLoading: isGeoLoading } = useServerSafeCurrency();
+  // Use simplified INR-only pricing
+  const { currency, symbol, isIndia } = { currency: 'INR' as const, symbol: '₹' as const, isIndia: true };
   
-  // Get all tiers with appropriate pricing
-  const tiersWithPricing = getAllTiersPricing(currency, billingPeriod);
+  // Get all tiers with INR pricing
+  const tiersWithPricing = getAllTiersPricing('INR', billingPeriod);
 
   const pricingFeatures = {
     free: [
@@ -134,29 +133,6 @@ export default function PricingSection({
                 20% OFF
               </span>
             </button>
-          </motion.div>
-          
-          {/* Currency Info */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-6 text-sm text-gray-400"
-          >
-            {isGeoLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span>Detecting your location...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span>
-                  Pricing in {currency} • {isIndia ? 'India region detected' : `${country} region`}
-                  {currency === 'INR' && !isIndia && ' (INR fallback)'}
-                </span>
-              </div>
-            )}
           </motion.div>
         </motion.div>
 
@@ -278,7 +254,7 @@ export default function PricingSection({
                           notes={{ plan: plan.id }}
                           user_id={user.id}
                           plan_id={plan.id}
-                          disabled={loading || isGeoLoading}
+                          disabled={loading}
                           className={`w-full py-4 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                             isFree
                               ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg shadow-green-500/25'
@@ -297,7 +273,7 @@ export default function PricingSection({
                       ) : (
                         <button
                           onClick={() => setShowSignInModal(true)}
-                          disabled={loading || isGeoLoading}
+                          disabled={loading}
                           className={`w-full py-4 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                             isFree
                               ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg shadow-green-500/25'

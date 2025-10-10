@@ -104,6 +104,35 @@ export async function POST(req: NextRequest) {
       });
     }
     
+    // Check store connection limit (1 store per user for all plans)
+    const { data: allConnections, error: connectionsError } = await supabaseAdmin
+      .from('store_integrations')
+      .select('id, platform, store_name, status')
+      .eq('user_id', user_id)
+      .eq('status', 'active');
+    
+    if (connectionsError) {
+      logger.error('Error checking existing connections', { reqId, user_id, error: connectionsError });
+      throw connectionsError;
+    }
+    
+    const activeConnections = allConnections || [];
+    
+    // If there are already active connections and this is not an update to existing connection
+    if (activeConnections.length > 0 && !existingConnection) {
+      const connectedStore = activeConnections[0];
+      logger.warn('Store connection limit reached', { 
+        reqId, 
+        user_id, 
+        existing_store: connectedStore.store_name,
+        platform: connectedStore.platform
+      });
+      return NextResponse.json({
+        success: false,
+        message: `You can only connect one store per account. You currently have "${connectedStore.store_name}" (${connectedStore.platform}) connected. Please disconnect your current store first if you want to connect a different one.`
+      }, { status: 400 });
+    }
+    
     // Encrypt access token before storing
     const encryptedAccessToken = await encryptCredential(access_token);
     
@@ -121,7 +150,7 @@ export async function POST(req: NextRequest) {
       connected_at: new Date().toISOString(),
       last_sync_at: new Date().toISOString(),
       config: {
-        currency: currency || 'USD',
+        currency: currency || 'INR',
         timezone: timezone || 'UTC',
         plan: plan || 'basic',
         scopes: scopes || [],

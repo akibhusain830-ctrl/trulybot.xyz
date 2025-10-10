@@ -7,7 +7,7 @@ import { calculateSubscriptionAccess } from '@/lib/subscription';
 import { getFeatureRestrictions, getUpgradeMessage } from '@/lib/featureRestrictions';
 
 export default function KnowledgeBaseManager() {
-  const { user } = useAuth();
+  const { user, subscriptionStatus, trialInfo } = useAuth();
   const [pastedText, setPastedText] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -90,11 +90,20 @@ export default function KnowledgeBaseManager() {
   }, [user?.id]);
 
   useEffect(() => {
-    // Get user subscription tier
-    if (user) {
-      const userProfile = { id: user.id };
-      const access = calculateSubscriptionAccess(userProfile);
-      setUserTier(access.tier);
+    // Determine user tier based on AuthContext subscription status
+    if (subscriptionStatus === 'active') {
+      // For paid users, we'd need to fetch their tier from profile
+      // For now, assume basic (we can enhance this later)
+      setUserTier('basic');
+    } else if (subscriptionStatus === 'trial') {
+      // Trial users always get ultra tier
+      setUserTier('ultra');
+    } else if (subscriptionStatus === 'eligible') {
+      // New users with free access
+      setUserTier('free');
+    } else {
+      // Default to free for expired/none
+      setUserTier('free');
     }
 
     // Hydrate from lastUsage first (optimistic) then fetch fresh
@@ -117,7 +126,7 @@ export default function KnowledgeBaseManager() {
     } catch {}
     loadDocuments();
     loadUsage();
-  }, [loadDocuments, loadUsage, user]);
+  }, [loadDocuments, loadUsage, user, subscriptionStatus]);
 
   // 80% usage toast (total words)
   useEffect(() => {

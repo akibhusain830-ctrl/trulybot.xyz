@@ -38,7 +38,7 @@ export default function NoAccessGuard({ children }: NoAccessPageProps) {
   }
 
   // Immediate access for active/trial users - no loading spinner!
-  if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing') {
+  if (subscriptionStatus === 'active' || subscriptionStatus === 'trial') {
     return <>{children}</>;
   }
 

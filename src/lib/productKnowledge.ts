@@ -1,7 +1,7 @@
 import { PRICING_TIERS } from './constants/pricing';
 import { generatePricingContent, generateShortPricingSummary, detectCurrencyFromBrowser } from './location-aware-pricing';
 
-export const KNOWLEDGE_VERSION = '2025-09-21-1';
+export const KNOWLEDGE_VERSION = '2025-10-10-latest';
 
 export interface KnowledgeEntry {
   readonly id: string;
@@ -77,28 +77,37 @@ Ready to give your customers this experience? Start your free trial or view our 
       'price',
       'plans'
     ],
-    keywords: ['pricing', 'plans', 'cost', 'price', 'how much', 'rupees', 'dollars'],
-    answer: `💰 TrulyBot Pricing Plans:
+    keywords: ['pricing', 'plans', 'cost', 'price', 'how much', 'rupees', 'free'],
+    answer: `💰 TrulyBot Pricing Plans (INR Only):
 
-**Basic Plan** - ₹99/month ($5/month)
-• Perfect for small businesses
-• Up to 1,000 conversations/month
-• Basic AI responses & email support
+**Free Plan** - ₹0/month 🆓
+• Perfect for testing our AI chatbot
+• 100 conversations/month
+• Basic Knowledge Base (500 words)
+• 1 Knowledge Upload & Website Embedding
 
-**Pro Plan** - ₹399/month ($10/month) ⭐ Most Popular
-• Best for growing businesses  
-• Up to 10,000 conversations/month
-• Advanced AI with custom branding
+**Basic Plan** - ₹99/month (₹950/year)
+• For emerging businesses & startups
+• 1,000 conversations/month
+• Standard Knowledge Base (2,000 words)
+• 4 Knowledge Uploads
 
-**Ultra Plan** - ₹599/month ($15/month)
-• For enterprise & high-volume
+**Pro Plan** - ₹399/month (₹3,831/year) ⭐ Most Popular
+• Best for growing e-commerce brands
 • Unlimited conversations
-• Premium features + API access
+• Expanded Knowledge Base (15,000 words)
+• 10 Knowledge Uploads + Lead Capture
 
-🎁 Start with a 7-day FREE trial - no credit card required!
+**Ultra Plan** - ₹599/month (₹5,750/year)
+• Ultimate toolkit for established businesses
+• Unlimited conversations
+• Maximum Knowledge Base (50,000 words)
+• 25 Knowledge Uploads + Full Brand Customization
+
+🎁 Start FREE today - no credit card required!
 
 Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
-    short: 'Plans: Basic ₹99/$5, Pro ₹399/$10, Ultra ₹599/$15. 7-day free trial available.',
+    short: 'Plans: Free ₹0, Basic ₹99, Pro ₹399, Ultra ₹599. Start with free plan forever!',
     priority: 5
   },
   {
@@ -112,23 +121,24 @@ Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
       'start\\s+trial'
     ],
     keywords: ['free', 'trial', 'signup', 'start', 'test'],
-    answer: `🚀 Start Your FREE 7-Day Trial!
+    answer: `🚀 Start with TrulyBot Forever FREE!
 
 ✅ No credit card required
-✅ Full access to all features
-✅ Cancel anytime
+✅ Permanent free plan available
+✅ Upgrade anytime for more features
 ✅ Setup takes just 5 minutes
 
-During your trial, you'll get:
+With our FREE plan, you get:
+• 100 conversations/month
+• Basic Knowledge Base (500 words)
+• 1 Knowledge Upload
+• Website Embedding
 • Complete dashboard access
-• Widget customization
-• Real customer conversations
-• Analytics & insights
 
-Lots of businesses are already using TrulyBot to improve their customer support. Ready to join them?
+Want more features? Choose from Basic (₹99), Pro (₹399), or Ultra (₹599) plans.
 
-Start your free trial → [Start Free Trial]`,
-    short: '7-day free trial, no credit card needed. Full access to all features.',
+Ready to start FREE? → [Start Free Plan] [View All Plans]`,
+    short: 'Forever FREE plan available! 100 conversations/month, basic features, no credit card required.',
     priority: 5
   },
   {
@@ -365,24 +375,68 @@ You can re-trigger refresh after editing source content. Goal: minimize hallucin
     category: 'integration',
     keywords: ['embed', 'widget', 'script', 'install', 'snippet', 'placement'],
     questionPatterns: ['how\\s+do\\s+i\\s+embed', 'embed\\s+code', 'chat\\s+widget\\s+snippet'],
-    answer: `Embedding Instructions:
-1. Copy the provided <script> snippet from the dashboard.
-2. Place it just before the closing </head> tag (or in Next.js: inside app/layout.tsx <head>).
-3. For Shopify: use theme editor or edit theme.liquid (head section).
-4. Data attributes let you configure color, position, greeting.
-5. Avoid duplicating the script (check if already injected).
-6. After deploy, hard-refresh page to load the widget.
+    answer: `🚀 Super Easy Embedding - 3 Methods:
 
-Example (illustrative):
+**Method 1: WooCommerce Plugin (Recommended)**
+• Download our official TrulyBot plugin
+• One-click installation & automatic setup
+• No coding required - fully seamless!
+
+**Method 2: Universal Script (Any Website)**
+• Copy the script from your dashboard
+• Paste before </head> tag
+• Instantly live on your website
+
+**Method 3: Platform Integrations**
+• Shopify: Use our Shopify app
+• Next.js: Add script to layout.tsx
+• WordPress: Plugin or manual script
+
+Example Script:
 <script async src="https://cdn.trulybot.xyz/widget.js"
   data-project="YOUR_PROJECT_ID"
-  data-color="#2C4AF7"
-  data-position="right"
-  data-greeting="Hi there!">
+  data-color="#2C4AF7">
 </script>
 
-Need a framework-specific snippet (Next.js or Shopify)?`,
-    short: 'Insert script before </head>; configure with data attributes; avoid duplicates.'
+Setup takes just 5 minutes with our seamless integration methods!
+
+Need platform-specific help? → [WooCommerce Setup] [Shopify Setup] [General Instructions]`,
+    short: 'Multiple easy methods: WooCommerce plugin, universal script, or platform integrations. Setup in 5 minutes!',
+    priority: 4
+  },
+  {
+    id: 'woocommerce-plugin',
+    category: 'integration',
+    keywords: ['woocommerce', 'plugin', 'seamless', 'easy', 'one-click'],
+    questionPatterns: ['woocommerce\\s+plugin', 'woo\\s+commerce', 'seamless\\s+integration'],
+    answer: `🎯 WooCommerce Plugin - Seamless Integration!
+
+**Why Choose Our WooCommerce Plugin?**
+✅ One-click installation (no coding required)
+✅ Automatic chatbot setup & configuration
+✅ Access to all customer & order data
+✅ Instant product recommendations
+✅ Seamless theme integration
+
+**Setup Process (Less than 5 minutes):**
+1. Download TrulyBot WooCommerce plugin
+2. Upload & activate in WordPress admin
+3. Connect your TrulyBot account
+4. Customize appearance (optional)
+5. Go live instantly!
+
+**Features Included:**
+• Real-time order tracking
+• Product search & recommendations
+• Customer support automation
+• Lead capture integration
+• Analytics & insights
+
+Perfect for WooCommerce stores wanting professional AI support without technical complexity!
+
+Ready to install? → [Download Plugin] [Setup Guide] [View Demo]`,
+    short: 'Official WooCommerce plugin: one-click install, automatic setup, seamless integration in under 5 minutes!',
+    priority: 5
   },
   {
     id: 'pricing-overview',

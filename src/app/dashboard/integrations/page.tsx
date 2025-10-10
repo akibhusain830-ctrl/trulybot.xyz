@@ -78,7 +78,7 @@ export default function IntegrationsPage() {
   };
 
   const handleDisconnect = async (integrationId: string, storeName: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${storeName}? This will disable the chatbot on that store.`)) {
+    if (!confirm(`Are you sure you want to disconnect "${storeName}"?\n\nThis will:\n• Disable the chatbot on that store\n• Allow you to connect a different store\n\nYou can always reconnect this store later.`)) {
       return;
     }
 
@@ -278,11 +278,37 @@ export default function IntegrationsPage() {
       </motion.div>
 
       {/* Integration Setup Cards */}
+      {stats.active_integrations > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-500/10 backdrop-blur-sm rounded-xl p-6 mb-6 border border-amber-500/30"
+        >
+          <div className="flex items-start gap-4">
+            <ExclamationTriangleIcon className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="text-lg font-semibold text-amber-400 mb-2">Store Connection Limit</h3>
+              <p className="text-amber-200 mb-3">
+                You can only connect <strong>one store per account</strong>. You currently have{' '}
+                <strong>{stats.active_integrations}</strong> store{stats.active_integrations > 1 ? 's' : ''} connected.
+              </p>
+              <p className="text-amber-300 text-sm">
+                To connect a different store, you must first disconnect your current store using the trash icon in the "Connected Stores" section below.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50"
+          className={`backdrop-blur-sm rounded-xl p-6 shadow-lg border ${
+            stats.active_integrations > 0 
+              ? 'bg-gray-900/30 border-gray-700/30 opacity-60' 
+              : 'bg-gray-900/50 border-gray-700/50'
+          }`}
         >
           <div className="flex items-center mb-4">
             <div className="p-3 bg-purple-500/20 rounded-lg border border-purple-500/30">
@@ -296,14 +322,26 @@ export default function IntegrationsPage() {
           <p className="text-gray-300 mb-4">
             Install our WordPress plugin to connect your WooCommerce store and enable order tracking through the chatbot.
           </p>
+          {stats.active_integrations > 0 ? (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
+              <p className="text-amber-300 text-sm">
+                You already have a store connected. Disconnect your current store first to connect a WooCommerce store.
+              </p>
+            </div>
+          ) : null}
           <div className="flex gap-3">
             <a
               href="/integrations/woocommerce/trulybot-woocommerce.zip"
               download
-              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg"
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors shadow-lg ${
+                stats.active_integrations > 0
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+              onClick={stats.active_integrations > 0 ? (e) => e.preventDefault() : undefined}
             >
               <PlusIcon className="w-4 h-4 mr-2" />
-              Download Plugin
+              {stats.active_integrations > 0 ? 'Limit Reached' : 'Download Plugin'}
             </a>
             <Link
               href="/integrations/woocommerce/setup"
@@ -319,7 +357,11 @@ export default function IntegrationsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gray-900/30 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/30 opacity-75"
+          className={`backdrop-blur-sm rounded-xl p-6 shadow-lg border ${
+            stats.active_integrations > 0 
+              ? 'bg-gray-900/20 border-gray-700/20 opacity-50' 
+              : 'bg-gray-900/30 border-gray-700/30 opacity-75'
+          }`}
         >
           <div className="flex items-center mb-4">
             <div className="p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
@@ -333,6 +375,13 @@ export default function IntegrationsPage() {
           <p className="text-gray-300 mb-4">
             Our Shopify app is coming soon! We're working hard to bring you seamless AI-powered customer support with order tracking for Shopify stores.
           </p>
+          {stats.active_integrations > 0 ? (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
+              <p className="text-amber-300 text-sm">
+                You already have a store connected. When Shopify becomes available, disconnect your current store first.
+              </p>
+            </div>
+          ) : null}
           <div className="flex gap-3">
             <button
               disabled
@@ -355,17 +404,22 @@ export default function IntegrationsPage() {
       {/* Connected Stores */}
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-700/50">
         <div className="p-6 border-b border-gray-700/50">
-          <h2 className="text-xl font-semibold text-white">Connected Stores</h2>
-          <p className="text-gray-400 mt-1">Manage your connected e-commerce integrations</p>
+          <h2 className="text-xl font-semibold text-white">Manage Your Store</h2>
+          <p className="text-gray-400 mt-1">
+            {integrations.length > 0 
+              ? 'Manage your connected store (1 store limit per account)'
+              : 'Connect your first e-commerce store'
+            }
+          </p>
         </div>
 
         <div className="p-6">
           {integrations.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingBagIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No stores connected</h3>
+              <h3 className="text-lg font-medium text-white mb-2">No store connected</h3>
               <p className="text-gray-400 mb-6">
-                Connect your first store to enable TrulyBot chatbot with order tracking.
+                Connect your first store to enable TrulyBot chatbot with order tracking. You can connect one store per account.
               </p>
             </div>
           ) : (
@@ -419,19 +473,24 @@ export default function IntegrationsPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-400 hover:text-gray-300 transition-colors"
+                      title="Visit store"
                     >
                       <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                     </a>
                     <button
                       onClick={() => handleDisconnect(integration.id, integration.store_name)}
                       disabled={disconnectingId === integration.id}
-                      className="p-2 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                      className="flex items-center px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 border border-red-500/30"
+                      title="Disconnect store to connect a different one"
                     >
                       {disconnectingId === integration.id ? (
-                        <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin mr-2"></div>
                       ) : (
-                        <TrashIcon className="w-5 h-5" />
+                        <TrashIcon className="w-4 h-4 mr-2" />
                       )}
+                      <span className="text-sm font-medium">
+                        {disconnectingId === integration.id ? 'Disconnecting...' : 'Disconnect'}
+                      </span>
                     </button>
                   </div>
                 </motion.div>
