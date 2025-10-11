@@ -136,6 +136,7 @@ CREATE TABLE public.leads (
 CREATE INDEX leads_workspace_id_idx ON public.leads(workspace_id);
 CREATE INDEX leads_created_at_idx ON public.leads(created_at);
 CREATE INDEX leads_email_idx ON public.leads(email);
+CREATE INDEX leads_phone_idx ON public.leads(phone);
 
 -- Enable RLS
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
@@ -201,9 +202,9 @@ BEGIN
         'Assistant',
         'Hello! How can I help you today?',
         '#2563EB',
-        NOW() + INTERVAL '7 days', -- Automatic 7-day trial
-        'trial',
-        'ultra',
+        NULL, -- No automatic trial
+        'none',
+        'basic',
         NOW(),
         NOW()
     );

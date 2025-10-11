@@ -1,8 +1,8 @@
-import OpenAI from 'openai';
-import { config } from './config/secrets';
+import OpenAI from "openai";
+import { config } from "./config/secrets";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 interface Chunk {
@@ -21,14 +21,16 @@ interface AnswerParams {
 export async function generateAnswerFromDocs(params: AnswerParams) {
   const { userMessage, chunks } = params;
 
-  const contextBlocks = chunks.map(c => {
-    const snippet = c.content.slice(0, 800);
-    return `[Doc: ${c.title} | Score: ${c.score.toFixed(2)}]\n${snippet}`;
-  }).join('\n---\n');
+  const contextBlocks = chunks
+    .map((c) => {
+      const snippet = c.content.slice(0, 800);
+      return `[Doc: ${c.title} | Score: ${c.score.toFixed(2)}]\n${snippet}`;
+    })
+    .join("\n---\n");
 
   const system = `You answer ONLY using DOCUMENT CONTEXT. 
-If the answer is not in the context, respond exactly: "I don’t find that in the stored documents."
-No hallucinations. Concise and direct.`;
+If the answer is not in the context, respond exactly: "I'd be happy to help you with that! Could you please share your email or phone number so I can have our team follow up with you directly?"
+No hallucinations. Be professional and helpful.`;
 
   const prompt = `DOCUMENT CONTEXT:
 ---
@@ -43,13 +45,15 @@ If answerable from context, answer. Otherwise output the exact fallback sentence
     model: config.openai.chatModel,
     temperature: 0.2,
     messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: prompt }
-    ]
+      { role: "system", content: system },
+      { role: "user", content: prompt },
+    ],
   });
 
-  const modelResponse = completion.choices[0]?.message?.content?.trim() || '';
-  const indicatesNoAnswer = /i don.?t find that in the stored documents/i.test(modelResponse);
+  const modelResponse = completion.choices[0]?.message?.content?.trim() || "";
+  const indicatesNoAnswer = /i'd be happy to help you with that/i.test(
+    modelResponse,
+  );
 
   const usedDocIds = new Set<string>();
   const sources = [];
@@ -60,7 +64,7 @@ If answerable from context, answer. Otherwise output the exact fallback sentence
         title: c.title,
         docId: c.documentId,
         url: c.url || undefined,
-        snippet: c.content.slice(0, 260)
+        snippet: c.content.slice(0, 260),
       });
     }
     if (sources.length >= 4) break;
@@ -69,6 +73,6 @@ If answerable from context, answer. Otherwise output the exact fallback sentence
   return {
     text: modelResponse,
     sources: indicatesNoAnswer ? [] : sources,
-    indicatesNoAnswer
+    indicatesNoAnswer,
   };
 }
