@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
     
-    // Check if subscription allows integrations
-    const allowedTiers = ['pro', 'business', 'enterprise'];
+    // Check if subscription allows integrations (allow all tiers to connect)
+    const allowedTiers = ['basic', 'pro', 'business', 'enterprise', 'trial', 'ultra'];
     if (!allowedTiers.includes(user.subscription_tier)) {
       logger.warn('Subscription tier does not allow integrations', { 
         reqId, 
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json({
         success: false,
-        message: 'Integration features require a Pro subscription or higher. Please upgrade your plan.'
+        message: 'Integration features require an active subscription. Please check your account.'
       }, { status: 403 });
     }
     

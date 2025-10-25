@@ -334,10 +334,10 @@ export default function KnowledgeBaseManager() {
           {conversationCap !== null && monthlyConversations !== null && (
             <div className="w-full bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
               <div className="flex flex-wrap justify-between text-xs text-slate-400 mb-2 gap-2">
-                <span>Conversations (Monthly)</span>
+                <span>Replies (Monthly)</span>
                 <span className="text-slate-300">{monthlyConversations.toLocaleString()} / {conversationCap.toLocaleString()}</span>
               </div>
-              <div className="h-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={conversationCap} aria-valuenow={monthlyConversations} aria-label="Monthly conversations usage">
+              <div className="h-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={conversationCap} aria-valuenow={monthlyConversations} aria-label="Monthly replies usage">
                 <div
                   className={"h-full transition-all duration-500 " + ((monthlyConversations / conversationCap) >= 0.95 ? 'bg-red-600' : (monthlyConversations / conversationCap) >= 0.8 ? 'bg-amber-500' : 'bg-indigo-600')}
                   style={{ width: `${Math.min(100, (monthlyConversations / conversationCap) * 100).toFixed(2)}%` }}

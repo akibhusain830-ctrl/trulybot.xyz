@@ -60,7 +60,7 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
 
 **Free Plan** - ${pricing.symbol}0/month
 • Perfect for testing our AI chatbot
-• Up to 100 conversations/month
+• Up to 100 replies/month
 • Basic knowledge base (500 words)
 • 1 knowledge upload only
 
@@ -72,7 +72,7 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   
   content += `
 • Perfect for small businesses
-• Up to 1,000 conversations/month
+• Up to 1,000 replies/month
 • Basic AI responses & email support
 
 **Pro Plan** - ${pricing.symbol}${pricing.pro.monthly}/month ⭐ Most Popular`;
@@ -83,7 +83,7 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   
   content += `
 • Best for growing businesses  
-• Up to 10,000 conversations/month
+• Up to 10,000 replies/month
 • Advanced AI with custom branding
 
 **Ultra Plan** - ${pricing.symbol}${pricing.ultra.monthly}/month`;
@@ -94,7 +94,7 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   
   content += `
 • For enterprise & high-volume
-• Unlimited conversations
+• Unlimited replies
 • Premium features + API access
 
 🎁 Start with a 7-day FREE trial - no credit card required!

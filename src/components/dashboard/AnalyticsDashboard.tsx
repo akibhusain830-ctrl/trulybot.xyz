@@ -152,7 +152,7 @@ function MetricCard({ title, metrics }: MetricCardProps) {
       
       <div className="space-y-3">
         <div className="flex justify-between">
-          <span className="text-gray-600">Conversations</span>
+          <span className="text-gray-600">Replies</span>
           <span className="font-medium">{metrics.total_conversations}</span>
         </div>
         

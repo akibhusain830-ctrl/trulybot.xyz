@@ -1,9 +1,11 @@
 (function () {
+  'use strict';
+  
   try {
     var d = document;
     var w = window;
 
-    // Discover the <script> tag (customers paste this)
+    // ===== SCRIPT DETECTION & CONFIGURATION =====
     var script = d.currentScript || 
                  d.querySelector('script[data-bot-id][src*="/widget.js"]') ||
                  d.querySelector('script[data-chatbot-id][src*="/widget.js"]');
@@ -16,12 +18,17 @@
     }
 
     var botId = getAttr('data-bot-id', null) || getAttr('data-chatbot-id', 'demo');
-    var position = getAttr('data-position', 'right'); // 'right' or 'left'
-    var color = getAttr('data-color', '#2563eb');      // launcher color (will be overridden by user settings)
-    var greeting = getAttr('data-greeting', 'Chat');   // launcher label (visually hidden on desktop)
-    var zIndex = parseInt(getAttr('data-z', '2147483000'), 10); // keep above most UI
+    var position = getAttr('data-position', 'right');
+    var color = getAttr('data-color', '#2563eb');
+    var greeting = getAttr('data-greeting', 'Chat');
+    var zIndex = parseInt(getAttr('data-z', '2147483000'), 10);
     
-    // Configuration will be loaded from API
+    // Rate limiting
+    var RATE_LIMIT_MS = 3000;
+    var lastMessageTime = 0;
+    var messageQueue = [];
+
+    // Configuration
     var widgetConfig = {
       accent_color: color,
       chatbot_name: 'Assistant',
@@ -32,229 +39,252 @@
       tier: 'basic'
     };
 
-    // Compute origin from script src (e.g., https://trulybot.xyz)
+    // Compute origin
     var src = script && script.src || '';
     var origin;
     try {
       var u = new URL(src);
       origin = u.origin;
     } catch (e) {
-      // Fallback to production domain if script src detection fails
       origin = 'https://trulybot.xyz';
-      console.warn('[Trulybot widget] Could not detect origin from script src, using fallback:', origin);
+      console.warn('[Trulybot widget] Origin detection failed, using fallback:', origin);
     }
 
-    // Load user configuration
-    function loadWidgetConfig() {
-      if (botId && botId !== 'demo') {
-        var configUrl = origin + '/api/widget/config/' + encodeURIComponent(botId);
-        
-        console.log('[Trulybot widget] Loading config from:', configUrl);
-        
-        fetch(configUrl)
-          .then(function(response) {
-            if (!response.ok) {
-              throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-            }
-            return response.json();
-          })
-          .then(function(config) {
-            console.log('[Trulybot widget] Config loaded successfully:', config);
-            // Update widget configuration
-            widgetConfig = Object.assign(widgetConfig, config);
-            
-            // Apply custom styling
-            applyCustomStyling();
-            
-            // Update iframe URL with config
-            if (frame && frame.src) {
-              var configParam = '&config=' + encodeURIComponent(JSON.stringify(widgetConfig));
-              if (frame.src.indexOf('&config=') === -1) {
-                frame.src += configParam;
-              }
-            }
-          })
-          .catch(function(error) {
-            console.warn('[Trulybot widget] Config load failed:', error);
-            // Continue with default config
-            applyCustomStyling();
-          });
-      } else {
-        console.log('[Trulybot widget] Using demo mode - no config loading needed');
-        // Demo mode - use defaults
-        applyCustomStyling();
-      }
-    }
-
-    // Apply custom styling based on configuration
-    function applyCustomStyling() {
-      // Update launcher button color
-      if (widgetConfig.accent_color) {
-        btn.style.backgroundColor = widgetConfig.accent_color;
-      }
-      
-      // Apply custom CSS if available (Ultra plan)
-      if (widgetConfig.custom_css && widgetConfig.tier === 'ultra') {
-        var style = d.createElement('style');
-        style.textContent = '/* Trulybot Custom CSS */\n' + widgetConfig.custom_css;
-        d.head.appendChild(style);
-      }
-      
-      // Apply theme-specific styling
-      if (widgetConfig.chatbot_theme && widgetConfig.tier === 'ultra') {
-        applyThemeStyling(widgetConfig.chatbot_theme);
-      }
-    }
-
-    // Apply theme-specific styling
-    function applyThemeStyling(theme) {
-      switch (theme) {
-        case 'minimal':
-          btn.style.boxShadow = 'none';
-          btn.style.border = '1px solid ' + widgetConfig.accent_color;
-          break;
-        case 'corporate':
-          btn.style.borderRadius = '4px';
-          break;
-        case 'friendly':
-          btn.style.borderRadius = '50%';
-          btn.style.transform = 'scale(1.1)';
-          break;
-        case 'modern':
-          btn.style.background = 'linear-gradient(135deg, ' + widgetConfig.accent_color + ', ' + widgetConfig.accent_color + 'cc)';
-          btn.style.backdropFilter = 'blur(10px)';
-          break;
-        default:
-          // Default theme - no additional styling
-          break;
-      }
-    }
-
-    // Build iframe URL that hosts your ChatWidget
-    var iframeUrl = origin + '/embed?botId=' + encodeURIComponent(botId);
-
-    // Create container
-    var container = d.createElement('div');
-    container.id = 'trulybot-widget-container';
-    container.style.position = 'fixed';
-    container.style.zIndex = String(zIndex);
-    container.style.bottom = '20px';
-    if (position === 'left') container.style.left = '20px';
-    else container.style.right = '20px';
-    container.style.pointerEvents = 'none'; // let children manage events
-    container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    d.body.appendChild(container);
-
-    // Create launcher button
-    var btn = d.createElement('button');
-    btn.setAttribute('type', 'button');
-    btn.setAttribute('aria-label', 'Open Trulybot chat');
-    btn.id = 'trulybot-launcher';
-    btn.style.all = 'unset';
-    btn.style.position = 'relative';
-    btn.style.width = '56px';
-    btn.style.height = '56px';
-    btn.style.borderRadius = '50%';
-    btn.style.background = color;
-    btn.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
-    btn.style.cursor = 'pointer';
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.justifyContent = 'center';
-    btn.style.color = '#fff';
-    btn.style.fontSize = '24px';
-    btn.style.transition = 'all 0.2s ease';
-    btn.style.pointerEvents = 'auto'; // clickable
-    btn.style.border = 'none';
-    btn.style.outline = 'none';
-    // Prevent text selection
-    btn.style.userSelect = 'none';
-    btn.style.webkitUserSelect = 'none';
-    btn.style.mozUserSelect = 'none';
-    btn.style.msUserSelect = 'none';
-    btn.onmouseenter = function () { 
-      btn.style.transform = 'scale(1.1)'; 
-      btn.style.boxShadow = '0 6px 25px rgba(0,0,0,0.35)';
-    };
-    btn.onmouseleave = function () { 
-      btn.style.transform = 'scale(1)'; 
-      btn.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
-    };
-    btn.innerHTML = '<span aria-hidden="true" style="line-height: 1;">💬</span><span style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">' + greeting + '</span>';
-
-    // Create panel wrapper (holds iframe)
-    var panel = d.createElement('div');
-    panel.id = 'trulybot-panel';
-    panel.style.position = 'absolute';
-    panel.style.bottom = '72px'; // Adjusted for new button size
-    if (position === 'left') panel.style.left = '0';
-    else panel.style.right = '0';
-    panel.style.width = '400px';
-    panel.style.maxWidth = 'calc(100vw - 40px)'; // Account for container margins
-    panel.style.height = '600px';
-    panel.style.maxHeight = 'calc(100vh - 120px)';
-    panel.style.borderRadius = '12px';
-    panel.style.overflow = 'hidden';
-    panel.style.boxShadow = '0 10px 40px rgba(0,0,0,0.3)';
-    panel.style.transformOrigin = position === 'left' ? 'left bottom' : 'right bottom';
-    panel.style.transform = 'scale(0.95) translateY(10px)';
-    panel.style.opacity = '0';
-    panel.style.pointerEvents = 'none';
-    panel.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-    panel.style.border = '1px solid rgba(255,255,255,0.1)';
-
-    // Create iframe
-    var frame = d.createElement('iframe');
-    frame.src = iframeUrl;
-    frame.title = 'Trulybot chat';
-    frame.allow = 'clipboard-read; clipboard-write;';
-    frame.style.width = '100%';
-    frame.style.height = '100%';
-    frame.style.border = '0';
-    frame.style.display = 'block';
-    frame.referrerPolicy = 'no-referrer-when-downgrade';
-    panel.appendChild(frame);
-
-    // Append in the correct order
-    container.appendChild(panel);
-    container.appendChild(btn);
-
-    // Load user configuration and apply styling
-    loadWidgetConfig();
-
+    // ===== STATE & DOM ELEMENTS =====
+    var iframeReady = false;
+    var frame = null;
+    var pendingMessages = [];
+    var container = null;
+    var btn = null;
+    var panel = null;
     var open = false;
-    function openPanel() {
-      if (open) return;
-      open = true;
-      panel.style.pointerEvents = 'auto';
-      panel.style.opacity = '1';
-      panel.style.transform = 'scale(1) translateY(0)';
-    }
-    function closePanel() {
-      if (!open) return;
-      open = false;
-      panel.style.pointerEvents = 'none';
-      panel.style.opacity = '0';
-      panel.style.transform = 'scale(0.95) translateY(10px)';
-    }
-    function togglePanel() {
-      open ? closePanel() : openPanel();
+
+    // ===== POSTMESSAGE PROTOCOL =====
+    function postToIframe(type, data) {
+      if (!frame || !iframeReady) {
+        pendingMessages.push({ type: type, data: data });
+        return false;
+      }
+      try {
+        frame.contentWindow.postMessage({
+          type: type,
+          data: data,
+          source: 'trulybot-widget'
+        }, origin);
+        return true;
+      } catch (err) {
+        console.error('[Trulybot widget] postMessage failed:', err);
+        return false;
+      }
     }
 
-    btn.addEventListener('click', togglePanel);
+    w.addEventListener('message', function(e) {
+      try {
+        // Validate origin
+        if (origin && !e.origin.includes(origin.replace(/^https?:\/\//, ''))) {
+          return;
+        }
 
-    // Close on ESC when panel is open
-    w.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && open) {
-        closePanel();
+        if (!e.data || e.data.source !== 'trulybot-iframe') {
+          return;
+        }
+
+        switch(e.data.type) {
+          case 'iframe-ready':
+            iframeReady = true;
+            console.log('[Trulybot widget] iframe ready, sending config');
+            postToIframe('set-config', widgetConfig);
+            while (pendingMessages.length > 0) {
+              var pending = pendingMessages.shift();
+              postToIframe(pending.type, pending.data);
+            }
+            break;
+          
+          case 'message':
+            if (e.data.data) {
+              displayMessage(e.data.data);
+            }
+            break;
+
+          case 'error':
+            showError(e.data.data || 'An error occurred');
+            break;
+        }
+      } catch (err) {
+        console.error('[Trulybot widget] Message handler error:', err);
       }
     });
 
-    // Basic mobile handling (make panel full-screen)
+    // ===== RATE LIMITING =====
+    function canSendMessage() {
+      var now = Date.now();
+      if (now - lastMessageTime < RATE_LIMIT_MS) {
+        return false;
+      }
+      lastMessageTime = now;
+      return true;
+    }
+
+    function processMessageQueue() {
+      if (messageQueue.length === 0) return;
+      if (!canSendMessage()) {
+        setTimeout(processMessageQueue, RATE_LIMIT_MS);
+        return;
+      }
+      var msg = messageQueue.shift();
+      postToIframe('send-message', msg);
+      if (messageQueue.length > 0) {
+        setTimeout(processMessageQueue, RATE_LIMIT_MS);
+      }
+    }
+
+    // ===== UI DISPLAY FUNCTIONS =====
+    var messageHistory = [];
+
+    function displayMessage(message) {
+      messageHistory.push(message);
+      // Message displayed in iframe - just track it
+      console.log('[Trulybot widget] Message received:', message.role);
+    }
+
+    function showError(text) {
+      var errorEl = d.createElement('div');
+      errorEl.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ef4444; ' +
+        'color: white; padding: 16px 20px; border-radius: 8px; font-size: 14px; z-index: ' + (zIndex + 100) + '; ' +
+        'max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+      errorEl.textContent = '⚠️ ' + text;
+      d.body.appendChild(errorEl);
+      setTimeout(function() {
+        try { d.body.removeChild(errorEl); } catch (e) {}
+      }, 5000);
+    }
+
+    // ===== LOAD CONFIGURATION =====
+    function loadWidgetConfig() {
+      if (!botId || botId === 'demo') {
+        console.log('[Trulybot widget] Demo mode - no config loading');
+        applyCustomStyling();
+        return;
+      }
+
+      var configUrl = origin + '/api/widget/config/' + encodeURIComponent(botId);
+      console.log('[Trulybot widget] Loading config from:', configUrl);
+      
+      fetch(configUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      })
+        .then(function(response) {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        })
+        .then(function(config) {
+          console.log('[Trulybot widget] Config loaded');
+          widgetConfig = Object.assign(widgetConfig, config);
+          applyCustomStyling();
+          postToIframe('set-config', widgetConfig);
+        })
+        .catch(function(error) {
+          console.warn('[Trulybot widget] Config load failed:', error);
+          showError('Configuration load failed. Using defaults.');
+          applyCustomStyling();
+        });
+    }
+
+    function applyCustomStyling() {
+      if (!btn) return;
+      
+      btn.style.backgroundColor = widgetConfig.accent_color;
+      btn.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25), 0 0 0 0 ' + widgetConfig.accent_color + '40';
+      
+      if (widgetConfig.custom_css && widgetConfig.tier === 'ultra') {
+        var style = d.createElement('style');
+        style.id = 'trulybot-custom';
+        style.textContent = widgetConfig.custom_css;
+        d.head.appendChild(style);
+      }
+
+      if (widgetConfig.chatbot_theme === 'minimal' && widgetConfig.tier === 'ultra') {
+        btn.style.boxShadow = 'none';
+        btn.style.border = '2px solid ' + widgetConfig.accent_color;
+      }
+    }
+
+    // ===== CREATE UI =====
+    function createUI() {
+      // Container
+      container = d.createElement('div');
+      container.id = 'trulybot-widget-container';
+      container.style.cssText = 'position: fixed; z-index: ' + zIndex + '; bottom: 20px; ' +
+        (position === 'left' ? 'left: 20px;' : 'right: 20px;') +
+        'pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;';
+      d.body.appendChild(container);
+
+      // Button
+      btn = d.createElement('button');
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', 'Open Trulybot chat');
+      btn.id = 'trulybot-launcher';
+      btn.style.cssText = 'position: relative; width: 56px; height: 56px; border-radius: 50%; ' +
+        'background: ' + color + '; border: none; cursor: pointer; display: flex; align-items: center; ' +
+        'justify-content: center; color: #fff; font-size: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); ' +
+        'transition: all 0.2s ease; pointer-events: auto; user-select: none; ' +
+        '-webkit-user-select: none; -moz-user-select: none; outline: none;';
+      
+      btn.innerHTML = '<span aria-hidden="true">💬</span>';
+      
+      btn.onmouseenter = function() {
+        btn.style.transform = 'scale(1.1)';
+        btn.style.boxShadow = '0 6px 25px rgba(0,0,0,0.35)';
+      };
+      
+      btn.onmouseleave = function() {
+        btn.style.transform = 'scale(1)';
+        btn.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
+      };
+
+      btn.addEventListener('click', function() {
+        open ? closePanel() : openPanel();
+      });
+
+      // Panel
+      panel = d.createElement('div');
+      panel.id = 'trulybot-panel';
+      panel.style.cssText = 'position: absolute; bottom: 72px; ' + 
+        (position === 'left' ? 'left: 0;' : 'right: 0;') +
+        'width: 400px; max-width: calc(100vw - 40px); height: 600px; max-height: calc(100vh - 120px); ' +
+        'border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3); ' +
+        'transform-origin: ' + (position === 'left' ? 'left' : 'right') + ' bottom; ' +
+        'transform: scale(0.95) translateY(10px); opacity: 0; pointer-events: none; ' +
+        'transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.1);';
+
+      // iframe
+      frame = d.createElement('iframe');
+      frame.src = origin + '/embed?botId=' + encodeURIComponent(botId);
+      frame.title = 'Trulybot Chat';
+      frame.allow = 'clipboard-read; clipboard-write;';
+      frame.style.cssText = 'width: 100%; height: 100%; border: none; display: block;';
+      frame.referrerPolicy = 'no-referrer-when-downgrade';
+      panel.appendChild(frame);
+
+      container.appendChild(panel);
+      container.appendChild(btn);
+
+      // Handle window resize
+      adaptForViewport();
+      w.addEventListener('resize', adaptForViewport);
+    }
+
     function adaptForViewport() {
+      if (!panel) return;
+      
       var vw = Math.max(d.documentElement.clientWidth || 0, w.innerWidth || 0);
       var vh = Math.max(d.documentElement.clientHeight || 0, w.innerHeight || 0);
+      
       if (vw < 700) {
+        // Mobile: full screen
+        panel.style.position = 'fixed';
         panel.style.width = '100vw';
         panel.style.height = '100vh';
         panel.style.maxWidth = '100vw';
@@ -265,6 +295,8 @@
         panel.style.transform = 'translateX(-50%) scale(0.98) translateY(10px)';
         panel.style.borderRadius = '0';
       } else {
+        // Desktop: floating panel
+        panel.style.position = 'absolute';
         panel.style.width = '400px';
         panel.style.height = '600px';
         panel.style.maxWidth = 'calc(100vw - 24px)';
@@ -275,23 +307,48 @@
         panel.style.borderRadius = '16px';
       }
     }
-    adaptForViewport();
-    w.addEventListener('resize', adaptForViewport);
+
+    function openPanel() {
+      if (open || !panel) return;
+      open = true;
+      panel.style.pointerEvents = 'auto';
+      panel.style.opacity = '1';
+      panel.style.transform = 'scale(1) translateY(0)';
+      console.log('[Trulybot widget] Panel opened');
+    }
+
+    function closePanel() {
+      if (!open || !panel) return;
+      open = false;
+      panel.style.pointerEvents = 'none';
+      panel.style.opacity = '0';
+      panel.style.transform = 'scale(0.95) translateY(10px)';
+      console.log('[Trulybot widget] Panel closed');
+    }
+
+    // Close on ESC
+    w.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && open) {
+        closePanel();
+      }
+    });
+
+    // ===== INITIALIZE =====
+    function init() {
+      console.log('[Trulybot widget] Initializing with botId:', botId);
+      createUI();
+      loadWidgetConfig();
+      console.log('[Trulybot widget] Initialization complete');
+    }
+
+    if (d.readyState === 'loading') {
+      d.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
 
   } catch (err) {
-    console.error('[Trulybot widget] init error:', err);
-    // Try to show a visible error for debugging
-    if (typeof document !== 'undefined') {
-      var errorDiv = document.createElement('div');
-      errorDiv.style.cssText = 'position:fixed;top:10px;right:10px;background:red;color:white;padding:10px;font-size:12px;z-index:999999;max-width:200px;';
-      errorDiv.textContent = 'Trulybot widget error: ' + err.message;
-      document.body.appendChild(errorDiv);
-      setTimeout(function() {
-        try { document.body.removeChild(errorDiv); } catch(e) {}
-      }, 5000);
-    }
+    console.error('[Trulybot widget] Fatal error:', err);
+    // Fail silently
   }
-
-  // Log successful initialization
-  console.log('[Trulybot widget] Successfully initialized with botId:', botId, 'origin:', origin);
 })();

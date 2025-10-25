@@ -28,18 +28,37 @@ jQuery(document).ready(function($) {
                 nonce: trulybot_ajax.nonce
             },
             success: function(response) {
+                console.log('✅ AJAX Response received:', response);
+                
                 if (response.success) {
                     showMessage('success', response.data);
+                    console.log('✅ Connection successful! Reloading...');
                     setTimeout(function() {
                         location.reload();
                     }, 2000);
                 } else {
-                    showMessage('error', response.data);
+                    const errorMsg = response.data || 'Unknown error occurred';
+                    console.error('❌ Connection failed:', errorMsg);
+                    showMessage('error', errorMsg);
                     resetForm();
                 }
             },
             error: function(xhr, status, error) {
-                showMessage('error', 'Connection failed: ' + error);
+                let errorMsg = 'Connection failed: ' + error;
+                try {
+                    const responseJson = JSON.parse(xhr.responseText);
+                    if (responseJson.data) {
+                        errorMsg = responseJson.data;
+                    }
+                } catch(e) {
+                    // Response wasn't JSON, use generic error
+                }
+                console.error('❌ AJAX Error:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseText
+                });
+                showMessage('error', errorMsg);
                 resetForm();
             }
         });

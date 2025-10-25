@@ -8,36 +8,31 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Section */}
           <div className="md:col-span-1">
-            <h2 className="text-xl font-bold text-white tracking-tight mb-4">
+            <Link href="/" className="flex items-center space-x-2.5 mb-4 hover:opacity-80 transition-opacity w-fit">
               <svg 
-                width="20" 
-                height="20" 
+                width="32" 
+                height="32" 
                 viewBox="0 0 512 512" 
                 fill="none"
-                className="inline-block mr-1 -mt-1"
+                className="flex-shrink-0"
               >
                 <defs>
-                  <linearGradient id="footerLightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
-                    <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
-                    <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                  <linearGradient id="footerLogoLightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#06B6D4', stopOpacity: 1}} />
+                    <stop offset="50%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
                   </linearGradient>
                 </defs>
                 <polygon 
-                  fill="url(#footerLightningGradient)"
-                  points="320,8 136,296 248,296 192,504 400,216 288,216"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-                <polygon 
-                  fill="#ffffff"
-                  opacity="0.3"
-                  points="310,20 146,290 240,290 200,480 380,220 280,220"
+                  fill="url(#footerLogoLightning)"
+                  points="320,32 136,296 248,296 192,480 400,216 288,216"
                 />
               </svg>
-              TrulyBot
-            </h2>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xs font-light text-slate-400">AI Platform</span>
+                <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold text-xl tracking-wider">TrulyBot</span>
+              </div>
+            </Link>
             <p className="text-sm text-slate-400 mb-4">
               Lightning-fast AI chatbot platform for e-commerce businesses. Reduce support tickets by 70% with thunderbolt-speed automation.
             </p>

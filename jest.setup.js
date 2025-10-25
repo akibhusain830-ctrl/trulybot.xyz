@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom'
 
-// Add fetch polyfill for Node.js environment
-global.fetch = require('node-fetch')
+// Mock fetch globally for tests
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: async () => ({}),
+  })
+)
 
 // Note: Removed Request/Response polyfills due to conflicts with Next.js NextRequest/NextResponse
 // API route tests are skipped until proper Next.js test environment is configured

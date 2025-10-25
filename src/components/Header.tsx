@@ -43,19 +43,19 @@ const MobileMenu = ({ open, onClose, user, signOut }: HeaderProps & { open: bool
           className="bg-gradient-to-b from-slate-900/90 to-[#1c1c1c]/90 rounded-3xl shadow-2xl border border-slate-800/80 p-8 flex flex-col gap-6 w-11/12 max-w-sm text-center"
           onClick={e => e.stopPropagation()}
         >
-          <Link href="/" className="flex items-center justify-center gap-2 text-xl font-bold tracking-tight mb-2" onClick={onClose}>
+          <Link href="/" className="flex items-center justify-center gap-2.5 mb-2" onClick={onClose}>
             <svg 
-              width="24" 
-              height="24" 
+              width="28" 
+              height="28" 
               viewBox="0 0 512 512" 
               fill="none"
               className="flex-shrink-0"
             >
               <defs>
                 <linearGradient id="lightningGradientMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
-                  <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
-                  <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                  <stop offset="0%" style={{stopColor: '#06B6D4', stopOpacity: 1}} />
+                  <stop offset="50%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
                 </linearGradient>
               </defs>
               <polygon 
@@ -63,7 +63,10 @@ const MobileMenu = ({ open, onClose, user, signOut }: HeaderProps & { open: bool
                 points="320,32 136,296 248,296 192,480 400,216 288,216"
               />
             </svg>
-            trulybot.xyz
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-light text-slate-400">AI Platform</span>
+              <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold text-lg tracking-wider">TrulyBot</span>
+            </div>
           </Link>
           <Link href="/dashboard" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Dashboard</Link>
           <a href="#features" className="text-lg hover:text-blue-400 transition-colors" onClick={onClose}>Features</a>
@@ -103,19 +106,19 @@ export default function Header({ user, loading, signOut }: HeaderProps) {
     <>
       <header className="relative z-20 flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center gap-12">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <Link href="/" className="flex items-center gap-2.5 text-lg font-bold tracking-wider hover:opacity-80 transition-opacity">
             <svg 
-              width="24" 
-              height="24" 
+              width="28" 
+              height="28" 
               viewBox="0 0 512 512" 
               fill="none"
               className="flex-shrink-0"
             >
               <defs>
                 <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: '#00D4FF', stopOpacity: 1}} />
-                  <stop offset="50%" style={{stopColor: '#0EA5E9', stopOpacity: 1}} />
-                  <stop offset="100%" style={{stopColor: '#0284C7', stopOpacity: 1}} />
+                  <stop offset="0%" style={{stopColor: '#06B6D4', stopOpacity: 1}} />
+                  <stop offset="50%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
                 </linearGradient>
               </defs>
               <polygon 
@@ -123,7 +126,10 @@ export default function Header({ user, loading, signOut }: HeaderProps) {
                 points="320,32 136,296 248,296 192,480 400,216 288,216"
               />
             </svg>
-            trulybot.xyz
+            <div className="flex flex-col leading-tight">
+              <span className="text-xs font-light text-slate-400">AI Platform</span>
+              <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold tracking-wider">TrulyBot</span>
+            </div>
           </Link>
         </div>
         <div className="flex items-center gap-4">

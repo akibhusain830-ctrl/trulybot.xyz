@@ -36,21 +36,21 @@ export interface UserProfile {
 const TIER_FEATURES = {
   free: [
     "Core AI Chatbot",
-    "100 Conversations/month",
+    "100 Replies/month",
     "Basic Knowledge Base (500 words)",
     "1 Knowledge Upload",
     "Website Embedding",
   ],
-  basic: ["Core AI Chatbot", "Unlimited Conversations", "1,000 Messages/month"],
+  basic: ["Core AI Chatbot", "Unlimited Replies", "1,000 Messages/month"],
   pro: [
     "Core AI Chatbot",
-    "Unlimited Conversations",
+    "Unlimited Replies",
     "Maximum Knowledge Base",
     "Basic Customization",
   ],
   ultra: [
     "Core AI Chatbot",
-    "Unlimited Conversations",
+    "Unlimited Replies",
     "Maximum Knowledge Base",
     "Full Brand Customization",
     "Enhanced Lead Capture",

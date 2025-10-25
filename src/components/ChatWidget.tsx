@@ -73,6 +73,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     welcome_message: "Hello! How can I help you today?",
     accent_color: "#2563EB",
   });
+  const [isEmbedded, setIsEmbedded] = useState(false);
 
   // Storage keys
   const CHAT_HISTORY_KEY = "trulybot_chat_history";
@@ -81,6 +82,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const listRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null); // Ref for the textarea
   const isMounted = useRef(true);
+  const parentOrigin = useRef<string>("");
 
   // Save chat history to localStorage
   const saveChatHistory = useCallback(
@@ -196,6 +198,83 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
       window.removeEventListener("resize", handleViewportChange);
     };
   }, []);
+
+  // ===== POSTMESSAGE COMMUNICATION =====
+  useEffect(() => {
+    // Detect if we're in an iframe (embedded widget)
+    const inIframe = window.self !== window.top;
+    setIsEmbedded(inIframe);
+
+    if (!inIframe) {
+      return; // Not embedded, skip postMessage setup
+    }
+
+    // Store parent origin
+    parentOrigin.current = document.referrer ? new URL(document.referrer).origin : window.location.origin;
+
+    // Listen for messages from parent widget.js
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        if (e.data.source !== 'trulybot-widget') {
+          return;
+        }
+
+        switch(e.data.type) {
+          case 'set-config':
+            if (e.data.data) {
+              setWidgetConfig(e.data.data);
+              console.log('[ChatWidget] Config received from parent');
+            }
+            break;
+
+          case 'send-message':
+            if (e.data.data && e.data.data.content) {
+              const userMessage = e.data.data.content;
+              // Add user message and send
+              setTimeout(() => {
+                setInput(userMessage);
+                // Trigger submit
+                const submitBtn = document.querySelector('[data-submit-button]') as HTMLButtonElement;
+                if (submitBtn) {
+                  submitBtn.click();
+                }
+              }, 0);
+            }
+            break;
+        }
+      } catch (err) {
+        console.error('[ChatWidget] Message handler error:', err);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    // Notify parent that iframe is ready
+    if (window.parent !== window) {
+      window.parent.postMessage({
+        type: 'iframe-ready',
+        source: 'trulybot-iframe'
+      }, '*');
+    }
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  // ===== SEND MESSAGES TO PARENT =====
+  const sendToParent = useCallback((type: string, data: any) => {
+    if (!isEmbedded || !window.parent) return;
+    try {
+      window.parent.postMessage({
+        type,
+        data,
+        source: 'trulybot-iframe'
+      }, '*');
+    } catch (err) {
+      console.error('[ChatWidget] Failed to send message to parent:', err);
+    }
+  }, [isEmbedded]);
 
   useEffect(() => {
     const scriptTag = document.querySelector("script[data-bot-id]");
@@ -549,28 +628,34 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
 
       // Update the message with the final text and metadata
       if (isMounted.current) {
+        const updatedMessage = {
+          ...{},
+          text: finalText.trim() || "(No reply text returned)",
+          sources: metadata?.sources,
+          usedDocs: metadata?.usedDocs,
+          fallback: metadata?.meta?.fallback,
+          buttons: Array.isArray(metadata?.buttons)
+            ? metadata.buttons
+            : undefined,
+          followUpQuestions: metadata?.followUpQuestions,
+          suggestedTopics: metadata?.suggestedTopics,
+          engagementHooks: metadata?.engagementHooks,
+          conversationTone: metadata?.meta?.conversationTone,
+        };
+        
         setMessages((prev) =>
           prev.map((m) =>
             m.id === botMessageId
               ? {
                   ...m,
-                  text: finalText.trim() || "(No reply text returned)",
-                  sources: metadata?.sources,
-                  usedDocs: metadata?.usedDocs,
-                  fallback: metadata?.meta?.fallback,
-                  // Ensure buttons are properly structured
-                  buttons: Array.isArray(metadata?.buttons)
-                    ? metadata.buttons
-                    : undefined,
-                  // Add engagement features
-                  followUpQuestions: metadata?.followUpQuestions,
-                  suggestedTopics: metadata?.suggestedTopics,
-                  engagementHooks: metadata?.engagementHooks,
-                  conversationTone: metadata?.meta?.conversationTone,
+                  ...updatedMessage,
                 }
               : m,
           ),
         );
+
+        // Notify parent widget if embedded
+        sendToParent('message', updatedMessage);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Network error";
@@ -582,6 +667,8 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
             m.id === botMessageId ? { ...m, text: msg, error: true } : m,
           ),
         );
+        // Notify parent of error
+        sendToParent('error', msg);
       }
     } finally {
       if (isMounted.current) {

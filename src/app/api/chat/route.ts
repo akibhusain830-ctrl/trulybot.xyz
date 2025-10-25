@@ -383,55 +383,59 @@ export async function POST(req: NextRequest) {
       type: "primary" | "secondary";
     }> = [];
 
-    // Parse [Start Free Trial] pattern
-    if (finalReply.includes("[Start Free Trial]")) {
-      buttons.push({
-        text: "Start Free Trial",
-        url: "/start-trial",
-        type: "primary",
-      });
-      // Remove the button text from the final reply
-      finalReply = finalReply.replace(/\s*→?\s*\[Start Free Trial\]/g, "");
-    }
+    // Define button patterns with their URLs
+    const buttonPatterns = [
+      // Primary CTAs
+      { pattern: "[Start Free Trial]", text: "Start Free Trial", url: "/start-trial", type: "primary" as const },
+      { pattern: "[Start Free Plan]", text: "Start Free Plan", url: "/start-trial", type: "primary" as const },
+      
+      // Pricing & Plans
+      { pattern: "[View Pricing]", text: "View Pricing", url: "/#pricing", type: "secondary" as const },
+      { pattern: "[View All Plans]", text: "View All Plans", url: "/#pricing", type: "secondary" as const },
+      
+      // Features & Demo
+      { pattern: "[Features]", text: "View Features", url: "/#features", type: "secondary" as const },
+      { pattern: "[See Features]", text: "See Features", url: "/#features", type: "secondary" as const },
+      { pattern: "[See Live Demo]", text: "See Live Demo", url: "/#demo-section", type: "secondary" as const },
+      { pattern: "[See Demo]", text: "See Demo", url: "/#demo-section", type: "secondary" as const },
+      { pattern: "[View Demo]", text: "View Demo", url: "/#demo-section", type: "secondary" as const },
+      { pattern: "[Try Widget]", text: "Try Widget", url: "/#demo-section", type: "secondary" as const },
+      { pattern: "[Learn More]", text: "Learn More", url: "/ai-chatbot-for-ecommerce", type: "secondary" as const },
+      
+      // Setup & Integration
+      { pattern: "[WooCommerce Setup]", text: "WooCommerce Setup", url: "/docs/woocommerce-setup", type: "secondary" as const },
+      { pattern: "[Shopify Setup]", text: "Shopify Setup", url: "/docs/shopify-setup", type: "secondary" as const },
+      { pattern: "[General Instructions]", text: "General Instructions", url: "/docs/getting-started", type: "secondary" as const },
+      { pattern: "[Download Plugin]", text: "Download Plugin", url: "/dashboard", type: "secondary" as const },
+      { pattern: "[Setup Guide]", text: "Setup Guide", url: "/docs/getting-started", type: "secondary" as const },
+      
+      // Dashboard & Account
+      { pattern: "[Dashboard]", text: "Go to Dashboard", url: "/dashboard", type: "secondary" as const },
+      { pattern: "[Custom Training]", text: "Custom Training", url: "/dashboard", type: "secondary" as const },
+      
+      // Support & Contact
+      { pattern: "[Contact Sales]", text: "Contact Sales", url: "/contact", type: "secondary" as const },
+      { pattern: "[Contact Support]", text: "Contact Support", url: "/contact", type: "secondary" as const },
+      
+      // Advanced Features
+      { pattern: "[Upgrade to Ultra]", text: "Upgrade to Ultra", url: "/#pricing", type: "primary" as const },
+      { pattern: "[API Documentation]", text: "API Documentation", url: "/docs/api", type: "secondary" as const },
+      { pattern: "[Language Demo]", text: "Language Demo", url: "/#demo-section", type: "secondary" as const },
+      { pattern: "[View Mobile Demo]", text: "View Mobile Demo", url: "/#demo-section", type: "secondary" as const },
+      
+      // Legal & Policy
+      { pattern: "[Full Privacy Policy]", text: "Privacy Policy", url: "/privacy", type: "secondary" as const },
+      { pattern: "[Full Terms]", text: "Terms of Service", url: "/terms", type: "secondary" as const },
+      { pattern: "[Legal Questions]", text: "Legal Questions", url: "/contact", type: "secondary" as const },
+    ];
 
-    // Parse [View Pricing] pattern
-    if (finalReply.includes("[View Pricing]")) {
-      buttons.push({
-        text: "View Pricing",
-        url: "/pricing",
-        type: "secondary",
-      });
-      finalReply = finalReply.replace(/\s*→?\s*\[View Pricing\]/g, "");
-    }
-
-    // Parse [Contact Sales] pattern
-    if (finalReply.includes("[Contact Sales]")) {
-      buttons.push({
-        text: "Contact Sales",
-        url: "/contact",
-        type: "secondary",
-      });
-      finalReply = finalReply.replace(/\s*→?\s*\[Contact Sales\]/g, "");
-    }
-
-    // Parse [Dashboard] pattern
-    if (finalReply.includes("[Dashboard]")) {
-      buttons.push({
-        text: "Go to Dashboard",
-        url: "/dashboard",
-        type: "secondary",
-      });
-      finalReply = finalReply.replace(/\s*→?\s*\[Dashboard\]/g, "");
-    }
-
-    // Parse [Features] pattern
-    if (finalReply.includes("[Features]")) {
-      buttons.push({
-        text: "View Features",
-        url: "/ai-chatbot-for-ecommerce",
-        type: "secondary",
-      });
-      finalReply = finalReply.replace(/\s*→?\s*\[Features\]/g, "");
+    // Parse all button patterns
+    for (const { pattern, text, url, type } of buttonPatterns) {
+      if (finalReply.includes(pattern)) {
+        buttons.push({ text, url, type });
+        // Remove the button pattern from the final reply
+        finalReply = finalReply.replace(new RegExp(`\\s*→?\\s*\\${pattern.replace(/[[\]]/g, "\\$&")}`, "g"), "");
+      }
     }
 
     // Clean up any remaining arrows at the end

@@ -26,21 +26,21 @@ export default function PricingSection({
 
   const pricingFeatures = {
     free: [
-      '100 Conversations / Month',
+      '100 Replies / Month',
       'Basic Knowledge Base (500 words)',
       '1 Knowledge Upload',
       'Basic AI Chatbot',
       'Website Embedding',
     ],
     basic: [
-      '1,000 Conversations / Month',
+      '1,000 Replies / Month',
       'Standard Knowledge Base (2,000 words)',
       '4 Knowledge Uploads',
       'Basic AI Chatbot',
       'Website Embedding',
     ],
     pro: [
-      'Unlimited Conversations',
+      'Unlimited Replies',
       'Expanded Knowledge Base (15,000 words)',
       '10 Knowledge Uploads',
       'Basic Chatbot Customization',
@@ -129,7 +129,7 @@ export default function PricingSection({
               }`}
             >
               Yearly
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              <span className="absolute -top-1.5 -right-1.5 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
                 20% OFF
               </span>
             </button>

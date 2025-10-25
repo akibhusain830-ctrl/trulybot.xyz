@@ -162,25 +162,25 @@ Ready to transform your customer experience? → [Start Free Trial] [View Pricin
 
 **Free Plan** - ₹0/month 🆓
 • Perfect for testing our AI chatbot
-• 100 conversations/month
+• 100 replies/month
 • Basic Knowledge Base (500 words)
 • 1 Knowledge Upload & Website Embedding
 
 **Basic Plan** - ₹99/month (₹950/year)
 • For emerging businesses & startups
-• 1,000 conversations/month
+• 1,000 replies/month
 • Standard Knowledge Base (2,000 words)
 • 4 Knowledge Uploads
 
 **Pro Plan** - ₹399/month (₹3,831/year) ⭐ Most Popular
 • Best for growing e-commerce brands
-• Unlimited conversations
+• Unlimited replies
 • Expanded Knowledge Base (15,000 words)
 • 10 Knowledge Uploads + Lead Capture
 
 **Ultra Plan** - ₹599/month (₹5,750/year)
 • Ultimate toolkit for established businesses
-• Unlimited conversations
+• Unlimited replies
 • Maximum Knowledge Base (50,000 words)
 • 25 Knowledge Uploads + Full Brand Customization
 
@@ -225,7 +225,7 @@ Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
 ✅ Setup takes just 5 minutes
 
 With our FREE plan, you get:
-• 100 conversations/month
+• 100 replies/month
 • Basic Knowledge Base (500 words)
 • 1 Knowledge Upload
 • Website Embedding
@@ -235,7 +235,7 @@ Want more features? Choose from Basic (₹99), Pro (₹399), or Ultra (₹599) p
 
 Ready to start FREE? → [Start Free Plan] [View All Plans]`,
     short:
-      "Forever FREE plan available! 100 conversations/month, basic features, no credit card required.",
+      "Forever FREE plan available! 100 replies/month, basic features, no credit card required.",
     priority: 5,
   },
   {
