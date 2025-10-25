@@ -648,7 +648,7 @@ Ready to install? → [Download Plugin] [Setup Guide] [View Demo]`,
     keywords: ["pricing", "cost", "plans", "price", "tiers", "inr"],
     questionPatterns: ["pricing", "price\\s+list", "plans"],
     answer: `Current INR Tiers:
-${PRICING_TIERS.map((t) => `- ${t.name} (₹${t.monthlyInr}/mo): ${t.messageAllowance} – ${t.features.slice(0, 2).join(", ")}${t.fairUse ? " (Unlimited under fair use)" : ""}`).join("\n")}
+${PRICING_TIERS.map((t) => `- ${t.name} (₹${t.monthlyInr}/mo): ${t.repliesAllowance} – ${t.features.slice(0, 2).join(", ")}${t.fairUse ? " (Unlimited under fair use)" : ""}`).join("\n")}
 
 Fair Use: “Unlimited” implies soft caps with a scaling dialogue if usage is atypically high for plan level.
 

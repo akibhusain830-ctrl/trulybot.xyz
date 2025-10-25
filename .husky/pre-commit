@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
-# . "$(dirname -- "$0")/_/husky.sh"
+. "$(dirname -- "$0")/_/husky.sh"
 
-# npm run lint-staged
-# Temporarily disabled for Windows
-exit 0
+npm run lint-staged
