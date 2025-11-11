@@ -1,5 +1,5 @@
 import { Menu } from 'lucide-react';
-import LogoImage from '@/assets/icons/logo.svg';
+import LogoImage from '../src/assets/icons/logo.svg';
 
 interface NavbarProps {
   user?: any;

@@ -1,6 +1,6 @@
 "use client"
-import HelixImage from '@/assets/images/helix2.png'
-import EmojiImage from '@/assets/images/emojistar.png'
+import HelixImage from '../src/assets/images/helix2.png'
+import EmojiImage from '../src/assets/images/emojistar.png'
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
