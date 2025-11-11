@@ -176,6 +176,10 @@ module.exports = {
       source: '/((?!embed|widget).*)',
       headers: [
         {
+          key: 'Strict-Transport-Security',
+          value: 'max-age=31536000; includeSubDomains; preload',
+        },
+        {
           key: 'X-Frame-Options',
           value: 'DENY',
         },
@@ -203,6 +207,12 @@ module.exports = {
   webpack(config, { dev }) {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     config.resolve.alias['@lib'] = path.resolve(__dirname, 'src/lib');
+
+    // Add SVG loader configuration
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
 
     // Production optimizations
     if (!dev) {

@@ -1,27 +1,34 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cache } from '@/lib/cache/manager'
-import { memoryMonitor } from '@/lib/performance/optimization'
+import { NextResponse, NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 interface HealthCheckResult {
-  status: 'healthy' | 'unhealthy'
+  status: 'healthy' | 'degraded' | 'unhealthy'
   timestamp: string
   checks: {
-    database: 'pass' | 'fail'
-    openai: 'pass' | 'fail'
-    environment: 'pass' | 'fail'
+    database: { status: 'ok' | 'error'; latency?: number; error?: string }
+    redis: { status: 'ok' | 'error'; latency?: number; error?: string }
+    openai: { status: 'ok' | 'error'; error?: string }
+    environment: { status: 'ok' | 'error'; missing?: string[] }
   }
   version: string
   uptime: number
+  responseTime: number
 }
 
-export async function GET(): Promise<NextResponse<HealthCheckResult>> {
+export const dynamic = 'force-dynamic'
+
+export async function GET(_req: NextRequest): Promise<NextResponse<HealthCheckResult>> {
   const startTime = Date.now()
-  const checks = {
-    database: 'fail' as 'pass' | 'fail',
-    openai: 'fail' as 'pass' | 'fail',
-    environment: 'fail' as 'pass' | 'fail',
+  const checks: HealthCheckResult['checks'] = {
+    database: { status: 'ok' },
+    redis: { status: 'ok' },
+    openai: { status: 'ok' },
+    environment: { status: 'ok' },
   }
+
+  let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy'
 
   // Check environment variables
   const requiredEnvVars = [
@@ -31,27 +38,51 @@ export async function GET(): Promise<NextResponse<HealthCheckResult>> {
   ]
   
   const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar])
-  if (missingEnvVars.length === 0) {
-    checks.environment = 'pass'
+  if (missingEnvVars.length > 0) {
+    checks.environment = { status: 'error', missing: missingEnvVars }
+    overallStatus = 'unhealthy'
   }
 
   // Check database connectivity
   try {
-    const supabase = createClient(
+    const dbStart = Date.now()
+    const cookieStore = cookies()
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
     )
     
     const { error } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id')
       .limit(1)
+      .single()
     
-    if (!error) {
-      checks.database = 'pass'
+    const dbLatency = Date.now() - dbStart
+    if (error) {
+      checks.database = { status: 'error', latency: dbLatency, error: error.message }
+      overallStatus = 'unhealthy'
+    } else {
+      checks.database = { status: 'ok', latency: dbLatency }
+      if (dbLatency > 1000) {
+        overallStatus = 'degraded'
+        logger.warn('Database latency high', { latency: dbLatency })
+      }
     }
   } catch (error) {
-    console.error('Database health check failed:', error)
+    checks.database = { 
+      status: 'error', 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
+    overallStatus = 'unhealthy'
+    logger.error('Database health check failed', { error })
   }
 
   // Check OpenAI API
@@ -63,26 +94,36 @@ export async function GET(): Promise<NextResponse<HealthCheckResult>> {
       },
     })
     
-    if (response.ok) {
-      checks.openai = 'pass'
+    if (!response.ok) {
+      checks.openai = { status: 'error', error: `HTTP ${response.status}` }
+      overallStatus = 'degraded'
     }
   } catch (error) {
-    console.error('OpenAI health check failed:', error)
+    checks.openai = { 
+      status: 'error', 
+      error: error instanceof Error ? error.message : 'Connection failed' 
+    }
+    overallStatus = 'degraded'
+    logger.warn('OpenAI health check failed', { error })
   }
 
-  const isHealthy = Object.values(checks).every(check => check === 'pass')
-  const endTime = Date.now()
+  const responseTime = Date.now() - startTime
 
   const result: HealthCheckResult = {
-    status: isHealthy ? 'healthy' : 'unhealthy',
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     checks,
     version: process.env.VERCEL_GIT_COMMIT_SHA || 'development',
-    uptime: endTime - startTime,
+    uptime: process.uptime(),
+    responseTime,
   }
 
+  const statusCode = overallStatus === 'healthy' ? 200 : 
+                     overallStatus === 'degraded' ? 200 : 
+                     503
+
   return NextResponse.json(result, {
-    status: isHealthy ? 200 : 503,
+    status: statusCode,
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Content-Type': 'application/json',

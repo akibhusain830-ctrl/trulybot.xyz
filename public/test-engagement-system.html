@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT-Level Engagement System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #00D4FF 0%, #0ea5e9 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .test-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .test-section h2 {
+            color: #1e293b;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .emoji {
+            font-size: 1.5em;
+        }
+        
+        .test-scenarios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .scenario {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #00D4FF;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .scenario h3 {
+            margin-top: 0;
+            color: #0ea5e9;
+            font-size: 1.1em;
+        }
+        
+        .scenario p {
+            margin: 10px 0;
+            color: #64748b;
+            line-height: 1.6;
+        }
+        
+        .test-message {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+            color: #475569;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid #00D4FF;
+        }
+        
+        .feature-card h3 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.implemented {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .cta {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .cta a {
+            display: inline-block;
+            background: linear-gradient(135deg, #00D4FF 0%, #0ea5e9 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            transition: transform 0.2s ease;
+        }
+        
+        .cta a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 ChatGPT-Level Engagement System</h1>
+            <p>Testing TrulyBot's Revolutionary Conversation Intelligence</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section">
+                <h2><span class="emoji">🧠</span> Conversation Intelligence Features <span class="status implemented">✅ IMPLEMENTED</span></h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🎭 Mood Detection</h3>
+                        <p>Analyzes user emotions: excited, frustrated, urgent, curious, neutral</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎯 Intent Analysis</h3>
+                        <p>Understands goals: information, support, sales, casual, problem_solving</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚡ Engagement Level</h3>
+                        <p>Measures user interest and adjusts response style accordingly</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>👥 User Type Detection</h3>
+                        <p>Identifies: first_time, returning, expert, beginner users</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎪 Conversation Stage</h3>
+                        <p>Tracks flow: opening, exploring, deciding, closing phases</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🌍 Page Context</h3>
+                        <p>Understands user location: pricing, features, docs, demo, home</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2><span class="emoji">💬</span> ChatGPT-Level Response Enhancement</h2>
+                <div class="test-scenarios">
+                    <div class="scenario">
+                        <h3>🎉 Enthusiastic Engagement</h3>
+                        <p>System detects excitement and matches energy</p>
+                        <div class="test-message">Test: "I'm so excited about your chatbot features!"</div>
+                        <p><strong>Expected:</strong> Enthusiastic response with follow-up questions</p>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>🚨 Frustrated User Support</h3>
+                        <p>Empathetic responses for frustrated users</p>
+                        <div class="test-message">Test: "This is confusing, I can't figure out your pricing"</div>
+                        <p><strong>Expected:</strong> Calm, helpful tone with direct solutions</p>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>⚡ Urgent Request Handling</h3>
+                        <p>Quick, direct responses for urgent needs</p>
+                        <div class="test-message">Test: "I need to set this up ASAP for a demo tomorrow"</div>
+                        <p><strong>Expected:</strong> Urgent tone with immediate action steps</p>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>🤔 Curious Exploration</h3>
+                        <p>Detailed, engaging responses for curious users</p>
+                        <div class="test-message">Test: "How exactly does the AI training work?"</div>
+                        <p><strong>Expected:</strong> Detailed explanation with related questions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2><span class="emoji">🎨</span> Interactive Engagement Elements</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>💭 Follow-up Questions</h3>
+                        <p>Clickable questions that encourage deeper conversation</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔍 Suggested Topics</h3>
+                        <p>Related topics to explore based on conversation context</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎣 Engagement Hooks</h3>
+                        <p>Conversation starters to maintain user interest</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🏠 Contextual Welcome</h3>
+                        <p>Page-aware greeting messages that feel personal</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2><span class="emoji">🎪</span> Personality & Tone Examples</h2>
+                <div class="test-scenarios">
+                    <div class="scenario">
+                        <h3>💼 Professional but Friendly</h3>
+                        <p>Business users get professional yet approachable responses</p>
+                        <div class="test-message">"What enterprise features do you offer?"</div>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>🎓 Educational & Patient</h3>
+                        <p>Beginners get detailed, patient explanations</p>
+                        <div class="test-message">"I'm new to chatbots, how do they work?"</div>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>⚡ Expert & Efficient</h3>
+                        <p>Technical users get direct, detailed responses</p>
+                        <div class="test-message">"What's your API rate limit and webhook support?"</div>
+                    </div>
+                    
+                    <div class="scenario">
+                        <h3>🎉 Casual & Fun</h3>
+                        <p>Casual interactions get relaxed, friendly responses</p>
+                        <div class="test-message">"Hey, what can your bot do?"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cta">
+                <a href="http://localhost:3001" target="_blank">🚀 Test the Live System</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TrulyBot Widget Integration -->
+    <script>
+        window.trulyBotConfig = {
+            botId: 'demo',
+            apiUrl: 'http://localhost:3001',
+            position: 'bottom-right',
+            theme: 'auto'
+        };
+    </script>
+    <script src="http://localhost:3001/widget.js" defer></script>
+</body>
+</html>

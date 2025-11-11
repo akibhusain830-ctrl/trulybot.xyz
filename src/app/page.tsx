@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { generateSEOMetadata, seoConfigs } from '@/lib/seo';
 import { faqSchema, serviceSchema, productSchema, reviewSchema, websiteSchema } from '@/lib/schema';
 import { navigationSchema, homeBreadcrumbSchema, enhancedProductSchema, enhancedWebsiteSchema } from '@/lib/enhanced-schema';
-import HomePageContent from './HomePageContent';
+import FinalHomePage from './FinalHomePage';
 
 // Homepage metadata export for SEO
 export const metadata: Metadata = generateSEOMetadata({
@@ -58,7 +58,7 @@ export default function HomePage() {
           __html: JSON.stringify(homeBreadcrumbSchema)
         }}
       />
-      <HomePageContent />
+      <FinalHomePage />
     </>
   );
 }

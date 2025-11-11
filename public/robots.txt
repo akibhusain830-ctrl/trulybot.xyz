@@ -1,5 +1,6 @@
 # TrulyBot AI Chatbot - Professional SEO Robots.txt
 # Optimized for maximum search engine visibility and professional SEO standards
+# Special focus on Indian market and Hindi language support
 
 User-agent: *
 Allow: /
@@ -29,6 +30,12 @@ User-agent: YandexBot
 Allow: /
 Crawl-delay: 2
 
+# Indian search engines for better local SEO
+User-agent: ia_archiver
+Allow: /
+Crawl-delay: 2
+
+# Social media bots for better sharing in India
 User-agent: facebookexternalhit
 Allow: /
 
@@ -36,6 +43,9 @@ User-agent: Twitterbot
 Allow: /
 
 User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsAppBot
 Allow: /
 
 # Disallow sensitive and duplicate content areas
@@ -71,18 +81,36 @@ Allow: /*?utm_source=*
 Allow: /*?ref=seo
 Allow: /*?source=organic
 
-# Professional sitemap declarations
+# Professional sitemap declarations with India-specific focus
 Sitemap: https://trulybot.xyz/sitemap.xml
 Sitemap: https://trulybot.xyz/sitemap-images.xml
 Sitemap: https://trulybot.xyz/sitemap-pages.xml
 Sitemap: https://trulybot.xyz/sitemap-blog.xml
 Sitemap: https://trulybot.xyz/sitemap-products.xml
+Sitemap: https://trulybot.xyz/sitemap-india.xml
+Sitemap: https://trulybot.xyz/sitemap-features.xml
+Sitemap: https://trulybot.xyz/sitemap-cities.xml
 
 # Host directive for preferred domain (SEO best practice)
 Host: https://trulybot.xyz
 
-# Additional professional directives
+# Additional professional directives optimized for Indian market
 Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
 Clean-param: fbclid&gclid&msclkid&yclid
-Sitemap: https://trulybot.xyz/sitemap-india.xml
-Sitemap: https://trulybot.xyz/sitemap-features.xml
+
+# Indian market specific crawling preferences
+User-agent: *
+Request-rate: 1/10s
+Visit-time: 0600-2300
+
+# Geolocation hints for Indian market
+Allow: /india*
+Allow: /hindi*
+Allow: /mumbai*
+Allow: /delhi*
+Allow: /bangalore*
+Allow: /chennai*
+Allow: /hyderabad*
+Allow: /pune*
+Allow: /kolkata*
+Allow: /ahmedabad*

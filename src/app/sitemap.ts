@@ -95,24 +95,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly' as const,
       priority: 0.3,
     },
-    // SEO landing pages for targeted keywords
+    // SEO landing pages for targeted high-traffic keywords (MAXIMUM PRIORITY)
     {
       url: `${baseUrl}/ai-chatbot-for-ecommerce`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.9,
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/customer-support-automation`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.8,
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/customer-support-automation-india`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/lead-generation-chatbot`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.8,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/ecommerce-chatbot`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/automated-customer-service`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
     },
     // Blog posts for content marketing SEO
     {
@@ -139,24 +157,48 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     },
-    // India-specific pages for regional SEO
+    // India-specific pages for regional SEO (HIGH PRIORITY)
     {
       url: `${baseUrl}/india`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.8,
+      priority: 0.95,
     },
     {
       url: `${baseUrl}/chatbot-india`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.8,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/ai-chatbot-indian-businesses`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.7,
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/hindi-chatbot`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/chatbot-mumbai`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/chatbot-delhi`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/chatbot-bangalore`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
     }
   ]
 

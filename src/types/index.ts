@@ -28,3 +28,4 @@ export interface Subscription {
   current_period_end: string;
   created_at: string;
 }
+

@@ -1,16 +1,18 @@
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { logger } from '@/lib/logger';
-
-export async function ensureUserWorkspace(userId: string, email: string): Promise<string> {
+export async function ensureUserWorkspace(
+  userId: string,
+  email: string,
+): Promise<string> {
   const supabase = supabaseAdmin;
-  
+
   try {
     // Check if user already has a profile with workspace
     const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('workspace_id, workspaces(id, name)')
-      .eq('id', userId)
+      .from("profiles")
+      .select("workspace_id, workspaces(id, name)")
+      .eq("id", userId)
       .single();
 
     if (existingProfile?.workspace_id) {
@@ -18,56 +20,59 @@ export async function ensureUserWorkspace(userId: string, email: string): Promis
     }
 
     // Create workspace for new user
-    const workspaceName = email.split('@')[0] + "'s Workspace";
+    const workspaceName = email.split("@")[0] + "'s Workspace";
     const workspaceSlug = `workspace-${userId.slice(0, 8)}`;
 
     const { data: workspace, error: workspaceError } = await supabase
-      .from('workspaces')
+      .from("workspaces")
       .insert({
         name: workspaceName,
         slug: workspaceSlug,
       })
-      .select('id')
+      .select("id")
       .single();
 
     if (workspaceError) {
       throw workspaceError;
     }
 
-    // Create or update user profile
-    const trialEndDate = new Date();
-    trialEndDate.setDate(trialEndDate.getDate() + 7);
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        workspace_id: workspace.id,
-        email,
-        role: 'owner',
-        trial_ends_at: trialEndDate.toISOString(),
-        subscription_status: 'trialing',
-      });
+    // Create or update user profile with FREE plan (no trial)
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: userId,
+      workspace_id: workspace.id,
+      email,
+      role: "owner",
+      subscription_status: "none", // Free plan, no trial
+      subscription_tier: "basic",
+      trial_ends_at: null,
+      has_used_trial: false,
+    });
 
     if (profileError) {
       throw profileError;
     }
 
-    logger.info('Created workspace and profile for user', { userId, workspaceId: workspace.id });
+    logger.info("Created workspace and profile for user", {
+      userId,
+      workspaceId: workspace.id,
+    });
     return workspace.id;
   } catch (error) {
-    logger.error('Error ensuring user workspace', { userId }, error as Error);
+    logger.error("Error ensuring user workspace", { userId }, error as Error);
     throw error;
   }
 }
 
-export async function getUserWorkspace(userId: string): Promise<{ workspaceId: string; profile: any } | null> {
+export async function getUserWorkspace(
+  userId: string,
+): Promise<{ workspaceId: string; profile: any } | null> {
   const supabase = supabaseAdmin;
-  
+
   try {
     const { data: profile, error } = await supabase
-      .from('profiles')
-      .select(`
+      .from("profiles")
+      .select(
+        `
         *,
         workspaces (
           id,
@@ -75,8 +80,9 @@ export async function getUserWorkspace(userId: string): Promise<{ workspaceId: s
           slug,
           created_at
         )
-      `)
-      .eq('id', userId)
+      `,
+      )
+      .eq("id", userId)
       .single();
 
     if (error || !profile?.workspace_id) {
@@ -85,28 +91,35 @@ export async function getUserWorkspace(userId: string): Promise<{ workspaceId: s
 
     return {
       workspaceId: profile.workspace_id,
-      profile
+      profile,
     };
   } catch (error) {
-    logger.error('Error getting user workspace', { userId }, error as Error);
+    logger.error("Error getting user workspace", { userId }, error as Error);
     return null;
   }
 }
 
-export async function validateWorkspaceAccess(userId: string, workspaceId: string): Promise<boolean> {
+export async function validateWorkspaceAccess(
+  userId: string,
+  workspaceId: string,
+): Promise<boolean> {
   const supabase = supabaseAdmin;
-  
+
   try {
     const { data, error } = await supabase
-      .from('profiles')
-      .select('workspace_id, role')
-      .eq('id', userId)
-      .eq('workspace_id', workspaceId)
+      .from("profiles")
+      .select("workspace_id, role")
+      .eq("id", userId)
+      .eq("workspace_id", workspaceId)
       .single();
 
     return !error && !!data;
   } catch (error) {
-    logger.error('Error validating workspace access', { userId, workspaceId }, error as Error);
+    logger.error(
+      "Error validating workspace access",
+      { userId, workspaceId },
+      error as Error,
+    );
     return false;
   }
 }

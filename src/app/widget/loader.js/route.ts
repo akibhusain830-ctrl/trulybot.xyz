@@ -49,19 +49,19 @@ export async function GET(req: NextRequest) {
         throw new Error('TrulyBot script element not found');
       }
 
-      const userId = script.getAttribute('data-chatbot-id') || script.getAttribute('data-user-id');
+      const chatbotId = script.getAttribute('data-chatbot-id');
       const apiUrl = script.getAttribute('data-api-url') || 
                     script.getAttribute('data-api-base-url') || 
-                    '\` + (process.env.NEXT_PUBLIC_APP_URL || 'https://trulybot.xyz') + \`';
+                    '${process.env.NEXT_PUBLIC_APP_URL || 'https://trulybot.xyz'}';
 
-      if (!userId) {
-        throw new Error('data-chatbot-id or data-user-id attribute is required');
+      if (!chatbotId) {
+        throw new Error('data-chatbot-id attribute is required');
       }
 
       // Clean and validate URLs
       const cleanApiUrl = apiUrl.replace(/\/$/, ''); // Remove trailing slash
       
-      return { userId, apiUrl: cleanApiUrl };
+      return { chatbotId, apiUrl: cleanApiUrl };
     } catch (error) {
       log(\`Configuration error: \${error.message}\`, 'error');
       return null;
@@ -103,11 +103,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  async function loadConfiguration(userId, apiUrl) {
+  async function loadConfiguration(chatbotId, apiUrl) {
     try {
       log('Loading chatbot configuration...');
       
-      const config = await fetchWithRetry(\`\${apiUrl}/api/widget/config/\${userId}\`);
+      const config = await fetchWithRetry(\`\${apiUrl}/api/widget/config/\${chatbotId}\`);
       
       if (config.error) {
         throw new Error(config.error);
@@ -123,7 +123,7 @@ export async function GET(req: NextRequest) {
         custom_css: config.custom_css || null,
         subscription_tier: config.subscription_tier || 'basic',
         apiUrl,
-        userId
+        chatbotId
       };
       
       log('Configuration loaded successfully');
@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
         custom_css: null,
         subscription_tier: 'basic',
         apiUrl,
-        userId
+        chatbotId
       };
       
       log('Using fallback configuration');
@@ -238,8 +238,8 @@ export async function GET(req: NextRequest) {
       iframe.setAttribute('title', \`Chat with \${widgetState.config.chatbot_name}\`);
       iframe.setAttribute('allowfullscreen', 'true');
       
-      const widgetUrl = new URL(\`\${widgetState.config.apiUrl}/embed\`);
-      widgetUrl.searchParams.set('botId', widgetState.config.userId);
+      const widgetUrl = new URL(\`\${widgetState.config.apiUrl}/widget\`);
+      widgetUrl.searchParams.set('id', widgetState.config.chatbotId);
       widgetUrl.searchParams.set('name', widgetState.config.chatbot_name);
       widgetUrl.searchParams.set('message', widgetState.config.welcome_message);
       widgetUrl.searchParams.set('color', widgetState.config.accent_color);
@@ -410,12 +410,12 @@ export async function GET(req: NextRequest) {
         throw new Error('Failed to get script configuration');
       }
 
-      const { userId, apiUrl } = scriptConfig;
-      log(\`User ID: \${userId}\`);
+      const { chatbotId, apiUrl } = scriptConfig;
+      log(\`Chatbot ID: \${chatbotId}\`);
       log(\`API URL: \${apiUrl}\`);
 
       // Load configuration
-      await loadConfiguration(userId, apiUrl);
+      await loadConfiguration(chatbotId, apiUrl);
       
       // Create and show bubble
       createBubble();
@@ -425,7 +425,7 @@ export async function GET(req: NextRequest) {
       
       // Dispatch custom event for integration hooks
       window.dispatchEvent(new CustomEvent('trulybot:loaded', {
-        detail: { userId, config: widgetState.config }
+        detail: { chatbotId, config: widgetState.config }
       }));
       
     } catch (error) {

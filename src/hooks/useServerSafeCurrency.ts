@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 
 export interface CurrencyInfo {
-  currency: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
-  symbol: '$' | '₹' | '€' | '£' | 'C$' | 'A$';
+  currency: 'INR';
+  symbol: '₹';
   isIndia: boolean;
   country: string;
   isLoading: boolean;
@@ -22,49 +22,32 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// Function to get initial currency info from cookies (prevents hydration issues)
+// Function to get initial currency info - simplified to INR only
 function getInitialCurrencyInfo(): CurrencyInfo {
-  // Get geolocation data from middleware cookies
-  const country = getCookie('user-country') || 'IN'; // Default to India
-  const currency = getCookie('user-currency') as CurrencyInfo['currency'] || 'INR';
-  const symbol = getCookie('currency-symbol') as CurrencyInfo['symbol'] || '₹';
-  const isIndia = getCookie('is-india') === 'true' || country === 'IN';
+  // Always use INR - no geolocation needed
+  const country = getCookie('user-country') || 'IN';
   
   // Development only logging
   if (process.env.NODE_ENV === 'development') {
-    console.log(`🎯 Currency detection - Country: ${country}, Currency: ${currency}, IsIndia: ${isIndia}`);
+    console.log(`🎯 Currency simplified - Always INR for country: ${country}`);
   }
   
-  // ROBUST RULE: If India, always INR - if not India, respect geolocation
-  if (country === 'IN' || isIndia) {
-    return {
-      currency: 'INR',
-      symbol: '₹',
-      isIndia: true,
-      country: 'IN',
-      isLoading: false
-    };
-  }
-  
-  // For non-Indian users, use detected currency from geolocation
+  // Always return INR
   return {
-    currency,
-    symbol,
-    isIndia: false,
+    currency: 'INR',
+    symbol: '₹',
+    isIndia: true,
     country,
     isLoading: false
   };
 }
 
 /**
- * Server-side safe currency detection hook that prevents hydration errors
- * Now uses robust geolocation-based currency detection:
- * - Indians ALWAYS see INR (no USD flashing)
- * - International users see their local currency (USD, EUR, etc.)
+ * Simplified currency detection hook - always returns INR
  */
 export function useServerSafeCurrency(): CurrencyInfo {
   const [currencyInfo, setCurrencyInfo] = useState<CurrencyInfo>({
-    currency: 'INR',  // Safe default to prevent USD showing to Indians
+    currency: 'INR',
     symbol: '₹',
     isIndia: true,
     country: 'IN',
@@ -72,13 +55,13 @@ export function useServerSafeCurrency(): CurrencyInfo {
   });
 
   useEffect(() => {
-    // Get robust currency info based on geolocation
+    // Always get INR currency info
     const info = getInitialCurrencyInfo();
     setCurrencyInfo(info);
     
     // Development only logging
     if (process.env.NODE_ENV === 'development') {
-      console.log(`💰 Currency set via useServerSafeCurrency:`, info);
+      console.log(`💰 Currency set to INR only:`, info);
     }
   }, []);
 
@@ -86,14 +69,13 @@ export function useServerSafeCurrency(): CurrencyInfo {
 }
 
 /**
- * Hook that provides stable currency info without loading states
- * Now uses robust geolocation-based currency detection
+ * Hook that provides stable currency info - always INR
  */
 export function useStableCurrency(): Omit<CurrencyInfo, 'isLoading'> {
   const [currencyInfo, setCurrencyInfo] = useState<Omit<CurrencyInfo, 'isLoading'>>(() => {
-    // Initialize with safe defaults that work on both server and client
+    // Always use INR
     return {
-      currency: 'INR',  // Safe default - Indians never see USD
+      currency: 'INR',
       symbol: '₹',
       isIndia: true,
       country: 'IN'
@@ -101,7 +83,7 @@ export function useStableCurrency(): Omit<CurrencyInfo, 'isLoading'> {
   });
 
   useEffect(() => {
-    // Use robust geolocation-based detection
+    // Always use INR
     const info = getInitialCurrencyInfo();
     setCurrencyInfo(info);
   }, []);
@@ -110,25 +92,22 @@ export function useStableCurrency(): Omit<CurrencyInfo, 'isLoading'> {
 }
 
 /**
- * Simple hook for currency display (legacy compatibility)
+ * Simple hook for currency display - always INR
  */
 export function useCurrencyDisplay() {
-  const { currency, symbol, isIndia } = useServerSafeCurrency();
-  return { currency, symbol, isIndia };
+  return { currency: 'INR', symbol: '₹', isIndia: true };
 }
 
 /**
- * Get currency symbol only
+ * Get currency symbol - always INR symbol
  */
 export function useCurrencySymbol(): string {
-  const { symbol } = useServerSafeCurrency();
-  return symbol;
+  return '₹';
 }
 
 /**
- * Check if user is from India
+ * Check if user is from India - always true now
  */
 export function useIsIndia(): boolean {
-  const { isIndia } = useServerSafeCurrency();
-  return isIndia;
+  return true;
 }

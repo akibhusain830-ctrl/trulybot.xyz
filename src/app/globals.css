@@ -11,6 +11,9 @@
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  
+  /* Animated gradient background size */
+  --bg-size: 300%;
 }
 
 body {
@@ -31,6 +34,20 @@ body {
 
 .animate-text-shine {
   animation: text-shine 3s linear infinite;
+}
+
+/* Shimmer animation for buttons and cards */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
 }
 
 /* Smooth scrolling for the entire site */

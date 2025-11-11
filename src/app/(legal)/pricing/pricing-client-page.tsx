@@ -92,7 +92,7 @@ export default function PricingClientPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPricingJsonLd()) }}
       />
-      <div className="relative min-h-screen bg-black py-12 overflow-hidden">
+      <div className="relative min-h-screen bg-black pb-12 overflow-hidden">
         {/* Subtle Background Elements */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
@@ -101,12 +101,12 @@ export default function PricingClientPage() {
         
         <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
           {/* Header Section - Moved Higher */}
-          <div className="mx-auto max-w-4xl text-center mb-12">
+          <div className="mx-auto max-w-4xl text-center mb-6 -mt-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm mb-4">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span className="text-sm font-medium text-blue-300">Simple & Transparent Pricing</span>
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
               <span className="block">Choose Your</span>
               <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
                 Perfect Plan
@@ -161,7 +161,7 @@ export default function PricingClientPage() {
 
           {/* Pricing Cards */}
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               {tiersWithPricing.map((tierWithPricing, index) => {
                 const { pricing, ...tier } = tierWithPricing;
                 const isPopular = tier.highlight;
@@ -213,7 +213,24 @@ export default function PricingClientPage() {
                         
                         {/* CTA Button */}
                         <div className="mt-auto">
-                          {user ? (
+                          {tier.id === 'free' ? (
+                            // Free tier - direct to dashboard
+                            user ? (
+                              <Link
+                                href="/dashboard"
+                                className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                              >
+                                Get Started Free
+                              </Link>
+                            ) : (
+                              <button
+                                onClick={() => setIsSignInModalOpen(true)}
+                                className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                              >
+                                Start Free
+                              </button>
+                            )
+                          ) : user ? (
                             <RazorpayButton
                               amount={pricing.amount}
                               currency={pricing.currency}

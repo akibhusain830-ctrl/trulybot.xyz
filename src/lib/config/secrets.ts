@@ -50,6 +50,7 @@ export const config = {
   },
   openai: {
     apiKey: mustGet('OPENAI_API_KEY'),
+    chatModel: 'gpt-4o-mini',
     embeddingModel: 'text-embedding-3-small',
     embeddingDimensions: 1536,
   },

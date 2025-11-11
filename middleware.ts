@@ -1,153 +1,109 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
-import { SecurityMiddleware } from './src/lib/security/securityMiddleware'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { defaultSecurityMiddleware } from '@/lib/security/middleware';
+import rateLimiter from '@/lib/redisRateLimit';
 
-// Currency mapping based on country codes
-const CURRENCY_MAP: Record<string, { currency: string; symbol: string }> = {
-  'IN': { currency: 'INR', symbol: '₹' },
-  'US': { currency: 'USD', symbol: '$' },
-  'GB': { currency: 'GBP', symbol: '£' },
-  'EU': { currency: 'EUR', symbol: '€' },
-  'CA': { currency: 'CAD', symbol: 'C$' },
-  'AU': { currency: 'AUD', symbol: 'A$' },
-};
+/**
+ * Global rate limiting middleware configuration
+ * Applies different rate limits based on route pattern
+ */
+async function applyGlobalRateLimit(request: NextRequest): Promise<{ allowed: boolean; result?: any }> {
+  const pathname = request.nextUrl.pathname;
+
+  // Skip rate limiting for static assets and public routes
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/public') ||
+    pathname.startsWith('/health') ||
+    pathname.endsWith('.js') ||
+    pathname.endsWith('.css') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.gif') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico') ||
+    pathname.endsWith('.woff') ||
+    pathname.endsWith('.woff2') ||
+    pathname === '/favicon.ico'
+  ) {
+    return { allowed: true };
+  }
+
+  // Apply different rate limits based on route
+  let result;
+  
+  if (pathname.startsWith('/api/payments')) {
+    // Strict limit for payment endpoints
+    result = await rateLimiter.checkRateLimit(request, {
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxRequests: 10,
+      keyPrefix: 'payment',
+    });
+  } else if (pathname.startsWith('/api/auth') || pathname.includes('login') || pathname.includes('signup')) {
+    // Strict limit for auth endpoints
+    result = await rateLimiter.checkRateLimit(request, {
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxRequests: 20,
+      keyPrefix: 'auth',
+    });
+  } else if (pathname.startsWith('/api')) {
+    // General API rate limit
+    result = await rateLimiter.checkRateLimit(request, {
+      windowMs: 60 * 1000, // 1 minute
+      maxRequests: 30,
+      keyPrefix: 'api',
+    });
+  } else {
+    // Page requests - lenient limit
+    return { allowed: true };
+  }
+
+  return { 
+    allowed: result.allowed,
+    result,
+  };
+}
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Initialize security monitoring
-  const securityMiddleware = new SecurityMiddleware();
-  const startTime = Date.now();
-
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
-
-  // Process request for security monitoring
-  await securityMiddleware.processRequest(request, response);
-
-  // Handle widget.js requests with special CORS headers
-  if (pathname === '/widget.js') {
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
-    response.headers.set('Vary', 'Accept-Encoding');
-    return response;
-  }
-
-  // Handle embed routes - allow iframe embedding from any domain
-  if (pathname.startsWith('/embed')) {
-    response.headers.delete('X-Frame-Options');
-    response.headers.set('Content-Security-Policy', 'frame-ancestors *');
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    return response;
-  }
-
-  // Create Supabase client for session management
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
+  // Apply rate limiting first
+  const rateLimit = await applyGlobalRateLimit(request);
+  if (!rateLimit.allowed && rateLimit.result) {
+    // Return 429 Too Many Requests
+    const response = NextResponse.json(
+      { 
+        error: 'Too many requests, please try again later',
+        retryAfter: Math.ceil((rateLimit.result.resetTime - Date.now()) / 1000),
       },
-    }
-  )
-
-  // Refresh session if expired
-  const { data: { session }, error } = await supabase.auth.getSession()
-
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/api/chat', '/api/settings', '/api/knowledge', '/api/leads']
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
-
-  if (isProtectedPath && !session) {
-    // Redirect to login if accessing protected route without session
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/sign-in'
-    redirectUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(redirectUrl)
+      { status: 429 }
+    );
+    
+    // Add rate limit headers
+    response.headers.set('X-RateLimit-Limit', rateLimit.result.totalHits?.toString() || '0');
+    response.headers.set('X-RateLimit-Remaining', Math.max(0, rateLimit.result.remaining).toString());
+    response.headers.set('X-RateLimit-Reset', Math.ceil(rateLimit.result.resetTime / 1000).toString());
+    response.headers.set('Retry-After', Math.ceil((rateLimit.result.resetTime - Date.now()) / 1000).toString());
+    
+    return response;
   }
 
-  // Robust geolocation detection using multiple sources
-  let country = 'IN'; // Default to India to prevent USD showing to Indians
-  
-  // Try multiple geolocation headers for maximum accuracy
-  const geoSources = [
-    request.headers.get('x-vercel-ip-country'),     // Vercel
-    request.headers.get('cf-ipcountry'),            // Cloudflare  
-    request.headers.get('x-forwarded-geo'),         // Generic
-    request.headers.get('x-country-code'),          // Custom proxies
-    request.geo?.country,                           // Next.js geo API
-  ];
-  
-  // Use the first non-null geolocation source
-  for (const geoCountry of geoSources) {
-    if (geoCountry && geoCountry.length === 2) {
-      country = geoCountry.toUpperCase();
-      break;
-    }
+  // Apply comprehensive security middleware
+  const securityResponse = await defaultSecurityMiddleware.process(request);
+  if (securityResponse && securityResponse.status !== 200) {
+    return securityResponse;
   }
+
+  // Simplified - always use INR for all users
+  const country = 'IN';
+  const currency = 'INR';
+  const symbol = '₹';
+  const isIndia = true;
   
-  // Force India for localhost testing
-  if (request.url.includes('localhost') || request.url.includes('127.0.0.1')) {
-    country = 'IN';
-  }
+  console.log(`💰 Simplified pricing: Always INR (₹) for all users`);
   
-  console.log(`🌍 Detected country: ${country} from IP geolocation`);
+  const res = securityResponse || NextResponse.next();
   
-  // Determine currency based on country - INR for India, USD for others
-  const currencyInfo = CURRENCY_MAP[country] || CURRENCY_MAP['US'];
-  const isIndia = country === 'IN';
-  
-  // ROBUST RULE: Indians always get INR, others get USD
-  const finalCurrency = isIndia ? 'INR' : 'USD';
-  const finalSymbol = isIndia ? '₹' : '$';
-  
-  console.log(`💰 Setting currency: ${finalCurrency} (${finalSymbol}) for country: ${country}`);
-  
-  // Set cookies for server-side currency detection (prevents hydration issues)
-  response.cookies.set('user-country', country, { 
+  // Set cookies for consistency (even though we always use INR)
+  res.cookies.set('user-country', country, { 
     path: '/', 
     httpOnly: false, // Allow client-side access
     secure: process.env.NODE_ENV === 'production',
@@ -156,7 +112,7 @@ export async function middleware(request: NextRequest) {
   });
   
   // Set currency cookies for client-side access
-  response.cookies.set('user-currency', finalCurrency, { 
+  res.cookies.set('user-currency', currency, { 
     path: '/', 
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
@@ -164,7 +120,7 @@ export async function middleware(request: NextRequest) {
     maxAge: 86400
   });
   
-  response.cookies.set('currency-symbol', finalSymbol, { 
+  res.cookies.set('currency-symbol', symbol, { 
     path: '/', 
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
@@ -172,7 +128,7 @@ export async function middleware(request: NextRequest) {
     maxAge: 86400
   });
   
-  response.cookies.set('is-india', isIndia.toString(), { 
+  res.cookies.set('is-india', isIndia.toString(), { 
     path: '/', 
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
@@ -180,23 +136,15 @@ export async function middleware(request: NextRequest) {
     maxAge: 86400
   });
 
-  // Add CSP headers for Razorpay integration (except for embed routes)
-  if (!pathname.startsWith('/embed')) {
-    response.headers.set(
-      'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://va.vercel-scripts.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://accounts.google.com https://va.vercel-scripts.com https://api.razorpay.com https://checkout.razorpay.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com; frame-ancestors 'self';"
-    );
-  }
+  // Add CSP headers for Razorpay integration
+  res.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://va.vercel-scripts.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://accounts.google.com https://va.vercel-scripts.com https://api.razorpay.com https://checkout.razorpay.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com; frame-ancestors *;"
+  );
 
-  // Complete security monitoring
-  const responseTime = Date.now() - startTime;
-  await securityMiddleware.processResponse(request, response, responseTime);
-
-  return response;
+  return res;
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};

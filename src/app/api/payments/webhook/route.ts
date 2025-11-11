@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createRequestId } from '../../../../lib/requestContext';
-import { securePaymentService } from '@/lib/payment/securePaymentService';
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+
 
 export const dynamic = 'force-dynamic';
+
+// Setup Supabase admin client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role key for server-side operations
+);
 
 export async function POST(req: Request) {
   const reqId = createRequestId();
@@ -11,143 +19,80 @@ export async function POST(req: Request) {
   const signature = req.headers.get('x-razorpay-signature') || '';
   const rawBody = await req.text();
 
-  // 1. Validate webhook signature with secure service
-  const webhookValidation = await securePaymentService.validateWebhookSignature(
-    rawBody,
-    signature,
-    webhookSecret
-  );
+  // 1. Verify webhook signature
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex');
 
-  if (!webhookValidation.isValid) {
-    logger.error('Webhook signature validation failed', { 
-      reqId, 
-      error: webhookValidation.error,
-      signatureLength: signature.length
-    });
-    
-    return NextResponse.json({ 
-      ok: false, 
-      error: 'Invalid webhook signature' 
-    }, { status: 401 });
+  if (expectedSignature !== signature) {
+    return NextResponse.json({ ok: false, error: 'Invalid signature' }, { status: 401 });
   }
 
-  const event = webhookValidation.event!;
+  const event = JSON.parse(rawBody);
 
   try {
     switch (event.event) {
       case 'payment.captured': {
         const payment = event.payload.payment.entity;
-        
-        // Extract payment details
-        const paymentDetails = {
-          type: 'payment.captured' as const,
-          paymentId: payment.id,
-          orderId: payment.order_id,
-          amount: payment.amount / 100, // Razorpay sends in paise
-          currency: payment.currency,
-          status: payment.status,
-          userId: '', // Will be set after order validation
-          planId: '', // Will be set after order validation
-          timestamp: new Date(payment.created_at * 1000)
-        };
+        // Extract details from payment object
+        const razorpay_payment_id = payment.id;
+        const razorpay_order_id = payment.order_id;
+        const amount_paid = payment.amount / 100; // Razorpay sends in paise
+        const currency = payment.currency;
+        const upi = payment.vpa || null; // UPI ID if present
+        const payment_status = payment.status;
+        const created_at = new Date(payment.created_at * 1000).toISOString();
 
-        // Validate order security
-        const orderValidation = await securePaymentService.validateOrderSecurity(
-          paymentDetails.orderId
-        );
+        // Fetch your order mapping from Supabase using razorpay_order_id
+        // Assumption: you have a table `orders` with order_id, user_id, plan_id, etc.
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('user_id, plan_id')
+          .eq('razorpay_order_id', razorpay_order_id)
+          .single();
 
-        if (!orderValidation.isValid) {
-          logger.error('Order validation failed', { 
-            reqId, 
-            orderId: paymentDetails.orderId,
-            error: orderValidation.error 
-          });
-          
-          return NextResponse.json({ 
-            ok: false, 
-            error: 'Order validation failed' 
-          }, { status: 404 });
+        if (orderError || !order) {
+          logger.error('Order not found for razorpay_order_id', { reqId, razorpay_order_id });
+          return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
         }
 
-        // Set user and plan details from validated order
-        paymentDetails.userId = orderValidation.userId!;
-        paymentDetails.planId = orderValidation.planId!;
+        // Insert into billing_history
+        const { error: bhError } = await supabase.from('billing_history').insert([{
+          user_id: order.user_id,
+          plan_id: order.plan_id,
+          amount_paid,
+          upi,
+          payment_status,
+          razorpay_payment_id,
+          razorpay_order_id,
+          currency,
+          created_at,
+        }]);
 
-        // Process payment securely
-        const processingResult = await securePaymentService.processPaymentEvent(paymentDetails);
-
-        if (!processingResult.success) {
-          logger.error('Payment processing failed', { 
-            reqId, 
-            paymentId: paymentDetails.paymentId,
-            error: processingResult.error 
-          });
-          
-          return NextResponse.json({ 
-            ok: false, 
-            error: 'Payment processing failed' 
-          }, { status: 500 });
+        if (bhError) {
+          logger.error('Failed to insert billing_history', { reqId, error: bhError });
+          return NextResponse.json({ ok: false, error: 'Billing history insert failed' }, { status: 500 });
         }
 
-        logger.info('Payment processed successfully', { 
-          reqId, 
-          paymentId: paymentDetails.paymentId,
-          userId: paymentDetails.userId,
-          planId: paymentDetails.planId,
-          amount: paymentDetails.amount
-        });
+        // Optionally: grant access to plan, send email, etc.
 
         break;
       }
-      
-      case 'payment.failed': {
-        const payment = event.payload.payment.entity;
-        
-        logger.warn('Payment failed', { 
-          reqId, 
-          paymentId: payment.id,
-          orderId: payment.order_id,
-          errorCode: payment.error_code,
-          errorDescription: payment.error_description
-        });
-        
-        // Log failed payment for monitoring
-        // Could trigger notification to user about failed payment
-        break;
-      }
-      
       case 'order.paid': {
-        // Additional validation for order.paid events
-        const order = event.payload.order.entity;
-        
-        logger.info('Order paid event received', { 
-          reqId, 
-          orderId: order.id,
-          amount: order.amount / 100
-        });
-        
+        // You may want to update your order status here
         break;
       }
-      
+      case 'payment.failed': {
+        // Optionally log or notify about failed payment
+        break;
+      }
       default:
-        logger.info('Unhandled webhook event', { 
-          reqId, 
-          eventType: event.event 
-        });
         break;
     }
-    
     return NextResponse.json({ ok: true });
-  } catch (error) {
-    logger.error('Webhook processing error', { 
-      reqId, 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    return NextResponse.json({ 
-      ok: false, 
-      error: 'Internal server error' 
-    }, { status: 500 });
+  } catch (e) {
+    logger.error('Webhook handling error', { reqId, error: e });
+    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
 }

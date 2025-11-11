@@ -101,11 +101,31 @@ export function ProfessionalNavigation() {
             {/* Logo */}
             <Link 
               href="/" 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity"
               title="TrulyBot - AI Chatbot Platform"
             >
-              <div className="text-2xl font-bold text-white">
-                ⚡ <span className="text-blue-500">TrulyBot</span>
+              <svg 
+                width="32" 
+                height="32" 
+                viewBox="0 0 512 512" 
+                fill="none"
+                className="flex-shrink-0"
+              >
+                <defs>
+                  <linearGradient id="navigationLightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#06B6D4', stopOpacity: 1}} />
+                    <stop offset="50%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
+                  </linearGradient>
+                </defs>
+                <polygon 
+                  fill="url(#navigationLightning)"
+                  points="320,32 136,296 248,296 192,480 400,216 288,216"
+                />
+              </svg>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xs font-light text-slate-400">AI Platform</span>
+                <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold text-xl tracking-wider">TrulyBot</span>
               </div>
             </Link>
 
@@ -175,9 +195,29 @@ export function ProfessionalFooter() {
           
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <div className="text-2xl font-bold">
-                ⚡ <span className="text-blue-500">TrulyBot</span>
+            <Link href="/" className="flex items-center space-x-2.5 mb-4 hover:opacity-80 transition-opacity">
+              <svg 
+                width="32" 
+                height="32" 
+                viewBox="0 0 512 512" 
+                fill="none"
+                className="flex-shrink-0"
+              >
+                <defs>
+                  <linearGradient id="footerLightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#06B6D4', stopOpacity: 1}} />
+                    <stop offset="50%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
+                  </linearGradient>
+                </defs>
+                <polygon 
+                  fill="url(#footerLightning)"
+                  points="320,32 136,296 248,296 192,480 400,216 288,216"
+                />
+              </svg>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xs font-light text-slate-400">AI Platform</span>
+                <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-bold text-xl tracking-wider">TrulyBot</span>
               </div>
             </Link>
             <p className="text-gray-400 mb-4 max-w-md">

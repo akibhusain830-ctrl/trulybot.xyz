@@ -21,7 +21,17 @@ export const CITY_SPECIFIC_KEYWORDS = {
       'chatbot for Mumbai online stores',
       'AI customer service Mumbai market',
       'automated support Bombay business',
-      'Mumbai tech startup chatbot'
+      'Mumbai tech startup chatbot',
+      'chatbot for Mumbai ecommerce',
+      'AI support Andheri businesses',
+      'automated customer service Bandra',
+      'chatbot for Powai startups',
+      'AI chatbot Navi Mumbai',
+      'customer support automation Maharashtra',
+      // Hindi/Marathi keywords
+      'Mumbai mein AI chatbot',
+      'Mumbai ke business ke liye chatbot',
+      'Maharashtra chatbot services'
     ],
     delhi: [
       'AI chatbot Delhi NCR',
@@ -31,7 +41,17 @@ export const CITY_SPECIFIC_KEYWORDS = {
       'chatbot for Delhi businesses',
       'AI customer service NCR region',
       'automated support Delhi market',
-      'Gurgaon Noida chatbot services'
+      'Gurgaon Noida chatbot services',
+      'chatbot for Delhi startups',
+      'AI customer support Gurgaon',
+      'automated service Noida businesses',
+      'chatbot for Faridabad companies',
+      'AI support Greater Noida',
+      'customer automation Ghaziabad',
+      // Hindi keywords for Delhi
+      'Delhi mein AI chatbot',
+      'Delhi ke business ke liye chatbot',
+      'NCR chatbot services Hindi'
     ],
     bangalore: [
       'AI chatbot Bangalore tech',
@@ -41,7 +61,17 @@ export const CITY_SPECIFIC_KEYWORDS = {
       'chatbot for Bengaluru IT companies',
       'AI customer service Bangalore hub',
       'automated support Bangalore market',
-      'Karnataka AI chatbot platform'
+      'Karnataka AI chatbot platform',
+      'chatbot for Bangalore ecommerce',
+      'AI support Electronic City',
+      'automated service Whitefield',
+      'chatbot for Koramangala startups',
+      'AI customer support HSR Layout',
+      'customer automation Indiranagar',
+      // Kannada/Hindi keywords
+      'Bangalore mein AI chatbot',
+      'Bengaluru ke business ke liye chatbot',
+      'Karnataka chatbot services'
     ],
     hyderabad: [
       'AI chatbot Hyderabad tech',
@@ -71,7 +101,50 @@ export const CITY_SPECIFIC_KEYWORDS = {
       'AI customer service Chennai',
       'automated support Chennai businesses',
       'Chennai digital transformation',
-      'South India AI chatbot platform'
+      'South India AI chatbot platform',
+      'chatbot for Chennai startups',
+      'AI support OMR businesses',
+      'automated service Velachery',
+      'chatbot for Anna Nagar companies',
+      // Tamil/Hindi keywords
+      'Chennai mein AI chatbot',
+      'Chennai ke business ke liye chatbot',
+      'Tamil Nadu chatbot services'
+    ],
+    kolkata: [
+      'AI chatbot Kolkata businesses',
+      'customer support automation West Bengal',
+      'Kolkata ecommerce chatbot',
+      'AI customer service Kolkata',
+      'automated support Bengal market',
+      'chatbot for Kolkata startups',
+      'AI support Salt Lake businesses',
+      'customer automation Park Street',
+      // Bengali/Hindi keywords
+      'Kolkata mein AI chatbot',
+      'Kolkata ke business ke liye chatbot',
+      'West Bengal chatbot services'
+    ],
+    ahmedabad: [
+      'AI chatbot Ahmedabad businesses',
+      'customer support automation Gujarat',
+      'Ahmedabad ecommerce AI solutions',
+      'chatbot for Gujarat businesses',
+      'AI customer service Ahmedabad',
+      'automated support Gujarat market',
+      // Gujarati/Hindi keywords
+      'Ahmedabad mein AI chatbot',
+      'Gujarat ke business ke liye chatbot'
+    ],
+    jaipur: [
+      'AI chatbot Jaipur businesses',
+      'customer support automation Rajasthan',
+      'Jaipur ecommerce chatbot',
+      'AI customer service Rajasthan',
+      'automated support Pink City',
+      // Hindi keywords
+      'Jaipur mein AI chatbot',
+      'Rajasthan ke business ke liye chatbot'
     ]
   },
   usa: {

@@ -48,53 +48,70 @@ export interface AdvancedMetadata {
 
 // Advanced keyword intelligence with search intent analysis
 export const ADVANCED_KEYWORD_INTELLIGENCE = {
-  // Voice search and conversational keywords
+  // Voice search and conversational keywords for maximum organic traffic
   voiceSearch: {
     questions: [
       'what is the best AI chatbot for ecommerce',
-      'how to reduce customer support tickets with AI',
+      'how to automate customer support with AI',
       'which chatbot increases sales the most',
-      'how much does AI customer service cost',
+      'how much does customer support automation cost',
       'what is the fastest way to setup a chatbot',
-      'how to automate customer support for online store',
-      'best AI chatbot for Indian businesses',
-      'how to get more leads with chatbot',
+      'how to reduce customer support tickets with AI',
+      'best AI chatbot for online stores',
+      'how to generate more leads with chatbot',
+      'what features should an ecommerce chatbot have',
+      'how does AI customer service work',
+      'which customer support automation tool is best'
     ],
     conversational: [
       'AI chatbot that actually works for ecommerce',
       'lightning fast customer support automation',
-      'chatbot that pays for itself',
-      'AI assistant that understands customers',
+      'chatbot that increases sales and reduces costs',
+      'AI assistant that understands customers perfectly',
       'smart chatbot for busy entrepreneurs',
       'customer service that never sleeps',
+      'automated support that feels human',
+      'AI that converts visitors into customers'
     ]
   },
   
-  // Featured snippet targeting keywords
+  // Featured snippet targeting keywords for maximum visibility
   featuredSnippets: {
     definitions: [
       'what is an AI chatbot for ecommerce',
-      'how does automated customer support work',
+      'how does customer support automation work',
       'what are the benefits of AI customer service',
+      'what is automated customer support',
+      'how do ecommerce chatbots work',
+      'what is lead generation automation'
     ],
     comparisons: [
       'AI chatbot vs human support agents',
       'TrulyBot vs other chatbot platforms',
       'automated vs manual customer service',
+      'ecommerce chatbot vs live chat',
+      'AI customer support vs traditional support',
+      'chatbot vs help desk software'
     ],
     howTo: [
       'how to setup AI chatbot in 5 minutes',
       'how to reduce support tickets by 70%',
       'how to increase sales with AI chatbot',
+      'how to automate customer support',
+      'how to generate leads with chatbot',
+      'how to integrate chatbot with ecommerce'
     ],
     lists: [
       'top benefits of AI customer support',
       'best practices for ecommerce chatbots',
       'features to look for in AI chatbot',
+      'reasons to use customer support automation',
+      'ways AI chatbot improves ecommerce',
+      'benefits of automated customer service'
     ]
   },
   
-  // Regional keyword intelligence
+  // Regional keyword intelligence - INDIA FOCUSED
   regional: {
     india: [
       'AI chatbot India price',
@@ -105,6 +122,23 @@ export const ADVANCED_KEYWORD_INTELLIGENCE = {
       'automated support for Indian businesses',
       'AI assistant Hindi English support',
       'customer service chatbot Mumbai Delhi',
+      'chatbot with Razorpay integration',
+      'GST compliant chatbot India',
+      'Hindi language AI chatbot',
+      'Indian business automation software',
+      'ecommerce chatbot India pricing',
+      'AI customer support Indian market',
+      'chatbot for Indian startups',
+      'automated customer service India',
+      'lead generation chatbot India',
+      'customer support software India',
+      // Hindi/Hinglish keywords for voice search
+      'bharat mein AI chatbot',
+      'chatbot ki price India mein',
+      'customer support automation kaise kare',
+      'sabse accha chatbot India mein',
+      'AI chatbot Hindi support',
+      'Indian business ke liye chatbot'
     ],
     global: [
       'enterprise AI chatbot solution',
@@ -146,7 +180,7 @@ export function generateIntelligentMetaDescription(config: SEOIntelligenceConfig
     homepage: {
       informational: "Discover how TrulyBot's AI chatbot revolutionizes ecommerce customer support. Reduce tickets by 70%, increase leads 5X, and automate 24/7 support. See the difference AI makes.",
       commercial: "Compare TrulyBot with other AI chatbots - #1 rated for ecommerce. 70% fewer support tickets, 5X more leads, 99.9% uptime. Free trial, 5-minute setup.",
-      transactional: "Start your TrulyBot AI chatbot free trial today! Reduce support workload 70%, boost sales 5X. Setup in 5 minutes. Join 10,000+ successful businesses."
+      transactional: "Start your TrulyBot AI chatbot free trial today! Reduce support workload 70%, boost sales 5X. Setup in 5 minutes. Join successful businesses."
     },
     product: {
       informational: "Learn how TrulyBot's advanced AI technology delivers lightning-fast customer support automation. Smart responses, lead capture, and seamless ecommerce integration.",

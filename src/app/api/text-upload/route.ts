@@ -9,7 +9,7 @@ import { config } from '@/lib/config/secrets';
 import { limitIp } from '@/lib/middleware/rateLimiter';
 import { withApi } from '@/lib/middleware/apiHandler';
 import { PlanLimitError, ValidationError, UnifiedRateLimitError, AuthError } from '@/lib/errors';
-import { authenticateRequest } from '@/lib/protectedRoute';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 // Admin client (server role) via centralized config
 const supabaseAdmin = createClient(
@@ -32,20 +32,19 @@ export const POST = withApi(async function POST(req: NextRequest) {
     throw new UnifiedRateLimitError('Upload rate limit exceeded');
   }
   
-  // Authentication check using unified system
-  const authResult = await authenticateRequest(req);
-  if (!authResult.success) {
-    throw new AuthError('You must be logged in to upload');
-  }
+  const supabase = createSupabaseServerClient();
 
   try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new AuthError('You must be logged in to upload');
+
     const { text, filename } = await req.json();
     if (!text || !filename || !filename.trim()) {
       throw new ValidationError('File name and text content are required.');
     }
 
     // Convert user.id to string to match your database schema
-    const userId = authResult.userId;
+    const userId = user.id; // Remove .toString() since database expects UUID
 
     // Fetch profile to determine tier (fallback basic)
     const { data: profile } = await supabaseAdmin

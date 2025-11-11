@@ -1,0 +1,253 @@
+/* TrulyBot WooCommerce Admin Styles */
+
+.trulybot-admin-container {
+    max-width: 1000px;
+    margin: 20px 0;
+}
+
+.trulybot-connection-status {
+    margin-bottom: 30px;
+}
+
+.trulybot-connection-status .notice {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-left: 4px solid;
+}
+
+.trulybot-connection-status .notice-success {
+    border-left-color: #46b450;
+    background-color: #f7fcf0;
+}
+
+.trulybot-connection-status .notice-warning {
+    border-left-color: #ffb900;
+    background-color: #fef7e4;
+}
+
+.trulybot-connection-status .dashicons {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.trulybot-connect-section,
+.trulybot-settings-section,
+.trulybot-preview-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.trulybot-connect-section h2,
+.trulybot-settings-section h2,
+.trulybot-preview-section h2 {
+    margin-top: 0;
+    color: #23282d;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.trulybot-connect-section p {
+    color: #646970;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.form-table th {
+    font-weight: 600;
+    color: #23282d;
+}
+
+.form-table .description {
+    color: #646970;
+    font-style: italic;
+}
+
+#trulybot_user_id {
+    font-family: Consolas, Monaco, monospace;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    width: 300px;
+}
+
+#trulybot_user_id:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.button-primary:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.button-primary:disabled {
+    background: #a7aaad;
+    border-color: #a7aaad;
+    cursor: not-allowed;
+}
+
+.trulybot-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #c3c4c7;
+}
+
+.trulybot-actions .button {
+    margin-right: 10px;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.trulybot-actions .button:hover {
+    background: #f0f0f1;
+}
+
+.trulybot-actions .button-secondary {
+    color: #d63638;
+    border-color: #d63638;
+}
+
+.trulybot-actions .button-secondary:hover {
+    background: #d63638;
+    color: #fff;
+}
+
+.trulybot-preview-widget {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.trulybot-message {
+    animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading states */
+.button:disabled {
+    position: relative;
+}
+
+.button:disabled::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .trulybot-admin-container {
+        margin: 10px;
+    }
+    
+    .trulybot-connect-section,
+    .trulybot-settings-section,
+    .trulybot-preview-section {
+        padding: 20px;
+    }
+    
+    #trulybot_user_id {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .trulybot-actions .button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        text-align: center;
+    }
+}
+
+/* WordPress admin color scheme compatibility */
+.admin-color-fresh .button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+}
+
+.admin-color-fresh .button-primary:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.admin-color-light .button-primary {
+    background: #04a4cc;
+    border-color: #04a4cc;
+}
+
+.admin-color-blue .button-primary {
+    background: #096484;
+    border-color: #096484;
+}
+
+/* Status indicators */
+.connection-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.connection-status-indicator.connected {
+    background: #d1e7dd;
+    color: #0a3622;
+}
+
+.connection-status-indicator.disconnected {
+    background: #f8d7da;
+    color: #58151c;
+}
+
+.connection-status-indicator .dashicons {
+    margin-right: 4px;
+    font-size: 14px;
+}
