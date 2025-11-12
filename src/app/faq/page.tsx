@@ -68,7 +68,7 @@ const faqData = [
     questions: [
       {
         question: 'What pricing plans does TrulyBot offer?',
-        answer: 'TrulyBot offers three plans: Basic (₹99/$5/month) for small businesses, Pro (₹399/$10/month) for growing companies, and Ultra (₹599/$15/month) for enterprises. All plans include a free 7-day trial with no credit card required. Visit our pricing page for detailed feature comparisons.'
+        answer: 'TrulyBot offers four plans: Free (₹0/month with 300 replies), Basic (₹499/month with 1k replies), Pro (₹1,499/month with 3k replies), and Enterprise (₹2,999/month with 15k replies). All paid plans include a free 7-day trial with no credit card required. Visit our pricing page for detailed feature comparisons.'
       },
       {
         question: 'Is there a free trial available?',

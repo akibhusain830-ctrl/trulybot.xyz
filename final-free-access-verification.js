@@ -7,7 +7,7 @@ const TIER_FEATURES = {
   free: ['Core AI Chatbot', '100 Conversations/month', 'Basic Knowledge Base (500 words)', '1 Knowledge Upload', 'Website Embedding'],
   basic: ['Core AI Chatbot', 'Unlimited Conversations', '1,000 Messages/month'],
   pro: ['Core AI Chatbot', 'Unlimited Conversations', 'Maximum Knowledge Base', 'Basic Customization'],
-  ultra: ['Core AI Chatbot', 'Unlimited Conversations', 'Maximum Knowledge Base', 'Full Brand Customization', 'Enhanced Lead Capture', 'Priority Support Queue']
+  enterprise: ['Core AI Chatbot', 'Unlimited Conversations', 'Maximum Knowledge Base', 'Full Brand Customization', 'Enhanced Lead Capture', 'Priority Support Queue']
 };
 
 function calculateSubscriptionAccess(profile) {
@@ -56,13 +56,13 @@ function calculateSubscriptionAccess(profile) {
     
     return {
       status: 'trial',
-      tier: 'ultra',
+      tier: 'enterprise',
       trial_ends_at: profile.trial_ends_at,
       subscription_ends_at: null,
       is_trial_active: true,
       has_access: true,
       days_remaining: Math.max(0, daysRemaining),
-      features: TIER_FEATURES.ultra
+      features: TIER_FEATURES.enterprise
     };
   }
   
@@ -131,7 +131,7 @@ const testScenarios = [
       id: 'user-expired-456',
       email: 'expired@company.com', 
       subscription_status: 'trial',
-      subscription_tier: 'ultra',
+      subscription_tier: 'enterprise',
       has_used_trial: true,
       trial_ends_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
       subscription_ends_at: null,
@@ -148,7 +148,7 @@ const testScenarios = [
       id: 'user-trial-789',
       email: 'trial@company.com',
       subscription_status: 'trial',
-      subscription_tier: 'ultra',
+      subscription_tier: 'enterprise',
       has_used_trial: false,
       trial_ends_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
       subscription_ends_at: null,
@@ -199,7 +199,7 @@ console.log('='.repeat(50));
 console.log('✅ New users → Get immediate FREE access (5 features)');
 console.log('✅ Trial expires → Fall back to FREE access (5 features)');
 console.log('✅ Profile loading fails → Graceful FREE access (5 features)');
-console.log('✅ Active trials → Full ULTRA access (6 features)');
+console.log('✅ Active trials → Full ENTERPRISE access (6 features)');
 console.log('✅ Paid users → Full tier access based on plan');
 console.log('');
 console.log('🚀 Your automatic free plan system is now WORKING!');

@@ -119,6 +119,7 @@ export async function GET(req: NextRequest) {
         welcome_message: config.welcome_message || WIDGET_CONFIG.fallbackMessage,
         accent_color: config.accent_color || WIDGET_CONFIG.fallbackColor,
         chatbot_logo_url: config.chatbot_logo_url || null,
+        chat_bubble_icon: config.chat_bubble_icon || 'lightning',
         chatbot_theme: config.chatbot_theme || 'light',
         custom_css: config.custom_css || null,
         subscription_tier: config.subscription_tier || 'basic',
@@ -137,6 +138,7 @@ export async function GET(req: NextRequest) {
         welcome_message: WIDGET_CONFIG.fallbackMessage,
         accent_color: WIDGET_CONFIG.fallbackColor,
         chatbot_logo_url: null,
+        chat_bubble_icon: 'lightning',
         chatbot_theme: 'light',
         custom_css: null,
         subscription_tier: 'basic',
@@ -161,11 +163,22 @@ export async function GET(req: NextRequest) {
       bubble.setAttribute('role', 'button');
       bubble.setAttribute('tabindex', '0');
       
-      // Set bubble content (logo or emoji)
+      // Set bubble content (logo or selected icon)
       if (widgetState.config.chatbot_logo_url) {
-        bubble.innerHTML = \`<img src="\${widgetState.config.chatbot_logo_url}" alt="Chat" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentNode.innerHTML='💬';">\`;
+        bubble.innerHTML = \`<img src="\${widgetState.config.chatbot_logo_url}" alt="Chat" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentNode.innerHTML='';">\`;
       } else {
-        bubble.innerHTML = '💬';
+        const icon = (widgetState.config.chat_bubble_icon || 'lightning').toLowerCase();
+        const stroke = '#FFFFFF';
+        function svg(name){
+          if(name==='lightning') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="'+stroke+'" xmlns="http://www.w3.org/2000/svg"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/></svg>';
+          if(name==='chat') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6a4 4 0 014-4h8a4 4 0 014 4v8a4 4 0 01-4 4H9l-5 4V6z" stroke="'+stroke+'" stroke-width="1.6"/><circle cx="9" cy="10" r="1.5" fill="'+stroke+'"/><circle cx="13" cy="10" r="1.5" fill="'+stroke+'"/><circle cx="17" cy="10" r="1.5" fill="'+stroke+'"/></svg>';
+          if(name==='robot') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="7" width="16" height="12" rx="3" stroke="'+stroke+'" stroke-width="1.6"/><circle cx="9" cy="13" r="1.8" fill="'+stroke+'"/><circle cx="15" cy="13" r="1.8" fill="'+stroke+'"/><rect x="11" y="3" width="2" height="3" fill="'+stroke+'"/></svg>';
+          if(name==='message') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18v12H9l-6 4V5z" stroke="'+stroke+'" stroke-width="1.6"/><path d="M6 9h12M6 12h8" stroke="'+stroke+'" stroke-width="1.6"/></svg>';
+          if(name==='spark') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="'+stroke+'" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z"/></svg>';
+          if(name==='help') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="'+stroke+'" stroke-width="1.6"/><path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.2 2-2 2.5v1" stroke="'+stroke+'" stroke-width="1.6"/><circle cx="12" cy="17" r="1" fill="'+stroke+'"/></svg>';
+          return '<svg width="22" height="22" viewBox="0 0 24 24" fill="'+stroke+'" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3"/></svg>';
+        }
+        bubble.innerHTML = svg(icon);
       }
       
       bubble.style.cssText = \`
@@ -178,7 +191,7 @@ export async function GET(req: NextRequest) {
         border: none !important;
         background: \${widgetState.config.accent_color} !important;
         color: white !important;
-        font-size: 24px !important;
+        font-size: 0 !important;
         cursor: pointer !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
         z-index: \${WIDGET_CONFIG.zIndex} !important;
@@ -244,6 +257,7 @@ export async function GET(req: NextRequest) {
       widgetUrl.searchParams.set('message', widgetState.config.welcome_message);
       widgetUrl.searchParams.set('color', widgetState.config.accent_color);
       widgetUrl.searchParams.set('theme', widgetState.config.chatbot_theme);
+      widgetUrl.searchParams.set('icon', widgetState.config.chat_bubble_icon || 'lightning');
       
       iframe.src = widgetUrl.toString();
       // Check if desktop (min-width: 1024px) for significantly larger chat window

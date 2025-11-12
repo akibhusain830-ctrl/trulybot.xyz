@@ -82,6 +82,18 @@ export class ProfileManager {
         
         let workspaceId = null;
         
+        // Double-check if profile was created by trigger (race condition prevention)
+        const { data: doubleCheckProfile, error: doubleCheckError } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+          
+        if (!doubleCheckError && doubleCheckProfile) {
+          logger.info('Profile was created by trigger during race condition, using existing profile', { userId });
+          return doubleCheckProfile as UserProfile;
+        }
+        
         // Try to create workspace, but don't fail if workspaces table doesn't exist
         try {
           // Generate a unique slug to avoid collisions
@@ -100,7 +112,31 @@ export class ProfileManager {
             .single();
 
           if (workspaceError) {
-            logger.warn('Workspace creation failed', { error: workspaceError });
+            // Check if workspace already exists (duplicate slug)
+            if (workspaceError.code === '23505') {
+              logger.info('Workspace with this slug already exists, trying with different slug', { slug: uniqueSlug });
+              
+              // Try with a more unique slug
+              const moreUniqueSlug = `${uniqueSlug}-${Math.random().toString(36).substr(2, 9)}`;
+              const { data: retryWorkspace, error: retryError } = await supabaseAdmin
+                .from('workspaces')
+                .insert({
+                  name: 'Personal Workspace',
+                  slug: moreUniqueSlug,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+              if (retryError) {
+                logger.warn('Workspace creation failed on retry', { error: retryError });
+              } else {
+                workspaceId = retryWorkspace.id;
+              }
+            } else {
+              logger.warn('Workspace creation failed', { error: workspaceError });
+            }
           } else {
             workspaceId = workspace.id;
           }
@@ -120,7 +156,7 @@ export class ProfileManager {
           // NO automatic trial - user must explicitly start trial
           trial_ends_at: null,
           subscription_status: 'none', // No access until trial/subscription
-          subscription_tier: 'basic',
+          subscription_tier: 'free',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -143,6 +179,28 @@ export class ProfileManager {
           .single();
 
         if (createError) {
+          // Check if the error is due to duplicate key (profile already exists)
+          if (createError.code === '23505' || createError.message.includes('duplicate key')) {
+            logger.info('Profile already exists (likely created by trigger), fetching existing profile', { userId });
+            
+            // Try to fetch the existing profile that was just created
+            const { data: existingProfile, error: fetchAfterError } = await supabaseAdmin
+              .from('profiles')
+              .select('*')
+              .eq('id', userId)
+              .single();
+
+            if (fetchAfterError) {
+              logger.error('Failed to fetch existing profile after duplicate key error:', fetchAfterError);
+              throw new Error(`Failed to fetch existing profile: ${fetchAfterError.message}`);
+            }
+
+            if (existingProfile) {
+              logger.info('Successfully fetched existing profile', { userId });
+              return existingProfile as UserProfile;
+            }
+          }
+          
           logger.error('Profile creation error:', createError);
           throw new Error(`Failed to create profile: ${createError.message}`);
         }
@@ -342,7 +400,7 @@ export class ProfileManager {
         .update({
           trial_ends_at: trialEnd.toISOString(),
           subscription_status: 'trial',
-          subscription_tier: 'ultra',
+          subscription_tier: 'enterprise',
           has_used_trial: true, // Mark trial as used permanently
           updated_at: now.toISOString()
         })

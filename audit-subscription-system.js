@@ -114,7 +114,7 @@ async function auditSubscriptionSystem() {
         .from('profiles')
         .update({
           subscription_status: 'trial',
-          subscription_tier: 'ultra',
+          subscription_tier: 'enterprise',
           trial_ends_at: trialEnd.toISOString(),
           has_used_trial: true,
           updated_at: new Date().toISOString()
@@ -130,7 +130,7 @@ async function auditSubscriptionSystem() {
         console.log(`   Status: ${trialUser.subscription_status}`);
         console.log(`   Tier: ${trialUser.subscription_tier}`);
         console.log(`   Trial Ends: ${new Date(trialUser.trial_ends_at).toLocaleDateString()}`);
-        console.log(`   Has Access: YES (Ultra features)`);
+        console.log(`   Has Access: YES (Enterprise features)`);
       }
       
       // Clean up
@@ -198,7 +198,7 @@ async function auditSubscriptionSystem() {
     const featureMatrix = [
       { tier: 'basic', features: ['Core AI Chatbot', 'Limited Conversations'] },
       { tier: 'pro', features: ['Core AI Chatbot', 'Unlimited Conversations', 'Custom Name/Message'] },
-      { tier: 'ultra', features: ['Core AI Chatbot', 'Unlimited Conversations', 'Full Customization', 'Priority Support'] }
+      { tier: 'enterprise', features: ['Core AI Chatbot', 'Unlimited Conversations', 'Full Customization', 'Priority Support'] }
     ];
     
     console.log('✅ Feature Access Matrix:');
@@ -249,7 +249,7 @@ async function auditSubscriptionSystem() {
     console.log('='.repeat(50));
     console.log('✅ New users get subscription_status="none" (NO automatic access)');
     console.log('✅ Users must explicitly start trial to get access');
-    console.log('✅ Trial users get Ultra-level features');
+    console.log('✅ Trial users get Enterprise-level features');
     console.log('✅ Paid users get immediate access to their tier features');
     console.log('✅ Feature access is controlled by subscription_tier');
     console.log('✅ Payment verification activates subscription immediately');

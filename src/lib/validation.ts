@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { logger } from './logger';
 
-// Core type definitions
-export const SubscriptionTier = z.enum(['basic', 'pro', 'ultra']);
+// Core type definitions (Free/Basic/Pro/Enterprise plans)
+export const SubscriptionTier = z.enum(['free', 'basic', 'pro', 'enterprise']);
 export const BillingPeriod = z.enum(['monthly', 'yearly']);
 export const UserRole = z.enum(['user', 'admin']);
 
@@ -88,7 +88,7 @@ export const createOrderSchema = z.object({
 // Trial activation validation
 export const trialActivationSchema = z.object({
   user_id: userIdSchema.optional(), // Optional as it can be derived from auth
-  tier: z.enum(['ultra']).default('ultra'), // Only ultra tier for trials
+  tier: z.enum(['enterprise']).default('enterprise'), // Only enterprise tier for trials
 });
 
 // Lead management validation

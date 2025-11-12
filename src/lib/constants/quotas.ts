@@ -1,42 +1,44 @@
-// Quota & usage constants (word & upload caps per plan)
-// These limits implement the product decision: Basic capped; Pro & Ultra unlimited conversations except Basic 1k convs.
+// Quota & usage constants - SOFT CAPS (show upgrade prompts, don't block)
+// Soft caps show toast notifications encouraging upgrades
 
 export interface PlanQuota {
-  id: 'free' | 'basic' | 'pro' | 'ultra';
-  monthlyUploadLimit: number; // uploads per calendar month
-  perUploadWordLimit: number; // hard word cap per upload
-  totalWordCap?: number;      // hard stored word cap (undefined => use fair use model)
-  fairUseSoft?: number;       // soft threshold for warnings
-  fairUseHard?: number;       // hard stop for "unlimited" style plan
-  monthlyConversationCap?: number; // Free and Basic have conversation caps
+  id: 'free' | 'basic' | 'pro' | 'enterprise';
+  monthlyUploadLimit: number; // soft cap - shows toast when reached
+  perUploadWordLimit: number; // no limit = 999999
+  totalWordCap?: number;      // soft cap - shows toast when reached
+  fairUseSoft?: number;       // not used
+  fairUseHard?: number;       // not used
+  monthlyConversationCap?: number; // conversation limits (hard cap)
 }
 
 export const PLAN_QUOTAS: Record<string, PlanQuota> = {
   free: {
     id: 'free',
-    monthlyUploadLimit: 1, // only 1 upload for free
-    perUploadWordLimit: 500, // max 500 words per upload
-    totalWordCap: 500, // total 500 words maximum
-    monthlyConversationCap: 100, // 100 conversations per month
+    monthlyUploadLimit: 10,     // Soft cap - show upgrade toast
+    perUploadWordLimit: 999999, // No per-upload limit
+    totalWordCap: 2000,         // Soft cap - show upgrade toast
+    monthlyConversationCap: 300,
   },
   basic: {
     id: 'basic',
-    monthlyUploadLimit: 4, // updated: max 4 uploads
-    perUploadWordLimit: 1000, // per upload limit clarified
-    totalWordCap: 2000, // corrected total stored cap
+    monthlyUploadLimit: 20,     // Soft cap - show upgrade toast
+    perUploadWordLimit: 999999, // No per-upload limit
+    totalWordCap: 5000,         // Soft cap - show upgrade toast
     monthlyConversationCap: 1000,
   },
   pro: {
     id: 'pro',
-    monthlyUploadLimit: 10, // unchanged per user spec
-    perUploadWordLimit: 5000, // updated per upload limit
-    totalWordCap: 15000, // adjusted total stored cap per new request
+    monthlyUploadLimit: 50,     // Soft cap - show upgrade toast
+    perUploadWordLimit: 999999, // No per-upload limit
+    totalWordCap: 15000,        // Soft cap - show upgrade toast
+    monthlyConversationCap: 3000,
   },
-  ultra: {
-    id: 'ultra',
-    monthlyUploadLimit: 25,
-    perUploadWordLimit: 10000, // clarified spec
-    totalWordCap: 50000, // fixed hard cap (no fair use model now)
+  enterprise: {
+    id: 'enterprise',
+    monthlyUploadLimit: 100,    // Soft cap - show upgrade toast
+    perUploadWordLimit: 999999, // No per-upload limit
+    totalWordCap: 30000,        // Soft cap - show upgrade toast
+    monthlyConversationCap: 15000,
   }
 };
 

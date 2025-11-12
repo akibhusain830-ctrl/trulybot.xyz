@@ -26,7 +26,7 @@ export default function PricingSection({
 
   const pricingFeatures = {
     free: [
-      '100 Replies / Month',
+      '300 Replies / Month',
       'Basic Knowledge Base (500 words)',
       '1 Knowledge Upload',
       'Basic AI Chatbot',
@@ -47,7 +47,7 @@ export default function PricingSection({
       'Automated Lead Capture',
       'Priority Support',
     ],
-    ultra: [
+    enterprise: [
       'Everything in Pro',
       'Maximum Knowledge Base (50,000 words)', 
       '25 Knowledge Uploads',
@@ -143,7 +143,7 @@ export default function PricingSection({
             const features = pricingFeatures[plan.id as keyof typeof pricingFeatures] || [];
             const isPopular = plan.id === 'pro';
             const isFree = plan.id === 'free';
-            const isEnterprise = plan.id === 'ultra';
+            const isEnterprise = plan.id === 'enterprise';
             const equivalentMonthlyInr = (billingPeriod === 'yearly' && currency === 'INR') ? Math.round((pricing.amount / 12)) : null;
 
             return (
@@ -328,7 +328,7 @@ export default function PricingSection({
             className="text-gray-400 text-sm mt-8 max-w-2xl mx-auto"
           >
             Join thousands of businesses already using TrulyBot to automate customer support and increase sales. 
-            Start with our Ultra plan free trial - no commitment required.
+            Start with our Enterprise plan free trial - no commitment required.
           </motion.p>
         </motion.div>
       </div>

@@ -59,7 +59,7 @@ export const UpdateDocumentSchema = z.object({
 
 // Payment schemas
 export const CreateOrderSchema = z.object({
-  planId: z.enum(['basic', 'pro', 'ultra']),
+  planId: z.enum(['basic', 'pro', 'enterprise']),
   currency: z.enum(['INR', 'USD']).default('INR'),
   billingPeriod: z.enum(['monthly', 'yearly']).default('monthly'),
   userId: IdSchema,

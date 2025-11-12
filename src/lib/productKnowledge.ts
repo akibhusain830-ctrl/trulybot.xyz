@@ -162,25 +162,25 @@ Ready to transform your customer experience? → [Start Free Trial] [View Pricin
 
 **Free Plan** - ₹0/month 🆓
 • Perfect for testing our AI chatbot
-• 100 replies/month
+• 300 replies/month
 • Basic Knowledge Base (500 words)
 • 1 Knowledge Upload & Website Embedding
 
-**Basic Plan** - ₹99/month (₹950/year)
+**Basic Plan** - ₹499/month (₹4,790/year)
 • For emerging businesses & startups
 • 1,000 replies/month
 • Standard Knowledge Base (2,000 words)
 • 4 Knowledge Uploads
 
-**Pro Plan** - ₹399/month (₹3,831/year) ⭐ Most Popular
+**Pro Plan** - ₹1,499/month (₹14,390/year) ⭐ Most Popular
 • Best for growing e-commerce brands
-• Unlimited replies
+• 3,000 replies/month
 • Expanded Knowledge Base (15,000 words)
 • 10 Knowledge Uploads + Lead Capture
 
-**Ultra Plan** - ₹599/month (₹5,750/year)
+**Enterprise Plan** - ₹2,999/month (₹28,790/year)
 • Ultimate toolkit for established businesses
-• Unlimited replies
+• 15,000 replies/month
 • Maximum Knowledge Base (50,000 words)
 • 25 Knowledge Uploads + Full Brand Customization
 
@@ -188,7 +188,7 @@ Ready to transform your customer experience? → [Start Free Trial] [View Pricin
 
 Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
     short:
-      "Plans: Free ₹0, Basic ₹99, Pro ₹399, Ultra ₹599. Start with free plan forever!",
+      "Plans: Free ₹0, Basic ₹499, Pro ₹1,499, Enterprise ₹2,999. Start with free plan forever!",
     priority: 5,
   },
   {
@@ -217,25 +217,25 @@ Ready to get started? → [Start Free Trial] [View Pricing] [Contact Sales]`,
       "available",
       "version",
     ],
-    answer: `🚀 Start with TrulyBot Forever FREE!
+    answer: `🚀 Start with TrulyBot Free!
 
 ✅ No credit card required
-✅ Permanent free plan available
+✅ Free plan available
 ✅ Upgrade anytime for more features
-✅ Setup takes just 5 minutes
+✅ Setup typically takes about 5 minutes
 
-With our FREE plan, you get:
-• 100 replies/month
+With the Free plan, you get:
+• 300 replies/month
 • Basic Knowledge Base (500 words)
 • 1 Knowledge Upload
 • Website Embedding
 • Complete dashboard access
 
-Want more features? Choose from Basic (₹99), Pro (₹399), or Ultra (₹599) plans.
+Want more features? Choose from Basic (₹499), Pro (₹1,499), or Enterprise (₹2,999) plans.
 
-Ready to start FREE? → [Start Free Plan] [View All Plans]`,
+Ready to get started? → [Start Free Plan] [View All Plans]`,
     short:
-      "Forever FREE plan available! 100 replies/month, basic features, no credit card required.",
+      "Free plan available: 300 replies/month, basic features, no credit card required.",
     priority: 5,
   },
   {
@@ -432,9 +432,12 @@ Ready to get started? → [Start Free Trial] [Dashboard]`,
 • Manage team access
 • Export conversation data
 
-**Business Insights:**
+**Insights (current):**
 • Most asked questions
 • Peak usage times
+• Basic conversation summaries
+
+**Coming soon (roadmap):**
 • Conversion analytics
 • Revenue attribution
 
@@ -467,7 +470,6 @@ Key pillars:
 - Rapid setup (minutes, not weeks)
 - Deterministic knowledge answers before AI creativity
 - Localized pricing for India
-- Soft, trust-first email capture
 - Roadmap: deeper integrations (Slack, CRM, docs ingestion)
 
 Goal: push high CSAT and reduced handling cost while staying privacy-conscious. Want details on setup or pricing next?`,
@@ -654,7 +656,7 @@ Fair Use: “Unlimited” implies soft caps with a scaling dialogue if usage is 
 
 Enterprise / custom? Reach out for a tailored conversation (volume, compliance, advanced support). Want fair use details or feature breakdown next?`,
     short:
-      "Basic ₹99 (1k msgs), Pro ₹299 (Unlimited*), Ultra ₹499 (Unlimited* + branding).",
+      "Basic ₹499 (1k msgs), Pro ₹1,499 (3k msgs), Enterprise ₹2,999 (15k msgs + branding).",
   },
   {
     id: "fair-use",
@@ -906,7 +908,7 @@ Need clarification? → [Full Terms] [Contact Support] [Legal Questions]`,
     ],
     answer: `🔌 TrulyBot API Access & Integration:
 
-**💎 Ultra Plan API Features:**
+**💎 Enterprise Plan API Features:**
 ✅ Full REST API access
 ✅ Webhook notifications
 ✅ Programmatic chat management
@@ -916,7 +918,7 @@ Need clarification? → [Full Terms] [Contact Support] [Legal Questions]`,
 **🛠️ API Capabilities:**
 • Send/receive messages programmatically
 • Manage chatbot configurations
-• Access conversation analytics
+• Access basic conversation metrics (where available)
 • Trigger custom workflows
 • Real-time webhook notifications
 
@@ -932,10 +934,10 @@ Need clarification? → [Full Terms] [Contact Support] [Legal Questions]`,
 • Automated workflows
 • Third-party app connections
 
-**Available in:** Ultra Plan (₹599/month)
-Ready to integrate? → [Upgrade to Ultra] [API Documentation] [Contact Sales]`,
+**Available in:** Enterprise Plan (₹2,999/month)
+Ready to integrate? → [Upgrade to Enterprise] [API Documentation] [Contact Sales]`,
     short:
-      "Full REST API access available in Ultra plan. Webhooks, programmatic chat, custom integrations.",
+      "Full REST API access available in Enterprise plan. Webhooks, programmatic chat, custom integrations.",
     priority: 4,
   },
   {
@@ -1131,19 +1133,16 @@ Want limitations transparently stated?`,
     answer: `🌍 TrulyBot Multi-Language & Localization:
 
 **🎯 Current Language Support:**
-✅ **English Primary** (optimized for Indian English)
-✅ **Hindi Support** (Beta - India-focused)
-✅ **Multi-language Detection** (automatic)
-✅ **Regional Context** (India-first design)
+✅ **English**
 
-**🚀 Advanced Language Features:**
-• Auto-detect customer language preference
+**🚀 Language Features (roadmap):**
+• Detect customer language preference
 • Respond in customer's preferred language
-• Support for regional business terminology
-• India-specific cultural context
+• Regional terminology support
+• India-specific context polishing
 
 **📈 Expansion Roadmap:**
-• Tamil, Telugu, Bengali support (Q1 2025)
+• Hindi, Tamil, Telugu, Bengali
 • European languages (based on demand)
 • Arabic & Southeast Asian languages
 • Custom language training for enterprise
@@ -1154,12 +1153,12 @@ Want limitations transparently stated?`,
 • Seamless switching between languages
 • Maintain brand voice across languages
 
-**🇮🇳 India-First Advantage:**
-Built specifically for Indian market needs with local language nuances.
+**🇮🇳 India-First Focus:**
+Optimized pricing and onboarding for Indian businesses.
 
-Ready for global customers? → [Start Free Trial] [Language Demo] [Custom Training]`,
+Want multi-language updates? → [Start Free Trial] [Language Demo] [Custom Training]`,
     short:
-      "English + Hindi support, multi-language roadmap, India-first design with regional context.",
+      "English today; multi-language support on roadmap with India-first focus.",
     priority: 4,
   },
   {

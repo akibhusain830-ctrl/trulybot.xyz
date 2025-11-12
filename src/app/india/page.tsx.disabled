@@ -59,7 +59,7 @@ export default function IndiaLandingPage() {
       popular: true,
     },
     {
-      name: 'Ultra',
+      name: 'Enterprise',
       price: '₹599',
       originalPrice: '$15',
       description: 'For enterprise and high-volume businesses',

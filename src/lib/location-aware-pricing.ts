@@ -18,7 +18,7 @@ export interface LocationAwarePricing {
     monthly: number;
     yearly: number;
   };
-  ultra: {
+  enterprise: {
     monthly: number;
     yearly: number;
   };
@@ -43,7 +43,7 @@ export function getLocationAwarePricing(currency: Currency = 'INR'): LocationAwa
       monthly: PRICING_TIERS[2].monthlyInr,
       yearly: PRICING_TIERS[2].yearlyInr,
     },
-    ultra: {
+    enterprise: {
       monthly: PRICING_TIERS[3].monthlyInr,
       yearly: PRICING_TIERS[3].yearlyInr,
     },
@@ -60,9 +60,9 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
 
 **Free Plan** - ${pricing.symbol}0/month
 • Perfect for testing our AI chatbot
-• Up to 100 replies/month
-• Basic knowledge base (500 words)
-• 1 knowledge upload only
+• Up to 300 replies/month
+• Basic knowledge base
+• Lead capture included
 
 **Basic Plan** - ${pricing.symbol}${pricing.basic.monthly}/month`;
   
@@ -73,7 +73,8 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   content += `
 • Perfect for small businesses
 • Up to 1,000 replies/month
-• Basic AI responses & email support
+• Shopify & WordPress Integration
+• Basic Support
 
 **Pro Plan** - ${pricing.symbol}${pricing.pro.monthly}/month ⭐ Most Popular`;
   
@@ -82,20 +83,22 @@ export function generatePricingContent(currency: Currency = 'INR', includeYearly
   }
   
   content += `
-• Best for growing businesses  
-• Up to 10,000 replies/month
-• Advanced AI with custom branding
+• Best for established stores
+• Up to 3,000 replies/month
+• Advanced Lead Capture
+• Priority Support
 
-**Ultra Plan** - ${pricing.symbol}${pricing.ultra.monthly}/month`;
+**Enterprise Plan** - ${pricing.symbol}${pricing.enterprise.monthly}/month`;
   
   if (includeYearly) {
-    content += ` (${pricing.symbol}${Math.round(pricing.ultra.yearly)}/year - Save 20%)`;
+    content += ` (${pricing.symbol}${Math.round(pricing.enterprise.yearly)}/year - Save 20%)`;
   }
   
   content += `
-• For enterprise & high-volume
-• Unlimited replies
-• Premium features + API access
+• For high-volume stores
+• Up to 15,000 replies/month
+• Advanced Lead Capture
+• Priority Support
 
 🎁 Start with a 7-day FREE trial - no credit card required!
 
@@ -109,7 +112,7 @@ Want me to help you choose the right plan?`;
  */
 export function generateShortPricingSummary(currency: Currency = 'INR'): string {
   const pricing = getLocationAwarePricing(currency);
-  return `Plans start at ${pricing.symbol}${pricing.basic.monthly}/month. Basic/Pro/Ultra tiers. 7-day free trial available.`;
+  return `Plans start at ${pricing.symbol}${pricing.free.monthly}/month (Free), ${pricing.symbol}${pricing.basic.monthly}/month (Basic), ${pricing.symbol}${pricing.pro.monthly}/month (Pro), ${pricing.symbol}${pricing.enterprise.monthly}/month (Enterprise). 7-day free trial available.`;
 }
 
 /**
@@ -117,7 +120,7 @@ export function generateShortPricingSummary(currency: Currency = 'INR'): string 
  */
 export function generateFAQPricingText(currency: Currency = 'INR'): string {
   const pricing = getLocationAwarePricing(currency);
-  return `TrulyBot offers flexible pricing starting at ${pricing.symbol}${pricing.basic.monthly}/month for the Basic plan, ${pricing.symbol}${pricing.pro.monthly}/month for Pro, and ${pricing.symbol}${pricing.ultra.monthly}/month for Ultra. All plans include a free 7-day trial with no credit card required.`;
+  return `TrulyBot offers flexible pricing starting with a Free plan (${pricing.symbol}${pricing.free.monthly}/month), Basic (${pricing.symbol}${pricing.basic.monthly}/month), Pro (${pricing.symbol}${pricing.pro.monthly}/month), and Enterprise (${pricing.symbol}${pricing.enterprise.monthly}/month). All paid plans include a free 7-day trial with no credit card required.`;
 }
 
 /**

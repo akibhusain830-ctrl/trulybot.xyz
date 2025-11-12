@@ -18,9 +18,9 @@ WHERE chatbot_logo_url IS NULL
    OR custom_css IS NULL;
 
 -- Add comments for documentation
-COMMENT ON COLUMN public.profiles.chatbot_logo_url IS 'URL for custom chatbot logo (Ultra plan feature)';
+COMMENT ON COLUMN public.profiles.chatbot_logo_url IS 'URL for custom chatbot logo (Enterprise plan feature)';
 COMMENT ON COLUMN public.profiles.chatbot_theme IS 'Theme for chatbot appearance: default, minimal, corporate, friendly, modern';
-COMMENT ON COLUMN public.profiles.custom_css IS 'Custom CSS for chatbot styling (Ultra plan feature)';
+COMMENT ON COLUMN public.profiles.custom_css IS 'Custom CSS for chatbot styling (Enterprise plan feature)';
 
 -- Grant necessary permissions
 GRANT SELECT, UPDATE ON public.profiles TO authenticated;

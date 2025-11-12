@@ -36,7 +36,7 @@ export default function StartTrialPage() {
     }
   }, [mounted, user, loading, router]);
 
-  const ultraPlan = PRICING_TIERS.find(p => p.id === 'ultra');
+  const enterprisePlan = PRICING_TIERS.find(p => p.id === 'enterprise');
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -90,13 +90,13 @@ export default function StartTrialPage() {
       >
         <h1 className="text-3xl font-bold text-center tracking-tighter">Start Your 7-Day Free Trial</h1>
         <p className="text-slate-400 text-center mt-2">
-          You'll get full access to all features from our **Ultra** plan for a week. No credit card required.
+          You'll get full access to all features from our **Enterprise** plan for a week. No credit card required.
         </p>
 
         <div className="my-8 p-6 bg-slate-800/50 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">During your trial, you'll get:</h2>
             <ul className="space-y-3 text-slate-300">
-                {ultraPlan?.features.map((feature, i) => (
+                {enterprisePlan?.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">
                         <div className="pt-1"><CheckIcon /></div>
                         <span>{feature}</span>

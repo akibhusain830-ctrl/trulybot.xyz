@@ -25,7 +25,7 @@ const PROFESSIONAL_SITELINKS = {
     },
     {
       name: 'Pricing Plans',
-      description: 'Transparent pricing starting at ₹99/month. Choose the perfect plan for your business.',
+      description: 'Transparent pricing starting at ₹0/month. Choose the perfect plan for your business.',
       url: '/pricing',
       priority: 2
     },
@@ -309,7 +309,7 @@ function generatePageSpecificFAQ(pageType: string): any {
       },
       {
         question: 'What happens after my free trial ends?',
-        answer: 'After 7 days, you can choose a paid plan starting at ₹99/month or your chatbot will be paused until you upgrade.'
+        answer: 'After 7 days, you can choose a paid plan starting at ₹499/month or your chatbot will be paused until you upgrade.'
       },
       {
         question: 'Can I cancel my trial anytime?',
@@ -319,7 +319,7 @@ function generatePageSpecificFAQ(pageType: string): any {
     'pricing': [
       {
         question: 'What is included in the basic plan?',
-        answer: 'The basic plan includes 1,000 conversations/month, basic AI responses, email support, and standard knowledge base. Pricing varies by region: ₹99/month for India, $5/month internationally.'
+        answer: 'The basic plan includes 1,000 conversations/month, basic AI responses, email support, and standard knowledge base. Pricing is ₹499/month in INR.'
       },
       {
         question: 'Do you offer custom pricing for large businesses?',

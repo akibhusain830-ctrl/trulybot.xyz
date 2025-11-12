@@ -1,0 +1,666 @@
+table_schema,table_name,column_position,column_name,data_type,character_maximum_length,is_nullable,column_default
+auth,sso_domains,1,id,uuid,null,NO,null
+auth,sso_domains,2,sso_provider_id,uuid,null,NO,null
+auth,sso_domains,3,domain,text,null,NO,null
+auth,sso_domains,4,created_at,timestamp with time zone,null,YES,null
+auth,sso_domains,5,updated_at,timestamp with time zone,null,YES,null
+auth,saml_providers,1,id,uuid,null,NO,null
+auth,saml_providers,2,sso_provider_id,uuid,null,NO,null
+auth,saml_providers,3,entity_id,text,null,NO,null
+auth,saml_providers,4,metadata_xml,text,null,NO,null
+auth,saml_providers,5,metadata_url,text,null,YES,null
+auth,saml_providers,6,attribute_mapping,jsonb,null,YES,null
+auth,saml_providers,7,created_at,timestamp with time zone,null,YES,null
+auth,saml_providers,8,updated_at,timestamp with time zone,null,YES,null
+auth,saml_providers,9,name_id_format,text,null,YES,null
+auth,sso_providers,1,id,uuid,null,NO,null
+auth,sso_providers,2,resource_id,text,null,YES,null
+auth,sso_providers,3,created_at,timestamp with time zone,null,YES,null
+auth,sso_providers,4,updated_at,timestamp with time zone,null,YES,null
+auth,sso_providers,5,disabled,boolean,null,YES,null
+public,subscriptions,1,id,uuid,null,NO,gen_random_uuid()
+public,subscriptions,2,user_id,uuid,null,YES,null
+public,subscriptions,3,plan_name,text,null,NO,null
+public,subscriptions,4,status,text,null,NO,null
+public,subscriptions,5,current_period_end,timestamp with time zone,null,YES,null
+public,subscriptions,6,created_at,timestamp with time zone,null,YES,now()
+public,subscriptions,7,updated_at,timestamp with time zone,null,YES,now()
+public,subscriptions,8,version,integer,null,NO,1
+storage,prefixes,1,bucket_id,text,null,NO,null
+storage,prefixes,2,name,text,null,NO,null
+storage,prefixes,3,level,integer,null,NO,null
+storage,prefixes,4,created_at,timestamp with time zone,null,YES,now()
+storage,prefixes,5,updated_at,timestamp with time zone,null,YES,now()
+auth,instances,1,id,uuid,null,NO,null
+auth,instances,2,uuid,uuid,null,YES,null
+auth,instances,3,raw_base_config,text,null,YES,null
+auth,instances,4,created_at,timestamp with time zone,null,YES,null
+auth,instances,5,updated_at,timestamp with time zone,null,YES,null
+storage,buckets_analytics,1,id,text,null,NO,null
+storage,buckets_analytics,2,type,USER-DEFINED,null,NO,'ANALYTICS'::storage.buckettype
+storage,buckets_analytics,3,format,text,null,NO,'ICEBERG'::text
+storage,buckets_analytics,4,created_at,timestamp with time zone,null,NO,now()
+storage,buckets_analytics,5,updated_at,timestamp with time zone,null,NO,now()
+auth,schema_migrations,1,version,character varying,255,NO,null
+public,bot_analytics_events,1,id,uuid,null,NO,gen_random_uuid()
+public,bot_analytics_events,2,created_at,timestamp with time zone,null,NO,now()
+public,bot_analytics_events,3,bot_id,uuid,null,NO,null
+public,bot_analytics_events,4,session_id,text,null,NO,null
+public,bot_analytics_events,5,event_type,text,null,NO,null
+public,bot_analytics_events,6,metadata,jsonb,null,YES,null
+storage,buckets,1,id,text,null,NO,null
+storage,buckets,2,name,text,null,NO,null
+storage,buckets,3,owner,uuid,null,YES,null
+storage,buckets,4,created_at,timestamp with time zone,null,YES,now()
+storage,buckets,5,updated_at,timestamp with time zone,null,YES,now()
+storage,buckets,6,public,boolean,null,YES,false
+storage,buckets,7,avif_autodetection,boolean,null,YES,false
+storage,buckets,8,file_size_limit,bigint,null,YES,null
+storage,buckets,9,allowed_mime_types,ARRAY,null,YES,null
+storage,buckets,10,owner_id,text,null,YES,null
+storage,buckets,11,type,USER-DEFINED,null,NO,'STANDARD'::storage.buckettype
+storage,objects,1,id,uuid,null,NO,gen_random_uuid()
+storage,objects,2,bucket_id,text,null,YES,null
+storage,objects,3,name,text,null,YES,null
+storage,objects,4,owner,uuid,null,YES,null
+storage,objects,5,created_at,timestamp with time zone,null,YES,now()
+storage,objects,6,updated_at,timestamp with time zone,null,YES,now()
+storage,objects,7,last_accessed_at,timestamp with time zone,null,YES,now()
+storage,objects,8,metadata,jsonb,null,YES,null
+storage,objects,9,path_tokens,ARRAY,null,YES,null
+storage,objects,10,version,text,null,YES,null
+storage,objects,11,owner_id,text,null,YES,null
+storage,objects,12,user_metadata,jsonb,null,YES,null
+storage,objects,13,level,integer,null,YES,null
+auth,mfa_factors,1,id,uuid,null,NO,null
+auth,mfa_factors,2,user_id,uuid,null,NO,null
+auth,mfa_factors,3,friendly_name,text,null,YES,null
+auth,mfa_factors,4,factor_type,USER-DEFINED,null,NO,null
+auth,mfa_factors,5,status,USER-DEFINED,null,NO,null
+auth,mfa_factors,6,created_at,timestamp with time zone,null,NO,null
+auth,mfa_factors,7,updated_at,timestamp with time zone,null,NO,null
+auth,mfa_factors,8,secret,text,null,YES,null
+auth,mfa_factors,9,phone,text,null,YES,null
+auth,mfa_factors,10,last_challenged_at,timestamp with time zone,null,YES,null
+auth,mfa_factors,11,web_authn_credential,jsonb,null,YES,null
+auth,mfa_factors,12,web_authn_aaguid,uuid,null,YES,null
+auth,mfa_factors,13,last_webauthn_challenge_data,jsonb,null,YES,null
+auth,refresh_tokens,1,instance_id,uuid,null,YES,null
+auth,refresh_tokens,2,id,bigint,null,NO,nextval('auth.refresh_tokens_id_seq'::regclass)
+auth,refresh_tokens,3,token,character varying,255,YES,null
+auth,refresh_tokens,4,user_id,character varying,255,YES,null
+auth,refresh_tokens,5,revoked,boolean,null,YES,null
+auth,refresh_tokens,6,created_at,timestamp with time zone,null,YES,null
+auth,refresh_tokens,7,updated_at,timestamp with time zone,null,YES,null
+auth,refresh_tokens,8,parent,character varying,255,YES,null
+auth,refresh_tokens,9,session_id,uuid,null,YES,null
+vault,secrets,1,id,uuid,null,NO,gen_random_uuid()
+vault,secrets,2,name,text,null,YES,null
+vault,secrets,3,description,text,null,NO,''::text
+vault,secrets,4,secret,text,null,NO,null
+vault,secrets,5,key_id,uuid,null,YES,null
+vault,secrets,6,nonce,bytea,null,YES,vault._crypto_aead_det_noncegen()
+vault,secrets,7,created_at,timestamp with time zone,null,NO,CURRENT_TIMESTAMP
+vault,secrets,8,updated_at,timestamp with time zone,null,NO,CURRENT_TIMESTAMP
+auth,users,1,instance_id,uuid,null,YES,null
+auth,users,2,id,uuid,null,NO,null
+auth,users,3,aud,character varying,255,YES,null
+auth,users,4,role,character varying,255,YES,null
+auth,users,5,email,character varying,255,YES,null
+auth,users,6,encrypted_password,character varying,255,YES,null
+auth,users,7,email_confirmed_at,timestamp with time zone,null,YES,null
+auth,users,8,invited_at,timestamp with time zone,null,YES,null
+auth,users,9,confirmation_token,character varying,255,YES,null
+auth,users,10,confirmation_sent_at,timestamp with time zone,null,YES,null
+auth,users,11,recovery_token,character varying,255,YES,null
+auth,users,12,recovery_sent_at,timestamp with time zone,null,YES,null
+auth,users,13,email_change_token_new,character varying,255,YES,null
+auth,users,14,email_change,character varying,255,YES,null
+auth,users,15,email_change_sent_at,timestamp with time zone,null,YES,null
+auth,users,16,last_sign_in_at,timestamp with time zone,null,YES,null
+auth,users,17,raw_app_meta_data,jsonb,null,YES,null
+auth,users,18,raw_user_meta_data,jsonb,null,YES,null
+auth,users,19,is_super_admin,boolean,null,YES,null
+auth,users,20,created_at,timestamp with time zone,null,YES,null
+auth,users,21,updated_at,timestamp with time zone,null,YES,null
+auth,users,22,phone,text,null,YES,NULL::character varying
+auth,users,23,phone_confirmed_at,timestamp with time zone,null,YES,null
+auth,users,24,phone_change,text,null,YES,''::character varying
+auth,users,25,phone_change_token,character varying,255,YES,''::character varying
+auth,users,26,phone_change_sent_at,timestamp with time zone,null,YES,null
+auth,users,27,confirmed_at,timestamp with time zone,null,YES,null
+auth,users,28,email_change_token_current,character varying,255,YES,''::character varying
+auth,users,29,email_change_confirm_status,smallint,null,YES,0
+auth,users,30,banned_until,timestamp with time zone,null,YES,null
+auth,users,31,reauthentication_token,character varying,255,YES,''::character varying
+auth,users,32,reauthentication_sent_at,timestamp with time zone,null,YES,null
+auth,users,33,is_sso_user,boolean,null,NO,false
+auth,users,34,deleted_at,timestamp with time zone,null,YES,null
+auth,users,35,is_anonymous,boolean,null,NO,false
+auth,audit_log_entries,1,instance_id,uuid,null,YES,null
+auth,audit_log_entries,2,id,uuid,null,NO,null
+auth,audit_log_entries,3,payload,json,null,YES,null
+auth,audit_log_entries,4,created_at,timestamp with time zone,null,YES,null
+auth,audit_log_entries,5,ip_address,character varying,64,NO,''::character varying
+auth,saml_relay_states,1,id,uuid,null,NO,null
+auth,saml_relay_states,2,sso_provider_id,uuid,null,NO,null
+auth,saml_relay_states,3,request_id,text,null,NO,null
+auth,saml_relay_states,4,for_email,text,null,YES,null
+auth,saml_relay_states,5,redirect_to,text,null,YES,null
+auth,saml_relay_states,7,created_at,timestamp with time zone,null,YES,null
+auth,saml_relay_states,8,updated_at,timestamp with time zone,null,YES,null
+auth,saml_relay_states,9,flow_state_id,uuid,null,YES,null
+auth,mfa_amr_claims,1,session_id,uuid,null,NO,null
+auth,mfa_amr_claims,2,created_at,timestamp with time zone,null,NO,null
+auth,mfa_amr_claims,3,updated_at,timestamp with time zone,null,NO,null
+auth,mfa_amr_claims,4,authentication_method,text,null,NO,null
+auth,mfa_amr_claims,5,id,uuid,null,NO,null
+auth,flow_state,1,id,uuid,null,NO,null
+auth,flow_state,2,user_id,uuid,null,YES,null
+auth,flow_state,3,auth_code,text,null,NO,null
+auth,flow_state,4,code_challenge_method,USER-DEFINED,null,NO,null
+auth,flow_state,5,code_challenge,text,null,NO,null
+auth,flow_state,6,provider_type,text,null,NO,null
+auth,flow_state,7,provider_access_token,text,null,YES,null
+auth,flow_state,8,provider_refresh_token,text,null,YES,null
+auth,flow_state,9,created_at,timestamp with time zone,null,YES,null
+auth,flow_state,10,updated_at,timestamp with time zone,null,YES,null
+auth,flow_state,11,authentication_method,text,null,NO,null
+auth,flow_state,12,auth_code_issued_at,timestamp with time zone,null,YES,null
+auth,identities,1,provider_id,text,null,NO,null
+auth,identities,2,user_id,uuid,null,NO,null
+auth,identities,3,identity_data,jsonb,null,NO,null
+auth,identities,4,provider,text,null,NO,null
+auth,identities,5,last_sign_in_at,timestamp with time zone,null,YES,null
+auth,identities,6,created_at,timestamp with time zone,null,YES,null
+auth,identities,7,updated_at,timestamp with time zone,null,YES,null
+auth,identities,8,email,text,null,YES,null
+auth,identities,9,id,uuid,null,NO,gen_random_uuid()
+auth,one_time_tokens,1,id,uuid,null,NO,null
+auth,one_time_tokens,2,user_id,uuid,null,NO,null
+auth,one_time_tokens,3,token_type,USER-DEFINED,null,NO,null
+auth,one_time_tokens,4,token_hash,text,null,NO,null
+auth,one_time_tokens,5,relates_to,text,null,NO,null
+auth,one_time_tokens,6,created_at,timestamp without time zone,null,NO,now()
+auth,one_time_tokens,7,updated_at,timestamp without time zone,null,NO,now()
+storage,migrations,1,id,integer,null,NO,null
+storage,migrations,2,name,character varying,100,NO,null
+storage,migrations,3,hash,character varying,40,NO,null
+storage,migrations,4,executed_at,timestamp without time zone,null,YES,CURRENT_TIMESTAMP
+auth,mfa_challenges,1,id,uuid,null,NO,null
+auth,mfa_challenges,2,factor_id,uuid,null,NO,null
+auth,mfa_challenges,3,created_at,timestamp with time zone,null,NO,null
+auth,mfa_challenges,4,verified_at,timestamp with time zone,null,YES,null
+auth,mfa_challenges,5,ip_address,inet,null,NO,null
+auth,mfa_challenges,6,otp_code,text,null,YES,null
+auth,mfa_challenges,7,web_authn_session_data,jsonb,null,YES,null
+auth,sessions,1,id,uuid,null,NO,null
+auth,sessions,2,user_id,uuid,null,NO,null
+auth,sessions,3,created_at,timestamp with time zone,null,YES,null
+auth,sessions,4,updated_at,timestamp with time zone,null,YES,null
+auth,sessions,5,factor_id,uuid,null,YES,null
+auth,sessions,6,aal,USER-DEFINED,null,YES,null
+auth,sessions,7,not_after,timestamp with time zone,null,YES,null
+auth,sessions,8,refreshed_at,timestamp without time zone,null,YES,null
+auth,sessions,9,user_agent,text,null,YES,null
+auth,sessions,10,ip,inet,null,YES,null
+auth,sessions,11,tag,text,null,YES,null
+auth,sessions,12,oauth_client_id,uuid,null,YES,null
+auth,sessions,13,refresh_token_hmac_key,text,null,YES,null
+auth,sessions,14,refresh_token_counter,bigint,null,YES,null
+auth,oauth_clients,1,id,uuid,null,NO,null
+auth,oauth_clients,3,client_secret_hash,text,null,YES,null
+auth,oauth_clients,4,registration_type,USER-DEFINED,null,NO,null
+auth,oauth_clients,5,redirect_uris,text,null,NO,null
+auth,oauth_clients,6,grant_types,text,null,NO,null
+auth,oauth_clients,7,client_name,text,null,YES,null
+auth,oauth_clients,8,client_uri,text,null,YES,null
+auth,oauth_clients,9,logo_uri,text,null,YES,null
+auth,oauth_clients,10,created_at,timestamp with time zone,null,NO,now()
+auth,oauth_clients,11,updated_at,timestamp with time zone,null,NO,now()
+auth,oauth_clients,12,deleted_at,timestamp with time zone,null,YES,null
+auth,oauth_clients,13,client_type,USER-DEFINED,null,NO,'confidential'::auth.oauth_client_type
+realtime,messages_2025_09_29,1,topic,text,null,NO,null
+realtime,messages_2025_09_29,2,extension,text,null,NO,null
+realtime,messages_2025_09_29,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_29,4,event,text,null,YES,null
+realtime,messages_2025_09_29,5,private,boolean,null,YES,false
+realtime,messages_2025_09_29,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_29,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_29,8,id,uuid,null,NO,gen_random_uuid()
+storage,s3_multipart_uploads_parts,1,id,uuid,null,NO,gen_random_uuid()
+storage,s3_multipart_uploads_parts,2,upload_id,text,null,NO,null
+storage,s3_multipart_uploads_parts,3,size,bigint,null,NO,0
+storage,s3_multipart_uploads_parts,4,part_number,integer,null,NO,null
+storage,s3_multipart_uploads_parts,5,bucket_id,text,null,NO,null
+storage,s3_multipart_uploads_parts,6,key,text,null,NO,null
+storage,s3_multipart_uploads_parts,7,etag,text,null,NO,null
+storage,s3_multipart_uploads_parts,8,owner_id,text,null,YES,null
+storage,s3_multipart_uploads_parts,9,version,text,null,NO,null
+storage,s3_multipart_uploads_parts,10,created_at,timestamp with time zone,null,NO,now()
+storage,s3_multipart_uploads,1,id,text,null,NO,null
+storage,s3_multipart_uploads,2,in_progress_size,bigint,null,NO,0
+storage,s3_multipart_uploads,3,upload_signature,text,null,NO,null
+storage,s3_multipart_uploads,4,bucket_id,text,null,NO,null
+storage,s3_multipart_uploads,5,key,text,null,NO,null
+storage,s3_multipart_uploads,6,version,text,null,NO,null
+storage,s3_multipart_uploads,7,owner_id,text,null,YES,null
+storage,s3_multipart_uploads,8,created_at,timestamp with time zone,null,NO,now()
+storage,s3_multipart_uploads,9,user_metadata,jsonb,null,YES,null
+public,chat_sessions,1,id,uuid,null,NO,uuid_generate_v4()
+public,chat_sessions,2,workspace_id,uuid,null,YES,null
+public,chat_sessions,3,session_id,character varying,255,NO,null
+public,chat_sessions,4,visitor_id,character varying,255,YES,null
+public,chat_sessions,5,messages,jsonb,null,NO,'[]'::jsonb
+public,chat_sessions,6,status,character varying,50,YES,'active'::character varying
+public,chat_sessions,7,source_url,text,null,YES,null
+public,chat_sessions,8,user_agent,text,null,YES,null
+public,chat_sessions,9,ip_address,inet,null,YES,null
+public,chat_sessions,10,started_at,timestamp with time zone,null,YES,now()
+public,chat_sessions,11,ended_at,timestamp with time zone,null,YES,null
+public,chat_sessions,12,last_activity,timestamp with time zone,null,YES,now()
+public,chat_sessions,13,created_at,timestamp with time zone,null,YES,now()
+public,chat_sessions,14,updated_at,timestamp with time zone,null,YES,now()
+public,chat_sessions,15,user_id,uuid,null,YES,null
+public,documents,1,id,uuid,null,NO,uuid_generate_v4()
+public,documents,2,user_id,uuid,null,YES,null
+public,documents,3,filename,text,null,YES,null
+public,documents,4,content,text,null,YES,null
+public,documents,5,created_at,timestamp without time zone,null,YES,now()
+public,documents,6,file_name,text,null,YES,null
+public,documents,7,status,text,null,NO,'PENDING'::text
+public,documents,8,workspace_id,uuid,null,YES,null
+public,documents,9,content_type,character varying,100,YES,'text/plain'::character varying
+public,documents,10,file_size,integer,null,YES,null
+public,documents,11,processing_error,text,null,YES,null
+public,documents,12,embedding_status,character varying,50,YES,'pending'::character varying
+public,documents,13,updated_at,timestamp with time zone,null,YES,now()
+public,documents,14,word_count,integer,null,YES,null
+public,orders,1,id,uuid,null,NO,gen_random_uuid()
+public,orders,2,razorpay_order_id,text,null,NO,null
+public,orders,3,user_id,uuid,null,NO,null
+public,orders,4,plan_id,text,null,NO,null
+public,orders,5,billing_period,text,null,NO,'monthly'::text
+public,orders,6,amount,numeric,null,NO,null
+public,orders,7,currency,text,null,NO,'INR'::text
+public,orders,8,notes,jsonb,null,YES,'{}'::jsonb
+public,orders,9,status,text,null,NO,'created'::text
+public,orders,10,created_at,timestamp with time zone,null,NO,now()
+public,orders,11,updated_at,timestamp with time zone,null,NO,now()
+public,orders,12,idempotency_key,text,null,YES,null
+public,orders,13,request_id,text,null,YES,null
+public,orders,14,version,integer,null,NO,1
+realtime,messages_2025_09_24,1,topic,text,null,NO,null
+realtime,messages_2025_09_24,2,extension,text,null,NO,null
+realtime,messages_2025_09_24,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_24,4,event,text,null,YES,null
+realtime,messages_2025_09_24,5,private,boolean,null,YES,false
+realtime,messages_2025_09_24,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_24,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_24,8,id,uuid,null,NO,gen_random_uuid()
+realtime,messages_2025_09_26,1,topic,text,null,NO,null
+realtime,messages_2025_09_26,2,extension,text,null,NO,null
+realtime,messages_2025_09_26,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_26,4,event,text,null,YES,null
+realtime,messages_2025_09_26,5,private,boolean,null,YES,false
+realtime,messages_2025_09_26,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_26,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_26,8,id,uuid,null,NO,gen_random_uuid()
+realtime,schema_migrations,1,version,bigint,null,NO,null
+realtime,schema_migrations,2,inserted_at,timestamp without time zone,null,YES,null
+realtime,messages_2025_09_25,1,topic,text,null,NO,null
+realtime,messages_2025_09_25,2,extension,text,null,NO,null
+realtime,messages_2025_09_25,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_25,4,event,text,null,YES,null
+realtime,messages_2025_09_25,5,private,boolean,null,YES,false
+realtime,messages_2025_09_25,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_25,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_25,8,id,uuid,null,NO,gen_random_uuid()
+realtime,messages_2025_09_27,1,topic,text,null,NO,null
+realtime,messages_2025_09_27,2,extension,text,null,NO,null
+realtime,messages_2025_09_27,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_27,4,event,text,null,YES,null
+realtime,messages_2025_09_27,5,private,boolean,null,YES,false
+realtime,messages_2025_09_27,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_27,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_27,8,id,uuid,null,NO,gen_random_uuid()
+public,audit_logs,1,id,uuid,null,NO,gen_random_uuid()
+public,audit_logs,2,user_id,uuid,null,YES,null
+public,audit_logs,3,workspace_id,uuid,null,YES,null
+public,audit_logs,4,action,text,null,NO,null
+public,audit_logs,5,resource_type,text,null,NO,null
+public,audit_logs,6,resource_id,text,null,NO,null
+public,audit_logs,7,old_values,jsonb,null,YES,null
+public,audit_logs,8,new_values,jsonb,null,YES,null
+public,audit_logs,9,ip_address,inet,null,YES,null
+public,audit_logs,10,user_agent,text,null,YES,null
+public,audit_logs,11,created_at,timestamp with time zone,null,YES,CURRENT_TIMESTAMP
+public,billing_history,1,id,uuid,null,NO,gen_random_uuid()
+public,billing_history,2,user_id,uuid,null,NO,null
+public,billing_history,3,created_at,timestamp with time zone,null,NO,now()
+public,billing_history,4,plan_id,text,null,NO,null
+public,billing_history,5,amount_paid,numeric,null,NO,null
+public,billing_history,6,upi,text,null,YES,null
+public,billing_history,7,invoice_url,text,null,YES,null
+public,billing_history,8,payment_status,text,null,YES,'paid'::text
+public,billing_history,9,razorpay_payment_id,text,null,YES,null
+public,billing_history,10,razorpay_subscription_id,text,null,YES,null
+public,billing_history,11,razorpay_invoice_id,text,null,YES,null
+public,billing_history,12,currency,text,null,YES,'INR'::text
+public,billing_history,13,notes,jsonb,null,YES,null
+public,billing_history,14,razorpay_order_id,text,null,YES,null
+realtime,messages_2025_09_28,1,topic,text,null,NO,null
+realtime,messages_2025_09_28,2,extension,text,null,NO,null
+realtime,messages_2025_09_28,3,payload,jsonb,null,YES,null
+realtime,messages_2025_09_28,4,event,text,null,YES,null
+realtime,messages_2025_09_28,5,private,boolean,null,YES,false
+realtime,messages_2025_09_28,6,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_28,7,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages_2025_09_28,8,id,uuid,null,NO,gen_random_uuid()
+public,document_chunks,1,id,uuid,null,NO,gen_random_uuid()
+public,document_chunks,2,document_id,uuid,null,NO,null
+public,document_chunks,3,user_id,uuid,null,NO,null
+public,document_chunks,4,content,text,null,NO,null
+public,document_chunks,5,embedding,USER-DEFINED,null,YES,null
+public,document_chunks,6,workspace_id,uuid,null,YES,null
+public,error_logs,1,id,uuid,null,NO,gen_random_uuid()
+public,error_logs,2,user_id,uuid,null,YES,null
+public,error_logs,3,workspace_id,uuid,null,YES,null
+public,error_logs,4,error_type,text,null,NO,null
+public,error_logs,5,error_message,text,null,NO,null
+public,error_logs,6,error_stack,text,null,YES,null
+public,error_logs,7,request_id,text,null,YES,null
+public,error_logs,8,endpoint,text,null,YES,null
+public,error_logs,9,method,text,null,YES,null
+public,error_logs,10,status_code,integer,null,YES,null
+public,error_logs,11,ip_address,inet,null,YES,null
+public,error_logs,12,created_at,timestamp with time zone,null,YES,CURRENT_TIMESTAMP
+realtime,messages,3,topic,text,null,NO,null
+realtime,messages,4,extension,text,null,NO,null
+realtime,messages,5,payload,jsonb,null,YES,null
+realtime,messages,6,event,text,null,YES,null
+realtime,messages,7,private,boolean,null,YES,false
+realtime,messages,8,updated_at,timestamp without time zone,null,NO,now()
+realtime,messages,9,inserted_at,timestamp without time zone,null,NO,now()
+realtime,messages,10,id,uuid,null,NO,gen_random_uuid()
+public,security_events,1,id,uuid,null,NO,gen_random_uuid()
+public,security_events,2,event_type,text,null,NO,null
+public,security_events,3,severity,text,null,NO,'medium'::text
+public,security_events,4,user_id,uuid,null,YES,null
+public,security_events,5,ip_address,inet,null,YES,null
+public,security_events,6,user_agent,text,null,YES,null
+public,security_events,7,endpoint,text,null,YES,null
+public,security_events,8,method,text,null,YES,null
+public,security_events,9,status,text,null,YES,'new'::text
+public,security_events,10,event_data,jsonb,null,YES,'{}'::jsonb
+public,security_events,11,additional_context,jsonb,null,YES,'{}'::jsonb
+public,security_events,12,session_id,text,null,YES,null
+public,security_events,13,request_id,text,null,YES,null
+public,security_events,14,created_at,timestamp with time zone,null,YES,now()
+public,security_events,15,updated_at,timestamp with time zone,null,YES,now()
+public,audit_trail,1,id,uuid,null,NO,gen_random_uuid()
+public,audit_trail,2,table_name,text,null,NO,null
+public,audit_trail,3,operation,text,null,NO,null
+public,audit_trail,4,record_id,uuid,null,YES,null
+public,audit_trail,5,user_id,uuid,null,YES,null
+public,audit_trail,6,old_values,jsonb,null,YES,null
+public,audit_trail,7,new_values,jsonb,null,YES,null
+public,audit_trail,8,changed_fields,ARRAY,null,YES,null
+public,audit_trail,9,endpoint,text,null,YES,null
+public,audit_trail,10,request_id,text,null,YES,null
+public,audit_trail,11,session_id,text,null,YES,null
+public,audit_trail,12,ip_address,inet,null,YES,null
+public,audit_trail,13,user_agent,text,null,YES,null
+public,audit_trail,14,reason,text,null,YES,null
+public,audit_trail,15,additional_context,jsonb,null,YES,'{}'::jsonb
+public,audit_trail,16,created_at,timestamp with time zone,null,YES,now()
+public,authentication_events,1,id,uuid,null,NO,gen_random_uuid()
+public,authentication_events,2,event_type,text,null,NO,null
+public,authentication_events,3,user_id,uuid,null,YES,null
+public,authentication_events,4,email,text,null,YES,null
+public,authentication_events,5,ip_address,inet,null,YES,null
+public,authentication_events,6,user_agent,text,null,YES,null
+public,authentication_events,7,session_id,text,null,YES,null
+public,authentication_events,8,request_id,text,null,YES,null
+public,authentication_events,9,success,boolean,null,NO,null
+public,authentication_events,10,failure_reason,text,null,YES,null
+public,authentication_events,11,event_data,jsonb,null,YES,'{}'::jsonb
+public,authentication_events,12,suspicious,boolean,null,YES,false
+public,authentication_events,13,requires_review,boolean,null,YES,false
+public,authentication_events,14,created_at,timestamp with time zone,null,YES,now()
+public,rate_limit_violations,1,id,uuid,null,NO,gen_random_uuid()
+public,rate_limit_violations,2,user_id,uuid,null,YES,null
+public,rate_limit_violations,3,ip_address,inet,null,NO,null
+public,rate_limit_violations,4,endpoint,text,null,NO,null
+public,rate_limit_violations,5,limit_type,text,null,NO,null
+public,rate_limit_violations,6,current_count,integer,null,NO,null
+public,rate_limit_violations,7,limit_threshold,integer,null,NO,null
+public,rate_limit_violations,8,window_duration_seconds,integer,null,NO,null
+public,rate_limit_violations,9,user_agent,text,null,YES,null
+public,rate_limit_violations,10,session_id,text,null,YES,null
+public,rate_limit_violations,11,request_id,text,null,YES,null
+public,rate_limit_violations,12,request_data,jsonb,null,YES,'{}'::jsonb
+public,rate_limit_violations,13,created_at,timestamp with time zone,null,YES,now()
+public,security_alerts,1,id,uuid,null,NO,gen_random_uuid()
+public,security_alerts,2,alert_type,text,null,NO,null
+public,security_alerts,3,severity,text,null,NO,'medium'::text
+public,security_alerts,4,title,text,null,NO,null
+public,security_alerts,5,description,text,null,YES,null
+public,security_alerts,6,user_id,uuid,null,YES,null
+public,security_alerts,7,ip_address,inet,null,YES,null
+public,security_alerts,8,endpoint,text,null,YES,null
+public,security_alerts,9,event_count,integer,null,YES,1
+public,security_alerts,10,first_seen,timestamp with time zone,null,YES,now()
+public,security_alerts,11,last_seen,timestamp with time zone,null,YES,now()
+public,security_alerts,12,status,text,null,YES,'active'::text
+public,security_alerts,13,acknowledged_by,uuid,null,YES,null
+public,security_alerts,14,acknowledged_at,timestamp with time zone,null,YES,null
+public,security_alerts,15,resolved_by,uuid,null,YES,null
+public,security_alerts,16,resolved_at,timestamp with time zone,null,YES,null
+public,security_alerts,17,resolution_notes,text,null,YES,null
+public,security_alerts,18,metadata,jsonb,null,YES,'{}'::jsonb
+public,security_alerts,19,created_at,timestamp with time zone,null,YES,now()
+public,security_alerts,20,updated_at,timestamp with time zone,null,YES,now()
+realtime,subscription,1,id,bigint,null,NO,null
+realtime,subscription,2,subscription_id,uuid,null,NO,null
+realtime,subscription,4,entity,regclass,null,NO,null
+realtime,subscription,5,filters,ARRAY,null,NO,'{}'::realtime.user_defined_filter[]
+realtime,subscription,7,claims,jsonb,null,NO,null
+realtime,subscription,8,claims_role,regrole,null,NO,null
+realtime,subscription,9,created_at,timestamp without time zone,null,NO,"timezone('utc'::text, now())"
+public,workspaces,1,id,uuid,null,NO,gen_random_uuid()
+public,workspaces,2,name,text,null,NO,'My Workspace'::text
+public,workspaces,3,slug,text,null,NO,null
+public,workspaces,4,created_at,timestamp with time zone,null,NO,now()
+public,workspaces,5,updated_at,timestamp with time zone,null,NO,now()
+public,usage_counters,1,id,uuid,null,NO,gen_random_uuid()
+public,usage_counters,2,user_id,uuid,null,NO,null
+public,usage_counters,3,workspace_id,uuid,null,NO,null
+public,usage_counters,4,month,text,null,NO,null
+public,usage_counters,5,monthly_uploads,integer,null,NO,0
+public,usage_counters,6,monthly_conversations,integer,null,NO,0
+public,usage_counters,7,monthly_words,integer,null,NO,0
+public,usage_counters,8,total_stored_words,integer,null,NO,0
+public,usage_counters,9,created_at,timestamp with time zone,null,NO,now()
+public,usage_counters,10,updated_at,timestamp with time zone,null,NO,now()
+public,leads,1,id,uuid,null,NO,gen_random_uuid()
+public,leads,2,workspace_id,uuid,null,NO,null
+public,leads,3,name,text,null,YES,null
+public,leads,4,email,text,null,YES,null
+public,leads,5,phone,text,null,YES,null
+public,leads,6,message,text,null,YES,null
+public,leads,7,metadata,jsonb,null,YES,'{}'::jsonb
+public,leads,8,status,text,null,NO,'new'::text
+public,leads,9,created_at,timestamp with time zone,null,NO,now()
+public,leads,10,updated_at,timestamp with time zone,null,NO,now()
+public,leads,11,quality_score,integer,null,YES,0
+public,leads,12,source_page,text,null,YES,null
+public,profiles,1,id,uuid,null,NO,null
+public,profiles,2,workspace_id,uuid,null,NO,null
+public,profiles,3,email,text,null,NO,null
+public,profiles,4,full_name,text,null,YES,null
+public,profiles,5,avatar_url,text,null,YES,null
+public,profiles,6,role,text,null,NO,'owner'::text
+public,profiles,7,chatbot_name,text,null,NO,'Assistant'::text
+public,profiles,8,welcome_message,text,null,NO,'Hello! How can I help you today?'::text
+public,profiles,9,accent_color,text,null,NO,'#2563EB'::text
+public,profiles,10,trial_ends_at,timestamp with time zone,null,YES,null
+public,profiles,11,subscription_status,text,null,NO,'trial'::text
+public,profiles,12,subscription_tier,text,null,NO,'enterprise'::text
+public,profiles,13,subscription_ends_at,timestamp with time zone,null,YES,null
+public,profiles,14,payment_id,text,null,YES,null
+public,profiles,15,created_at,timestamp with time zone,null,NO,now()
+public,profiles,16,updated_at,timestamp with time zone,null,NO,now()
+public,profiles,17,chatbot_logo_url,text,null,YES,null
+public,profiles,18,has_used_trial,boolean,null,YES,false
+public,profiles,19,chatbot_theme,text,null,YES,'light'::text
+public,profiles,20,custom_css,text,null,YES,null
+public,profiles,21,version,integer,null,NO,1
+public,subscription_changes,1,id,uuid,null,NO,gen_random_uuid()
+public,subscription_changes,2,user_id,uuid,null,NO,null
+public,subscription_changes,3,workspace_id,uuid,null,YES,null
+public,subscription_changes,4,old_tier,text,null,YES,null
+public,subscription_changes,5,new_tier,text,null,NO,null
+public,subscription_changes,6,change_type,text,null,NO,null
+public,subscription_changes,7,payment_id,text,null,YES,null
+public,subscription_changes,8,order_id,text,null,YES,null
+public,subscription_changes,9,amount_paid,numeric,null,YES,null
+public,subscription_changes,10,currency,text,null,YES,'USD'::text
+public,subscription_changes,11,payment_method,text,null,YES,null
+public,subscription_changes,12,payment_status,text,null,YES,null
+public,subscription_changes,13,razorpay_payment_id,text,null,YES,null
+public,subscription_changes,14,razorpay_order_id,text,null,YES,null
+public,subscription_changes,15,razorpay_signature,text,null,YES,null
+public,subscription_changes,16,webhook_verified,boolean,null,YES,false
+public,subscription_changes,17,ip_address,inet,null,YES,null
+public,subscription_changes,18,user_agent,text,null,YES,null
+public,subscription_changes,19,created_at,timestamp with time zone,null,YES,now()
+public,subscription_changes,20,metadata,jsonb,null,YES,'{}'::jsonb
+public,payment_errors,1,id,uuid,null,NO,gen_random_uuid()
+public,payment_errors,2,user_id,uuid,null,YES,null
+public,payment_errors,3,workspace_id,uuid,null,YES,null
+public,payment_errors,4,error_type,text,null,NO,null
+public,payment_errors,5,error_code,text,null,YES,null
+public,payment_errors,6,error_message,text,null,YES,null
+public,payment_errors,7,payment_id,text,null,YES,null
+public,payment_errors,8,order_id,text,null,YES,null
+public,payment_errors,9,amount,numeric,null,YES,null
+public,payment_errors,10,currency,text,null,YES,'USD'::text
+public,payment_errors,11,payment_method,text,null,YES,null
+public,payment_errors,12,razorpay_error_code,text,null,YES,null
+public,payment_errors,13,razorpay_error_description,text,null,YES,null
+public,payment_errors,14,ip_address,inet,null,YES,null
+public,payment_errors,15,user_agent,text,null,YES,null
+public,payment_errors,16,request_data,jsonb,null,YES,null
+public,payment_errors,17,response_data,jsonb,null,YES,null
+public,payment_errors,18,created_at,timestamp with time zone,null,YES,now()
+public,payment_errors,19,resolved,boolean,null,YES,false
+public,payment_errors,20,resolved_at,timestamp with time zone,null,YES,null
+public,csrf_tokens,1,id,uuid,null,NO,gen_random_uuid()
+public,csrf_tokens,2,token_hash,text,null,NO,null
+public,csrf_tokens,3,user_id,uuid,null,YES,null
+public,csrf_tokens,4,session_id,text,null,YES,null
+public,csrf_tokens,5,ip_address,inet,null,YES,null
+public,csrf_tokens,6,user_agent,text,null,YES,null
+public,csrf_tokens,7,endpoint,text,null,NO,null
+public,csrf_tokens,8,expires_at,timestamp with time zone,null,NO,null
+public,csrf_tokens,9,used_at,timestamp with time zone,null,YES,null
+public,csrf_tokens,10,is_used,boolean,null,YES,false
+public,csrf_tokens,11,created_at,timestamp with time zone,null,YES,now()
+public,subscription_audit,1,id,uuid,null,NO,gen_random_uuid()
+public,subscription_audit,2,user_id,uuid,null,NO,null
+public,subscription_audit,3,workspace_id,uuid,null,YES,null
+public,subscription_audit,4,old_tier,text,null,YES,null
+public,subscription_audit,5,new_tier,text,null,YES,null
+public,subscription_audit,6,change_type,text,null,NO,null
+public,subscription_audit,7,change_reason,text,null,YES,null
+public,subscription_audit,8,order_id,text,null,YES,null
+public,subscription_audit,9,payment_id,text,null,YES,null
+public,subscription_audit,10,amount_paid,numeric,null,YES,null
+public,subscription_audit,11,currency,text,null,YES,'USD'::text
+public,subscription_audit,12,ip_address,inet,null,YES,null
+public,subscription_audit,13,user_agent,text,null,YES,null
+public,subscription_audit,14,request_id,text,null,YES,null
+public,subscription_audit,15,session_id,text,null,YES,null
+public,subscription_audit,16,created_at,timestamp with time zone,null,YES,now()
+public,subscription_audit,17,metadata,jsonb,null,YES,'{}'::jsonb
+public,shopify_stores,1,id,uuid,null,NO,gen_random_uuid()
+public,shopify_stores,2,shop_domain,text,null,NO,null
+public,shopify_stores,3,myshopify_domain,text,null,NO,null
+public,shopify_stores,4,primary_domain,text,null,YES,null
+public,shopify_stores,5,store_name,text,null,YES,null
+public,shopify_stores,6,store_email,text,null,YES,null
+public,shopify_stores,7,access_token_encrypted,text,null,NO,null
+public,shopify_stores,8,scopes,ARRAY,null,NO,'{}'::text[]
+public,shopify_stores,9,trulybot_account_id,uuid,null,YES,null
+public,shopify_stores,10,script_tag_id,text,null,YES,null
+public,shopify_stores,11,status,text,null,NO,'connected'::text
+public,shopify_stores,12,last_synced_at,timestamp with time zone,null,YES,null
+public,shopify_stores,13,synced_counts,jsonb,null,YES,'{}'::jsonb
+public,shopify_stores,14,created_at,timestamp with time zone,null,YES,now()
+public,shopify_stores,15,updated_at,timestamp with time zone,null,YES,now()
+public,store_integrations,1,id,uuid,null,NO,gen_random_uuid()
+public,store_integrations,2,user_id,uuid,null,NO,null
+public,store_integrations,3,workspace_id,uuid,null,NO,null
+public,store_integrations,4,platform,text,null,NO,null
+public,store_integrations,5,store_url,text,null,NO,null
+public,store_integrations,6,store_name,text,null,NO,null
+public,store_integrations,7,store_email,text,null,YES,null
+public,store_integrations,8,api_key_encrypted,text,null,YES,null
+public,store_integrations,9,api_secret_encrypted,text,null,YES,null
+public,store_integrations,10,permissions,text,null,YES,null
+public,store_integrations,11,access_token_encrypted,text,null,YES,null
+public,store_integrations,12,shop_domain,text,null,YES,null
+public,store_integrations,13,status,text,null,NO,'active'::text
+public,store_integrations,14,config,jsonb,null,YES,'{}'::jsonb
+public,store_integrations,15,connected_at,timestamp with time zone,null,YES,now()
+public,store_integrations,16,disconnected_at,timestamp with time zone,null,YES,null
+public,store_integrations,17,last_sync_at,timestamp with time zone,null,YES,null
+public,store_integrations,18,created_at,timestamp with time zone,null,YES,now()
+public,store_integrations,19,updated_at,timestamp with time zone,null,YES,now()
+public,user_activities,1,id,uuid,null,NO,gen_random_uuid()
+public,user_activities,2,user_id,uuid,null,NO,null
+public,user_activities,3,activity_type,text,null,NO,null
+public,user_activities,4,description,text,null,NO,null
+public,user_activities,5,metadata,jsonb,null,YES,'{}'::jsonb
+public,user_activities,6,created_at,timestamp with time zone,null,YES,now()
+public,webhook_dead_letters,1,id,uuid,null,NO,gen_random_uuid()
+public,webhook_dead_letters,2,webhook_type,text,null,NO,null
+public,webhook_dead_letters,3,payload,jsonb,null,NO,null
+public,webhook_dead_letters,4,attempts,integer,null,NO,null
+public,webhook_dead_letters,5,final_error,text,null,NO,null
+public,webhook_dead_letters,6,queued_at,timestamp with time zone,null,NO,null
+public,webhook_dead_letters,7,created_at,timestamp with time zone,null,NO,now()
+public,webhook_dead_letters,8,re_queued_at,timestamp with time zone,null,YES,null
+public,webhook_retry_queue,1,id,uuid,null,NO,gen_random_uuid()
+public,webhook_retry_queue,2,webhook_type,text,null,NO,null
+public,webhook_retry_queue,3,payload,jsonb,null,NO,null
+public,webhook_retry_queue,4,attempt,integer,null,NO,1
+public,webhook_retry_queue,5,max_attempts,integer,null,NO,5
+public,webhook_retry_queue,6,last_error,text,null,YES,null
+public,webhook_retry_queue,7,next_retry_at,timestamp with time zone,null,NO,null
+public,webhook_retry_queue,8,status,text,null,NO,'pending'::text
+public,webhook_retry_queue,9,created_at,timestamp with time zone,null,NO,now()
+public,webhook_retry_queue,10,updated_at,timestamp with time zone,null,NO,now()
+auth,oauth_consents,1,id,uuid,null,NO,null
+auth,oauth_consents,2,user_id,uuid,null,NO,null
+auth,oauth_consents,3,client_id,uuid,null,NO,null
+auth,oauth_consents,4,scopes,text,null,NO,null
+auth,oauth_consents,5,granted_at,timestamp with time zone,null,NO,now()
+auth,oauth_consents,6,revoked_at,timestamp with time zone,null,YES,null
+auth,oauth_authorizations,1,id,uuid,null,NO,null
+auth,oauth_authorizations,2,authorization_id,text,null,NO,null
+auth,oauth_authorizations,3,client_id,uuid,null,NO,null
+auth,oauth_authorizations,4,user_id,uuid,null,YES,null
+auth,oauth_authorizations,5,redirect_uri,text,null,NO,null
+auth,oauth_authorizations,6,scope,text,null,NO,null
+auth,oauth_authorizations,7,state,text,null,YES,null
+auth,oauth_authorizations,8,resource,text,null,YES,null
+auth,oauth_authorizations,9,code_challenge,text,null,YES,null
+auth,oauth_authorizations,10,code_challenge_method,USER-DEFINED,null,YES,null
+auth,oauth_authorizations,11,response_type,USER-DEFINED,null,NO,'code'::auth.oauth_response_type
+auth,oauth_authorizations,12,status,USER-DEFINED,null,NO,'pending'::auth.oauth_authorization_status
+auth,oauth_authorizations,13,authorization_code,text,null,YES,null
+auth,oauth_authorizations,14,created_at,timestamp with time zone,null,NO,now()
+auth,oauth_authorizations,15,expires_at,timestamp with time zone,null,NO,(now() + '00:03:00'::interval)
+auth,oauth_authorizations,16,approved_at,timestamp with time zone,null,YES,null

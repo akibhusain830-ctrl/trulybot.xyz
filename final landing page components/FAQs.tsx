@@ -55,7 +55,7 @@ const AccordinationItem = ({question, answer}:{question:string, answer: string})
 
 export const FAQs = () => {
   return (
-    <div className="bg-black text-white py-[72px] sm:py-24 bg-gradient-to-b from-[#5D2CA8] to-black ">
+    <div id="faqs" className="bg-black text-white py-[72px] sm:py-24 bg-gradient-to-b from-[#5D2CA8] to-black ">
       <div className="container">
         <h2 className="text-5xl sm:text-6xl sm:w-[648px] mx-auto text-center text-white tracking-tighter">
           Frequently Asked Questions

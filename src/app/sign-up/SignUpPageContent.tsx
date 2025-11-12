@@ -24,6 +24,16 @@ export default function SignUpPageContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  useEffect(() => {
+    const misconfigured = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      String(process.env.NEXT_PUBLIC_SUPABASE_URL).includes('placeholder') ||
+      String(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY).includes('placeholder');
+    if (misconfigured) {
+      setError('Sign up is temporarily unavailable due to configuration. Please try again later.');
+    }
+  }, []);
+
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && user) {
@@ -62,16 +72,39 @@ export default function SignUpPageContent() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
+    const params = new URLSearchParams(window.location.search);
+    const redirectParam = params.get('redirect');
+    const desiredNext = redirectParam && !redirectParam.includes('/sign-up') ? redirectParam : '/';
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(desiredNext)}`
       }
     });
 
     if (error) {
-      setError(error.message);
+      if (error.message && error.message.toLowerCase().includes('database error')) {
+        try {
+          const res = await fetch('/api/auth/admin-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, next: desiredNext })
+          });
+          if (res.ok) {
+            setSuccess('Check your email to confirm your account before signing in!');
+            setError('');
+          } else {
+            const data = await res.json();
+            setError(data?.error || 'Sign up failed. Please try again.');
+          }
+        } catch (e: any) {
+          setError(e?.message || 'Sign up failed. Please try again.');
+        }
+      } else {
+        setError(error.message);
+      }
     } else {
       setSuccess('Check your email to confirm your account before signing in!');
       // Don't auto-redirect - wait for email confirmation
@@ -94,10 +127,14 @@ export default function SignUpPageContent() {
         return;
       }
 
+      const params = new URLSearchParams(window.location.search);
+      const redirectParam = params.get('redirect');
+      const desiredNext = redirectParam && !redirectParam.includes('/sign-up') ? redirectParam : '/';
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${canonicalOrigin}/auth/callback`,
+          redirectTo: `${canonicalOrigin}/auth/callback?next=${encodeURIComponent(desiredNext)}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

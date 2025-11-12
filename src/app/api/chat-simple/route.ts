@@ -19,24 +19,24 @@ export async function POST(request: NextRequest) {
     let response = '';
     
     if (userContent.toLowerCase().includes('pricing') || userContent.toLowerCase().includes('plans') || userContent.toLowerCase().includes('cost')) {
-      response = `💰 **TrulyBot Pricing Plans:**
+      response = `💰 **TrulyBot Pricing (INR):**
 
-**Basic Plan** - ₹99/month ($5/month)
+**Basic** — ₹499/month
 • Perfect for small businesses
-• Up to 1,000 conversations/month
-• Basic AI responses & email support
+• Up to 1,000 replies/month
+• Core AI responses & email support
 
-**Pro Plan** - ₹399/month ($10/month) ⭐ Most Popular
-• Best for growing businesses  
-• Up to 10,000 conversations/month
-• Advanced AI with custom branding
+**Pro** — ₹1,499/month ⭐ Most Popular
+• Best for growing businesses
+• Up to 3,000 replies/month
+• Advanced AI with branding & analytics
 
-**Ultra Plan** - ₹599/month ($15/month)
-• For enterprise & high-volume
-• Unlimited conversations
-• Premium features + API access
+**Enterprise** — ₹2,999/month
+• For high volume teams
+• Up to 15,000 replies/month
+• Full customization + priority support
 
-🎁 Start with a 7-day FREE trial - no credit card required!
+🎁 7-day FREE trial available — no credit card required.
 
 Want me to help you choose the right plan?`;
     } else if (userContent.toLowerCase().includes('hello') || userContent.toLowerCase().includes('hi')) {
@@ -74,10 +74,10 @@ Want to see it in action? Start your free trial!`;
     } else if (userContent.toLowerCase().includes('trial') || userContent.toLowerCase().includes('free')) {
       response = `🎁 **Free Trial Information:**
 
-✅ **7-day FREE trial**
-✅ **No credit card required**
-✅ **Full Ultra plan access**
-✅ **Unlimited conversations during trial**
+✅ 7-day FREE trial
+✅ No credit card required
+✅ Full Enterprise features during trial
+✅ Generous reply allowances under fair use
 
 **Getting Started:**
 1. Sign up in 30 seconds
@@ -90,7 +90,7 @@ Ready to transform your customer support?`;
       response = `🤖 Thanks for your message! I'm here to help you learn about TrulyBot.
 
 I can provide information about:
-• Pricing plans (₹99-₹599/month)
+• Pricing plans (₹499–₹2,999/month)
 • Features and capabilities
 • Free trial details
 • Getting started guide

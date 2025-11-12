@@ -20,9 +20,9 @@ async function testSubscriptionLogicFlows() {
     {
       id: '2', 
       email: 'trial-user@test.com',
-      description: 'User on active trial (should get Ultra access)',
+      description: 'User on active trial (should get Enterprise access)',
       subscription_status: 'trial',
-      subscription_tier: 'ultra',
+      subscription_tier: 'enterprise',
       trial_ends_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
       subscription_ends_at: null,
       has_used_trial: true,
@@ -41,10 +41,10 @@ async function testSubscriptionLogicFlows() {
     },
     {
       id: '4',
-      email: 'ultra-user@test.com',
-      description: 'User with active Ultra subscription (should get Ultra access)', 
+      email: 'enterprise-user@test.com',
+      description: 'User with active Enterprise subscription (should get Enterprise access)', 
       subscription_status: 'active',
-      subscription_tier: 'ultra',
+      subscription_tier: 'enterprise',
       trial_ends_at: null,
       subscription_ends_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
       has_used_trial: true,
@@ -55,7 +55,7 @@ async function testSubscriptionLogicFlows() {
       email: 'expired-trial@test.com',
       description: 'User with expired trial (should get NO access)',
       subscription_status: 'trial',
-      subscription_tier: 'ultra',
+      subscription_tier: 'enterprise',
       trial_ends_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
       subscription_ends_at: null,
       has_used_trial: true,
@@ -113,13 +113,13 @@ async function testSubscriptionLogicFlows() {
         expectedResult = subscription.has_access ? '❌ ISSUE: New user should NOT have access' : '✅ CORRECT: New user has no access';
         break;
       case 1: // Active trial
-        expectedResult = (subscription.has_access && subscription.tier === 'ultra') ? '✅ CORRECT: Trial user has Ultra access' : '❌ ISSUE: Trial user should have Ultra access';
+        expectedResult = (subscription.has_access && subscription.tier === 'enterprise') ? '✅ CORRECT: Trial user has Enterprise access' : '❌ ISSUE: Trial user should have Enterprise access';
         break;
       case 2: // Pro subscription
         expectedResult = (subscription.has_access && subscription.tier === 'pro') ? '✅ CORRECT: Pro user has Pro access' : '❌ ISSUE: Pro user should have Pro access';
         break;
-      case 3: // Ultra subscription  
-        expectedResult = (subscription.has_access && subscription.tier === 'ultra') ? '✅ CORRECT: Ultra user has Ultra access' : '❌ ISSUE: Ultra user should have Ultra access';
+      case 3: // Enterprise subscription  
+        expectedResult = (subscription.has_access && subscription.tier === 'enterprise') ? '✅ CORRECT: Enterprise user has Enterprise access' : '❌ ISSUE: Enterprise user should have Enterprise access';
         break;
       case 4: // Expired trial
         expectedResult = !subscription.has_access ? '✅ CORRECT: Expired trial has no access' : '❌ ISSUE: Expired trial should have no access';
@@ -147,7 +147,7 @@ async function testSubscriptionLogicFlows() {
 
   console.log('2️⃣ TRIAL ACTIVATION:');
   console.log('   - User clicks "Start Free Trial"');
-  console.log('   - Status changes to "trial", tier to "ultra"');
+  console.log('   - Status changes to "trial", tier to "enterprise"');
   console.log('   - Gets 7 days of full access');
   console.log('   - ✅ Immediate access to all features\n');
 
@@ -160,7 +160,7 @@ async function testSubscriptionLogicFlows() {
   console.log('4️⃣ FEATURE ACCESS CONTROL:');
   console.log('   - Basic: Limited features');
   console.log('   - Pro: Custom name/message + unlimited');
-  console.log('   - Ultra: Full customization + priority support');
+  console.log('   - Enterprise: Full customization + priority support');
   console.log('   - ✅ Access controlled by subscription_tier\n');
 
   console.log('🎯 SYSTEM INTEGRITY CHECK:');

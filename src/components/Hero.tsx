@@ -337,7 +337,7 @@ export default function Hero({ user }: HeroProps) {
             className="mt-6 text-center max-w-md mx-auto px-4"
           >
             <p className="text-slate-400 text-sm mb-2">
-              We offer a 7-day free trial of Ultra plan • No credit card required
+              We offer a 7-day free trial of Enterprise plan • No credit card required
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
               <span className="flex items-center gap-1">

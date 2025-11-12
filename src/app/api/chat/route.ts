@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { CoreMessage as VercelChatMessage } from "ai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import {
@@ -104,6 +105,7 @@ function brandify(text: string) {
 // ---------------- Handler ----------------
 export async function POST(req: NextRequest) {
   const started = Date.now();
+  const requestId = randomUUID();
 
   try {
     // Performance monitoring
@@ -162,6 +164,7 @@ export async function POST(req: NextRequest) {
       mode,
       msgLen: messages.length,
       userText: safeSlice(userText),
+      requestId,
     });
 
     // Conversation quota enforcement (only for subscriber bots)
@@ -186,7 +189,7 @@ export async function POST(req: NextRequest) {
 
         const tier = profile?.subscription_tier || "basic";
         const quota = getPlanQuota(tier);
-        if (quota?.monthlyConversationCap) {
+        {
           const { data: usage } = await supabaseAdmin
             .from("usage_counters")
             .select("id, monthly_conversations")
@@ -195,7 +198,7 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
           const convs = usage?.monthly_conversations || 0;
-          if (convs + 1 > quota.monthlyConversationCap) {
+          if (quota?.monthlyConversationCap && convs + 1 > quota.monthlyConversationCap) {
             return jsonError(
               "Conversation limit reached for plan. Upgrade to Pro for unlimited.",
               429,
@@ -377,11 +380,7 @@ export async function POST(req: NextRequest) {
     }));
 
     // 5.5. Parse buttons from response text
-    const buttons: Array<{
-      text: string;
-      url: string;
-      type: "primary" | "secondary";
-    }> = [];
+    const buttons: Array<{ text: string; url: string; type: "primary" | "secondary" }> = [];
 
     // Define button patterns with their URLs
     const buttonPatterns = [
@@ -418,7 +417,8 @@ export async function POST(req: NextRequest) {
       { pattern: "[Contact Support]", text: "Contact Support", url: "/contact", type: "secondary" as const },
       
       // Advanced Features
-      { pattern: "[Upgrade to Ultra]", text: "Upgrade to Ultra", url: "/#pricing", type: "primary" as const },
+      { pattern: "[Upgrade Your Plan]", text: "Upgrade Your Plan", url: "/#pricing", type: "primary" as const },
+      { pattern: "[Upgrade to Ultra]", text: "Upgrade Your Plan", url: "/#pricing", type: "primary" as const },
       { pattern: "[API Documentation]", text: "API Documentation", url: "/docs/api", type: "secondary" as const },
       { pattern: "[Language Demo]", text: "Language Demo", url: "/#demo-section", type: "secondary" as const },
       { pattern: "[View Mobile Demo]", text: "View Mobile Demo", url: "/#demo-section", type: "secondary" as const },
@@ -430,10 +430,17 @@ export async function POST(req: NextRequest) {
     ];
 
     // Parse all button patterns
+    const origin = (() => {
+      try {
+        return new URL(BRAND.url).origin;
+      } catch {
+        return "https://trulybot.xyz";
+      }
+    })();
     for (const { pattern, text, url, type } of buttonPatterns) {
       if (finalReply.includes(pattern)) {
-        buttons.push({ text, url, type });
-        // Remove the button pattern from the final reply
+        const safeUrl = url.startsWith("/") ? url : new URL(url, origin).toString();
+        buttons.push({ text, url: safeUrl, type });
         finalReply = finalReply.replace(new RegExp(`\\s*→?\\s*\\${pattern.replace(/[[\]]/g, "\\$&")}`, "g"), "");
       }
     }
@@ -499,6 +506,7 @@ export async function POST(req: NextRequest) {
         "x-used-docs": usedDocs.toString(),
         "x-fallback": fallback.toString(),
         "x-response-time": `${Date.now() - started}ms`,
+        "x-request-id": requestId,
       },
     });
 
@@ -508,6 +516,7 @@ export async function POST(req: NextRequest) {
       usedDocs,
       responseTime: `${Date.now() - started}ms`,
       msgLen: finalReply.length,
+      requestId,
     });
 
     return response;

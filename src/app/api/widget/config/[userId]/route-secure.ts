@@ -131,6 +131,7 @@ export async function GET(
         chatbot_name,
         welcome_message,
         accent_color,
+        chat_bubble_icon,
         subscription_tier,
         subscription_status,
         trial_ends_at,
@@ -160,9 +161,11 @@ export async function GET(
     }
 
     // Determine features based on subscription tier
-    let tier: 'basic' | 'pro' | 'ultra' = 'basic';
-    if (isTrialActive || profile.subscription_tier === 'ultra') {
-      tier = 'ultra';
+    let tier: 'basic' | 'pro' | 'enterprise' = 'basic';
+    if (isTrialActive) {
+      tier = 'enterprise';
+    } else if (profile.subscription_tier === 'enterprise') {
+      tier = 'enterprise';
     } else if (profile.subscription_tier === 'pro') {
       tier = 'pro';
     }
@@ -174,10 +177,11 @@ export async function GET(
       chatbot_name: profile.chatbot_name || 'Assistant',
       welcome_message: profile.welcome_message || 'Hello! How can I help you today?',
       accent_color: profile.accent_color || '#2563EB',
+      chat_bubble_icon: profile.chat_bubble_icon || 'lightning',
       // Security: Don't expose internal user data
       features: {
         customBranding: tier !== 'basic',
-        customTheme: tier === 'ultra',
+        customTheme: tier === 'enterprise',
         prioritySupport: tier !== 'basic',
         analytics: tier !== 'basic'
       }

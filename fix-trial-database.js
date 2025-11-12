@@ -181,7 +181,7 @@ BEGIN
   SET 
     trial_ends_at = v_trial_end,
     subscription_status = 'trial',
-    subscription_tier = 'ultra',
+    subscription_tier = 'enterprise',
     has_used_trial = true,
     updated_at = v_now
   WHERE id = p_user_id;

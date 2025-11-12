@@ -37,7 +37,7 @@ console.log('   - No geolocation API calls ✓');
 console.log('\n🎯 HOMEPAGE PRICING NOW SHOWS:');
 console.log('   - Basic Plan: ₹99/month (₹950/year)');
 console.log('   - Pro Plan: ₹399/month (₹3,830/year)');
-console.log('   - Ultra Plan: ₹599/month (₹5,750/year)');
+console.log('   - Enterprise Plan: ₹599/month (₹5,750/year)');
 console.log('   - No currency detection or switching');
 console.log('   - No geolocation-based pricing');
 

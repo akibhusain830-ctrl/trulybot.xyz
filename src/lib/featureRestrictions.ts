@@ -17,7 +17,46 @@ export interface FeatureRestrictions {
   monthlyConversationLimit: number | null; // null means unlimited
 }
 
-export const TIER_RESTRICTIONS: Record<SubscriptionTier, FeatureRestrictions> = {
+// Feature restrictions by tier - SOFT CAPS
+// Upload and word limits show upgrade prompts but don't block
+
+export const FEATURE_RESTRICTIONS = {
+  free: {
+    maxKnowledgeUploads: 10,    // Soft cap - show toast when reached
+    maxKnowledgeWords: 2000,    // Soft cap - show toast when reached
+    allowCustomization: false,
+    allowBranding: false,
+    allowLeadCapture: false,
+    allowAnalytics: false,
+  },
+  basic: {
+    maxKnowledgeUploads: 20,    // Soft cap - show toast when reached
+    maxKnowledgeWords: 5000,    // Soft cap - show toast when reached
+    allowCustomization: true,
+    allowBranding: false,
+    allowLeadCapture: true,
+    allowAnalytics: true,
+  },
+  pro: {
+    maxKnowledgeUploads: 50,    // Soft cap - show toast when reached
+    maxKnowledgeWords: 15000,   // Soft cap - show toast when reached
+    allowCustomization: true,
+    allowBranding: true,
+    allowLeadCapture: true,
+    allowAnalytics: true,
+  },
+  enterprise: {
+    maxKnowledgeUploads: 100,   // Soft cap - show toast when reached
+    maxKnowledgeWords: 30000,   // Soft cap - show toast when reached
+    allowCustomization: true,
+    allowBranding: true,
+    allowLeadCapture: true,
+    allowAnalytics: true,
+  },
+};
+
+// Tier restrictions mapping to FeatureRestrictions interface
+const TIER_RESTRICTIONS: Record<SubscriptionTier, FeatureRestrictions> = {
   free: {
     canCustomizeName: false,
     canCustomizeWelcomeMessage: false,
@@ -25,19 +64,19 @@ export const TIER_RESTRICTIONS: Record<SubscriptionTier, FeatureRestrictions> = 
     canChangeColors: false,
     canCaptureLead: false,
     canRemoveBranding: false,
-    maxKnowledgeUploads: 1,
-    maxKnowledgeWords: 500,
-    monthlyConversationLimit: 100,
+    maxKnowledgeUploads: 10,      // Soft cap
+    maxKnowledgeWords: 2000,      // Soft cap
+    monthlyConversationLimit: 300,
   },
   basic: {
     canCustomizeName: true,
     canCustomizeWelcomeMessage: true,
     canUploadLogo: false,
     canChangeColors: false,
-    canCaptureLead: false,
+    canCaptureLead: true,
     canRemoveBranding: true,
-    maxKnowledgeUploads: 4,
-    maxKnowledgeWords: 2000,
+    maxKnowledgeUploads: 20,      // Soft cap
+    maxKnowledgeWords: 5000,      // Soft cap
     monthlyConversationLimit: 1000,
   },
   pro: {
@@ -47,20 +86,20 @@ export const TIER_RESTRICTIONS: Record<SubscriptionTier, FeatureRestrictions> = 
     canChangeColors: true,
     canCaptureLead: true,
     canRemoveBranding: true,
-    maxKnowledgeUploads: 10,
-    maxKnowledgeWords: 15000,
-    monthlyConversationLimit: null, // unlimited
+    maxKnowledgeUploads: 50,      // Soft cap
+    maxKnowledgeWords: 15000,     // Soft cap
+    monthlyConversationLimit: 3000,
   },
-  ultra: {
+  enterprise: {
     canCustomizeName: true,
     canCustomizeWelcomeMessage: true,
     canUploadLogo: true,
     canChangeColors: true,
     canCaptureLead: true,
     canRemoveBranding: true,
-    maxKnowledgeUploads: 25,
-    maxKnowledgeWords: 50000,
-    monthlyConversationLimit: null, // unlimited
+    maxKnowledgeUploads: 100,     // Soft cap
+    maxKnowledgeWords: 30000,     // Soft cap
+    monthlyConversationLimit: 15000,
   },
 };
 

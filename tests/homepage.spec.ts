@@ -39,7 +39,7 @@ test.describe('Homepage', () => {
     await page.getByText('Pricing').click()
     await expect(page.getByText('Basic')).toBeVisible()
     await expect(page.getByText('Pro')).toBeVisible()
-    await expect(page.getByText('Ultra')).toBeVisible()
+    await expect(page.getByText('Enterprise')).toBeVisible()
   })
 
   test('should be responsive on mobile', async ({ page, isMobile }) => {

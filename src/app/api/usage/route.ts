@@ -39,7 +39,7 @@ export const GET = withApi(async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
-    const tier = profile.subscription_tier || 'basic';
+    const tier = profile.subscription_tier || 'free';
     const quota = getPlanQuota(tier) || getPlanQuota('basic')!;
     const month = currentMonthKey();
     const workspaceId = profile.workspace_id || user.id; // fallback to user id if workspace not assigned

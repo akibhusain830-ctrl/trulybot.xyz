@@ -32,7 +32,7 @@ export function PricingTab(props: PricingTabProps) {
             <span className="text-white/70 font-medium">/mo</span>
           </div>
           <div className="text-sm text-white/70 mb-5">{props.planDescription}</div>
-          <a className="w-full inline-flex justify-center whitespace-nowrap rounded-lg bg-[#5D2CA8] px-3.5 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-950/10 hover:bg-[#5D2CA2] focus-visible:outline-none focus-visible:ring focus-visible:ring-slate-600 transition-colors duration-150" href="#0">
+          <a className="w-full inline-flex justify-center whitespace-nowrap rounded-lg bg-[#5D2CA8] px-3.5 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-950/10 hover:bg-[#5D2CA2] focus-visible:outline-none focus-visible:ring focus-visible:ring-slate-600 transition-colors duration-150" href="/pricing">
             {props.ctaLabel || 'Purchase Plan'}
           </a>
         </div>

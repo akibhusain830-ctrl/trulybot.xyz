@@ -111,7 +111,7 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
     if (!tier) {
       return createValidationErrorResponse('Invalid plan ID', {
         requestId,
-        details: { validPlans: ['basic', 'pro', 'ultra'] }
+        details: { validPlans: ['basic', 'pro', 'enterprise'] }
       });
     }
 

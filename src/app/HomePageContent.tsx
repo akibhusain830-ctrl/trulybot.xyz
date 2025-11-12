@@ -80,7 +80,7 @@ function buildAdvancedJsonLd() {
           {
             '@type': 'Offer',
             name: 'Basic Plan',
-            price: '99',
+            price: '499',
             priceCurrency: 'INR',
             billingIncrement: 'monthly',
             description: 'Core AI chatbot with 1,000 replies per month',
@@ -90,7 +90,7 @@ function buildAdvancedJsonLd() {
           {
             '@type': 'Offer', 
             name: 'Pro Plan',
-            price: '399',
+            price: '1499',
             priceCurrency: 'INR',
             billingIncrement: 'monthly',
             description: 'Advanced chatbot with lead capture and analytics',
@@ -99,11 +99,11 @@ function buildAdvancedJsonLd() {
           },
           {
             '@type': 'Offer',
-            name: 'Ultra Plan', 
-            price: '599',
+            name: 'Enterprise Plan', 
+            price: '2999',
             priceCurrency: 'INR',
             billingIncrement: 'monthly',
-            description: 'Enterprise-grade AI with unlimited replies and advanced features',
+            description: 'Enterprise-grade AI with advanced features and customization',
             availability: 'https://schema.org/InStock',
             url: 'https://trulybot.xyz/pricing'
           }
@@ -175,7 +175,7 @@ function buildAdvancedJsonLd() {
               '@type': 'Offer',
               itemOffered: {
                 '@type': 'Service', 
-                name: 'Ultra Plan',
+                name: 'Enterprise Plan',
                 description: 'Enterprise-grade solution with full customization'
               }
             }

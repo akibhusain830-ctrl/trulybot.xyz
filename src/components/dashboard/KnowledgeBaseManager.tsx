@@ -21,15 +21,9 @@ export default function KnowledgeBaseManager() {
   // User tier and restrictions
   const [userTier, setUserTier] = useState<string>('free');
 
-  // Quota state
+  // Quota state for conversation limits only
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [usageError, setUsageError] = useState<string | null>(null);
-  const [uploadsRemaining, setUploadsRemaining] = useState<number | null>(null);
-  const [uploadLimit, setUploadLimit] = useState<number | null>(null);
-  const [perUploadWordLimit, setPerUploadWordLimit] = useState<number | null>(null);
-  const [plan, setPlan] = useState<string | null>(null);
-  const [totalStoredWords, setTotalStoredWords] = useState<number | null>(null);
-  const [totalWordCap, setTotalWordCap] = useState<number | null>(null);
   const [monthlyConversations, setMonthlyConversations] = useState<number | null>(null);
   const [conversationCap, setConversationCap] = useState<number | null>(null);
 
@@ -37,14 +31,6 @@ export default function KnowledgeBaseManager() {
 
   // Get user restrictions
   const restrictions = getFeatureRestrictions(userTier as any);
-
-  const wordCount = useMemo(() => {
-    const trimmed = pastedText.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).length;
-  }, [pastedText]);
-
-  const wordLimitReached = perUploadWordLimit !== null && wordCount > perUploadWordLimit;
 
   const loadUsage = useCallback(async () => {
     if (!user?.id) return;
@@ -59,14 +45,8 @@ export default function KnowledgeBaseManager() {
       const data = await res.json();
       // Persist to localStorage for flicker-free reloads
       try { localStorage.setItem('lastUsage', JSON.stringify({ ts: Date.now(), data })); } catch {}
-      setUploadsRemaining(data.uploads_remaining);
-      setUploadLimit(data.monthly_upload_limit);
-      setPerUploadWordLimit(data.per_upload_word_limit);
-      setPlan(data.plan);
-  setTotalStoredWords(data.total_stored_words);
-      setTotalWordCap(data.total_word_cap);
-  setMonthlyConversations(data.monthly_conversations);
-  setConversationCap(data.monthly_conversation_cap);
+      setMonthlyConversations(data.monthly_conversations);
+      setConversationCap(data.monthly_conversation_cap);
     } catch (e: any) {
       setUsageError(e.message || 'Failed to load usage');
     } finally {
@@ -96,8 +76,8 @@ export default function KnowledgeBaseManager() {
       // For now, assume basic (we can enhance this later)
       setUserTier('basic');
     } else if (subscriptionStatus === 'trial') {
-      // Trial users always get ultra tier
-      setUserTier('ultra');
+      // Trial users always get enterprise tier
+      setUserTier('enterprise');
     } else if (subscriptionStatus === 'eligible') {
       // New users with free access
       setUserTier('free');
@@ -112,12 +92,6 @@ export default function KnowledgeBaseManager() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.data) {
-          setUploadsRemaining(parsed.data.uploads_remaining);
-          setUploadLimit(parsed.data.monthly_upload_limit);
-          setPerUploadWordLimit(parsed.data.per_upload_word_limit);
-          setPlan(parsed.data.plan);
-          setTotalStoredWords(parsed.data.total_stored_words);
-          setTotalWordCap(parsed.data.total_word_cap);
           setMonthlyConversations(parsed.data.monthly_conversations);
           setConversationCap(parsed.data.monthly_conversation_cap);
           setLoadingUsage(false); // show cached quickly
@@ -128,31 +102,7 @@ export default function KnowledgeBaseManager() {
     loadUsage();
   }, [loadDocuments, loadUsage, user, subscriptionStatus]);
 
-  // 80% usage toast (total words)
-  useEffect(() => {
-    if (!totalStoredWords || !totalWordCap) return;
-    const ratio = totalStoredWords / totalWordCap;
-    if (ratio >= 0.8 && !warned80Ref.current) {
-      // Lazy load toast to avoid circular import (already imported toast earlier)
-      import('react-hot-toast').then(({ toast }) => {
-        toast((t) => (
-          <div className="text-sm">
-            <p className="font-semibold text-slate-100">Approaching plan capacity</p>
-            <p className="mt-1 text-slate-300">{Math.round(ratio * 100)}% of your word limit used. Consider upgrading for more space.</p>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="mt-2 px-2 py-1 bg-slate-700/60 hover:bg-slate-600 rounded text-xs text-slate-200"
-            >Dismiss</button>
-          </div>
-        ), { duration: 7000 });
-      });
-      warned80Ref.current = true;
-    }
-    if (ratio < 0.75) {
-      // Reset warning if they delete docs and drop below 75%
-      warned80Ref.current = false;
-    }
-  }, [totalStoredWords, totalWordCap]);
+  // Remove unused 80% usage toast since we removed word limits
 
   const retry = async (fn: () => Promise<void>, attempts = 3, delay = 400) => {
     for (let i = 0; i < attempts; i++) {
@@ -165,32 +115,51 @@ export default function KnowledgeBaseManager() {
       toast.error('File name and content are required.');
       return;
     }
-    if (wordLimitReached) {
-      toast.error('Word limit exceeded for your plan.');
-      return;
-    }
-    if (uploadsRemaining !== null && uploadsRemaining <= 0) {
-      toast.error('No uploads remaining this month.');
-      return;
-    }
     
     setUploading(true);
     const toastId = toast.loading('Uploading and indexing document...');
     try {
       const result = await uploadTextDocument(pastedText, fileName);
-      // Optimistic usage adjustments if limits known
-      if (perUploadWordLimit !== null) {
-        setUploadsRemaining(prev => prev !== null ? Math.max(0, prev - 1) : prev);
+      
+      // Check for soft cap warnings
+      if (result.warnings) {
+        if (result.warnings.uploadLimitReached) {
+          toast((t) => (
+            <div className="text-sm">
+              <p className="font-semibold text-amber-600">Upload limit reached!</p>
+              <p className="mt-1 text-slate-700">You've reached your monthly upload limit. Upgrade your plan for more uploads.</p>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  window.location.href = '/#pricing';
+                }}
+                className="mt-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+              >View Plans</button>
+            </div>
+          ), { duration: 8000, icon: '⚠️' });
+        }
+        
+        if (result.warnings.wordLimitReached) {
+          toast((t) => (
+            <div className="text-sm">
+              <p className="font-semibold text-amber-600">Storage limit reached!</p>
+              <p className="mt-1 text-slate-700">You've reached your total word storage limit. Upgrade your plan for more storage.</p>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  window.location.href = '/#pricing';
+                }}
+                className="mt-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+              >View Plans</button>
+            </div>
+          ), { duration: 8000, icon: '⚠️' });
+        }
       }
-      if (totalStoredWords !== null) {
-        const wordsAdded = pastedText.trim().split(/\s+/).length;
-        setTotalStoredWords(prev => prev !== null ? prev + wordsAdded : prev);
-      }
+      
       toast.success('Document uploaded successfully!', { id: toastId });
       setPastedText('');
       setFileName('');
       await loadDocuments();
-      // Retry usage load to account for potential replication delay
       await retry(loadUsage);
     } catch (error) {
       console.error('Upload error', error);
@@ -206,26 +175,11 @@ export default function KnowledgeBaseManager() {
     
     const toastId = toast.loading('Deleting document...');
     try {
-      const target = documents.find(d => d.id === docId);
       await deleteDocument(docId);
       toast.success('Document deleted.', { id: toastId });
       setDocuments(docs => docs.filter(d => d.id !== docId));
       
-      // Optimistically update counters for immediate UI feedback
-      if (target && totalStoredWords !== null) {
-        const removed = target.content.trim().split(/\s+/).filter(Boolean).length;
-        setTotalStoredWords(prev => prev !== null ? Math.max(0, prev - removed) : prev);
-      }
-      
-      // Optimistically decrement uploads count for real-time update
-      if (uploadsRemaining !== null && uploadLimit !== null) {
-        const currentUploads = uploadLimit - uploadsRemaining;
-        if (currentUploads > 0) {
-          setUploadsRemaining(prev => prev !== null ? prev + 1 : prev);
-        }
-      }
-      
-      // Refresh usage to ensure accuracy (in background)
+      // Refresh usage to ensure accuracy
       setTimeout(() => {
         loadUsage();
       }, 100);
@@ -247,15 +201,8 @@ export default function KnowledgeBaseManager() {
     setUploading(true);
     const toastId = toast.loading('Updating and re-indexing document...');
     try {
-      const original = documents.find(d => d.id === editingDocId);
       const updatedDoc = await updateDocument(editingDocId, editingContent);
       setDocuments(docs => docs.map(d => d.id === editingDocId ? updatedDoc : d));
-      if (original && totalStoredWords !== null) {
-        const oldCount = original.content.trim().split(/\s+/).filter(Boolean).length;
-        const newCount = editingContent.trim().split(/\s+/).filter(Boolean).length;
-        const delta = newCount - oldCount;
-        if (delta !== 0) setTotalStoredWords(prev => prev !== null ? Math.max(0, prev + delta) : prev);
-      }
       loadUsage();
       toast.success('Document updated successfully!', { id: toastId });
       setEditingDocId(null);
@@ -281,56 +228,7 @@ export default function KnowledgeBaseManager() {
         <p className="text-sm text-slate-400 mt-1">
           Paste your business information or FAQs into the text box below.
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-          {loadingUsage ? (
-            <span>Loading quota…</span>
-          ) : usageError ? (
-            <span className="text-red-400">Usage error</span>
-          ) : (
-            <>
-              {typeof uploadsRemaining === 'number' && typeof uploadLimit === 'number' && (
-                <span>
-                  Uploads remaining: <span className={uploadsRemaining === 0 ? 'text-red-400' : 'text-slate-200'}>{uploadsRemaining}</span>/<span>{uploadLimit}</span>
-                </span>
-              )}
-              {typeof perUploadWordLimit === 'number' && (
-                <span>
-                  Per-upload word limit: <span className="text-slate-200">{perUploadWordLimit.toLocaleString()}</span>
-                </span>
-              )}
-              {plan && <span>Plan: <span className="uppercase text-slate-300">{plan}</span></span>}
-            </>
-          )}
-        </div>
         <div className="mt-4 space-y-4">
-          {totalWordCap !== null && totalStoredWords !== null && (
-            <div className="w-full bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
-              <div className="flex flex-wrap justify-between text-xs text-slate-400 mb-2 gap-2">
-                <span>Storage Usage</span>
-                <span className="text-slate-300">{totalStoredWords.toLocaleString()} / {totalWordCap.toLocaleString()} words</span>
-              </div>
-              <div className="h-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={totalWordCap} aria-valuenow={totalStoredWords} aria-label="Stored words usage">
-                <div
-                  className={"h-full transition-all duration-500 " + ((totalStoredWords / totalWordCap) >= 0.9 ? 'bg-red-500' : (totalStoredWords / totalWordCap) >= 0.8 ? 'bg-amber-500' : 'bg-blue-600')}
-                  style={{ width: `${Math.min(100, (totalStoredWords / totalWordCap) * 100).toFixed(2)}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {uploadLimit !== null && uploadsRemaining !== null && (
-            <div className="w-full bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
-              <div className="flex flex-wrap justify-between text-xs text-slate-400 mb-2 gap-2">
-                <span>Uploads This Month</span>
-                <span className="text-slate-300">{(uploadLimit - uploadsRemaining).toLocaleString()} / {uploadLimit.toLocaleString()}</span>
-              </div>
-              <div className="h-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={uploadLimit} aria-valuenow={uploadLimit - uploadsRemaining} aria-label="Monthly uploads usage">
-                <div
-                  className={"h-full transition-all duration-500 " + ((uploadLimit - uploadsRemaining) / uploadLimit >= 0.9 ? 'bg-red-500' : (uploadLimit - uploadsRemaining) / uploadLimit >= 0.8 ? 'bg-amber-500' : 'bg-green-600')}
-                  style={{ width: `${Math.min(100, ((uploadLimit - uploadsRemaining) / uploadLimit) * 100).toFixed(2)}%` }}
-                />
-              </div>
-            </div>
-          )}
           {conversationCap !== null && monthlyConversations !== null && (
             <div className="w-full bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
               <div className="flex flex-wrap justify-between text-xs text-slate-400 mb-2 gap-2">
@@ -358,24 +256,17 @@ export default function KnowledgeBaseManager() {
             <textarea
               value={pastedText}
               onChange={(e) => setPastedText(e.target.value)}
-              className={`w-full bg-slate-800/50 border ${wordLimitReached ? 'border-red-500 focus:ring-red-500' : 'border-slate-700 focus:ring-blue-500'} rounded-lg px-4 py-3 text-base placeholder-slate-500 focus:outline-none focus:ring-2 transition-all pr-24`}
+              className="w-full bg-slate-800/50 border border-slate-700 focus:ring-blue-500 rounded-lg px-4 py-3 text-base placeholder-slate-500 focus:outline-none focus:ring-2 transition-all"
               rows={8}
               placeholder="Paste your content here..."
               style={{ minHeight: '150px', resize: 'vertical' }}
             />
-            <div className="absolute top-2 right-3 text-[11px] font-medium tracking-wide">
-              {perUploadWordLimit !== null && (
-                <span className={wordLimitReached ? 'text-red-400' : 'text-slate-400'}>
-                  {wordCount.toLocaleString()} / {perUploadWordLimit.toLocaleString()} words
-                </span>
-              )}
-            </div>
           </div>
         </div>
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleNewUpload}
-            disabled={!pastedText.trim() || uploading || !fileName.trim() || wordLimitReached || (uploadsRemaining !== null && uploadsRemaining <= 0)}
+            disabled={!pastedText.trim() || uploading || !fileName.trim()}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
           >
             {uploading ? 'Uploading...' : 'Add to Knowledge Base'}
@@ -387,12 +278,11 @@ export default function KnowledgeBaseManager() {
           <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
             <div className="flex items-center gap-2 text-amber-400">
               <span>⚡</span>
-              <span className="font-medium">Free Plan Limitations</span>
+              <span className="font-medium">Free Plan</span>
             </div>
             <div className="text-sm text-amber-300/80 mt-2 space-y-1">
-              <p>• Maximum {restrictions.maxKnowledgeWords} words total</p>
-              <p>• Only {restrictions.maxKnowledgeUploads} knowledge upload allowed</p>
-              <p>• Upgrade to Basic plan for {getFeatureRestrictions('basic' as any).maxKnowledgeWords} words and {getFeatureRestrictions('basic' as any).maxKnowledgeUploads} uploads</p>
+              <p>• Upgrade to unlock more features and customization</p>
+              <p>• Get priority support with paid plans</p>
             </div>
           </div>
         )}

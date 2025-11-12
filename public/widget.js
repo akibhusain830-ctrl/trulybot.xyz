@@ -198,14 +198,14 @@
       btn.style.backgroundColor = widgetConfig.accent_color;
       btn.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25), 0 0 0 0 ' + widgetConfig.accent_color + '40';
       
-      if (widgetConfig.custom_css && widgetConfig.tier === 'ultra') {
+      if (widgetConfig.custom_css && widgetConfig.tier === 'enterprise') {
         var style = d.createElement('style');
         style.id = 'trulybot-custom';
         style.textContent = widgetConfig.custom_css;
         d.head.appendChild(style);
       }
 
-      if (widgetConfig.chatbot_theme === 'minimal' && widgetConfig.tier === 'ultra') {
+      if (widgetConfig.chatbot_theme === 'minimal' && widgetConfig.tier === 'enterprise') {
         btn.style.boxShadow = 'none';
         btn.style.border = '2px solid ' + widgetConfig.accent_color;
       }

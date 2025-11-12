@@ -519,7 +519,7 @@
         "properties": {
           "planId": {
             "type": "string",
-            "enum": ["basic", "pro", "ultra"]
+            "enum": ["basic", "pro", "enterprise"]
           },
           "currency": {
             "type": "string",

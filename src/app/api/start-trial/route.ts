@@ -136,7 +136,7 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
         processingTime: Date.now() - startedAt
       },
       {
-        message: 'Trial started successfully! Welcome to TrulyBot Ultra.',
+        message: 'Trial started successfully! Welcome to TrulyBot Enterprise.',
         requestId,
       }
     );

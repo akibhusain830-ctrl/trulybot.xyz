@@ -23,6 +23,16 @@ export default function SignInPageContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    useEffect(() => {
+        const misconfigured = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+            !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+            String(process.env.NEXT_PUBLIC_SUPABASE_URL).includes('placeholder') ||
+            String(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY).includes('placeholder');
+        if (misconfigured) {
+            setError('Authentication is temporarily unavailable. Please try again later or use email/password if available.');
+        }
+    }, []);
+
     // Redirect if already authenticated
     useEffect(() => {
         if (!authLoading && user) {
@@ -76,7 +86,10 @@ export default function SignInPageContent() {
         if (error) {
             setError(error.message);
         } else {
-            router.push('/'); // Redirect to home
+            const params = new URLSearchParams(window.location.search);
+            const redirectParam = params.get('redirect');
+            const safeRedirect = redirectParam && !redirectParam.includes('/sign-in') ? redirectParam : '/';
+            router.push(safeRedirect);
         }
         setLoading(false);
     };
@@ -108,10 +121,14 @@ export default function SignInPageContent() {
                 userAgent: navigator.userAgent,
             });
 
+            const params = new URLSearchParams(window.location.search);
+            const redirectParam = params.get('redirect');
+            const desiredNext = redirectParam && !redirectParam.includes('/sign-in') ? redirectParam : '/';
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${canonicalOrigin}/auth/callback`,
+                    redirectTo: `${canonicalOrigin}/auth/callback?next=${encodeURIComponent(desiredNext)}`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',

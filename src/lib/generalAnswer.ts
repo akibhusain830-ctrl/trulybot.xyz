@@ -73,14 +73,14 @@ RESPONSE POLICY:
 2. If user asks for an unlisted feature, say it's not currently offered and pivot to real capabilities.
 3. Do NOT invent roadmap items unless present.
 4. If user goes off-topic, gently steer back.
-5. ${opts.mode === "customer" ? "For customer bots: provide helpful business guidance and direct to contact info when needed." : "Avoid describing Anemo as project/task management."}
+5. ${opts.mode === "customer" ? "For customer bots: provide helpful business guidance and direct to contact info when needed." : "Avoid describing TrulyBot as project/task management."}
 6. Stay within ~${profile.styleGuidelines.maxWords} words unless multi-part clarification needed.
 7. Prefer concise paragraphs or bullets.
 ${opts.mode === "customer" ? '8. For business questions without specific info: "I\'d recommend checking our website or contacting our team directly for the most current information."' : ""}
 `.trim();
 
   const systemPrompt = `
-You are the canonical product knowledge assistant for Anemo.
+You are the canonical product knowledge assistant for TrulyBot.
 
 ${modeNote}
 
@@ -120,12 +120,12 @@ Output only the final user-facing answer.
 
   let answer =
     completion.choices[0]?.message?.content?.trim() ||
-    "I’m here to help with Anemo.";
+    "I’m here to help with TrulyBot.";
 
   const lower = answer.toLowerCase();
   if (HALLUCINATION_KEYWORDS.some((k) => lower.includes(k))) {
     answer +=
-      "\n\n(Note: Correction — Anemo is not a project/task management platform; it's an AI e‑commerce chatbot.)";
+      "\n\n(Note: Correction — TrulyBot is not a project/task management platform; it's an AI e‑commerce chatbot.)";
   }
 
   return answer;

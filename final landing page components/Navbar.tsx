@@ -1,3 +1,4 @@
+'use client';
 import { Menu } from 'lucide-react';
 import LogoImage from '../src/assets/icons/logo.svg';
 
@@ -8,6 +9,14 @@ interface NavbarProps {
 }
 
 export const Navbar = ({ user, loading, signOut }: NavbarProps) => {
+  const handleGetForFree = () => {
+    if (user) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.href = '/sign-in';
+    }
+  };
+
   return (
     <div className="bg-black">
       <div className="px-4">
@@ -25,23 +34,26 @@ export const Navbar = ({ user, loading, signOut }: NavbarProps) => {
       </div>
       <nav className='text-white gap-6 items-center hidden sm:flex'>
 
-        <a href="#features" className='text-opacity-60 text-white hover:text-opacity-100 transition' >Features</a>
-        <a href="#pricing" className='text-opacity-60 text-white hover:text-opacity-100 transition'>Pricing</a>
-        <a href="#faqs" className='text-opacity-60 text-white hover:text-opacity-100 transition'>FAQs</a>
+        <a href="#features" className='text-opacity-60 text-white hover:text-opacity-100 transition scroll-smooth' >Features</a>
+        <a href="#pricing" className='text-opacity-60 text-white hover:text-opacity-100 transition scroll-smooth'>Pricing</a>
+        <a href="#faqs" className='text-opacity-60 text-white hover:text-opacity-100 transition scroll-smooth'>FAQs</a>
+        <a href="/dashboard" className='text-opacity-60 text-white hover:text-opacity-100 transition'>Dashboard</a>
         {user ? (
-          <>
-            <a href="/dashboard" className='text-opacity-60 text-white hover:text-opacity-100 transition'>Dashboard</a>
-            <button
-              onClick={signOut}
-              className='text-opacity-60 text-white hover:text-opacity-100 transition'
-            >
-              Sign Out
-            </button>
-          </>
+          <button
+            onClick={signOut}
+            className='text-opacity-60 text-white hover:text-opacity-100 transition'
+          >
+            Sign Out
+          </button>
         ) : (
           <a href="/sign-in" className='text-opacity-60 text-white hover:text-opacity-100 transition'>Sign In</a>
         )}
-        <button className='bg-white py-2 px-4 rounded-lg text-black'>Get for free</button>
+        <button 
+          onClick={handleGetForFree}
+          className='bg-white py-2 px-4 rounded-lg text-black hover:bg-gray-100 transition'
+        >
+          Get for free
+        </button>
       </nav>
 
       </div>

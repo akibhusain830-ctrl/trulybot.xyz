@@ -74,7 +74,11 @@ export const uploadTextDocument = async (text: string, filename: string) => {
     throw new Error(result.error || 'Upload failed');
   }
 
-  return result.document;
+  // Return the full result including warnings
+  return {
+    ...result.document,
+    warnings: result.warnings,
+  };
 };
 
 // Fix updateDocument

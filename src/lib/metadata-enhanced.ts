@@ -171,7 +171,7 @@ export function generateLocalBusinessStructuredData(location: 'india' | 'global'
     description: 'AI chatbot platform for ecommerce businesses',
     telephone: location === 'india' ? '+91-9999999999' : '+1-555-0123',
     email: 'support@trulybot.xyz',
-    priceRange: location === 'india' ? '₹99-₹599' : '$5-$15',
+    priceRange: location === 'india' ? '₹0-₹2,999' : '$5-$15',
     paymentAccepted: location === 'india' ? 'Cash, Credit Card, UPI, Net Banking' : 'Cash, Credit Card, PayPal',
     currenciesAccepted: location === 'india' ? 'INR' : 'USD',
   };

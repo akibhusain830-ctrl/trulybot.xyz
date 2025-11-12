@@ -14,7 +14,7 @@ const LogoBeam = () => {
   return (
     <div className="flex items-center justify-center min-h-52">
       <div className="relative flex items-center">
-        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-16 h-16 p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
+        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 p-3 sm:p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
           <img src={logos[0]} alt="Logo 1" className="filter invert brightness-0" />
           <motion.div
             className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
@@ -43,7 +43,7 @@ const LogoBeam = () => {
             style={{ willChange: 'transform' }}
           />
         </div>
-        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-16 h-16 p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
+        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 p-3 sm:p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
           <img src={logos[1]} alt="Logo 2" className="filter invert brightness-0" />
           <motion.div
             className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
@@ -89,8 +89,8 @@ const CardWithEffect = ({ children }: { children: React.ReactNode }) => {
         <div
           className="pointer-events-none absolute rounded-full"
           style={{
-            width: '300px',
-            height: '300px',
+            width: '220px',
+            height: '220px',
             top: mousePosition.y - 150,
             left: mousePosition.x - 150,
             background: '#5D2CA8',
@@ -111,8 +111,8 @@ const AWSIcon = () => {
 
   return (
     <div className="flex flex-col justify-center h-full items-center relative">
-         <div className="flex flex-row gap-8 justify-center h-full items-center relative">
-         <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-16 h-16 p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
+         <div className="flex flex-row gap-6 sm:gap-8 justify-center h-full items-center relative">
+         <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 p-3 sm:p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
           <img src={logos[0]} alt="Logo 2" className="filter invert brightness-0" />
           <motion.div
             className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
@@ -127,7 +127,7 @@ const AWSIcon = () => {
             style={{ willChange: 'transform' }}
           />
         </div>
-        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-16 h-16 p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
+        <div className="relative bg-black border-2 border-white/70 rounded-2xl flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 p-3 sm:p-4 overflow-hidden shadow-[0_0_15px_5px_#dbe0e2]">
           <img src={logos[1]} alt="Logo 2" className="filter invert brightness-0" />
           <motion.div
             className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
@@ -146,8 +146,8 @@ const AWSIcon = () => {
 
       
       <div className="text-left p-6 mt-4">
-        <h1 className="text-white text-2xl font-bold mb-2">Connect Once, Answer Everything</h1>
-        <p className="text-gray-400 text-lg">Once connected through the WordPress plugin or Shopify app, Trulybot automatically learns from your entire store — products, inventory, policies — and instantly answers every customer question with perfect accuracy.</p>
+        <h1 className="text-white text-xl sm:text-2xl font-bold mb-2">Connect Once, Answer Everything</h1>
+        <p className="text-gray-400 text-base sm:text-lg">Once connected through the WordPress plugin or Shopify app, Trulybot automatically learns from your entire store — products, inventory, policies — and instantly answers every customer question with perfect accuracy.</p>
       </div>
     </div>
   );
@@ -184,8 +184,8 @@ const BentoBox1 = () => {
   }, [chartRef]);
 
   return (
-    <div className="bg-[#000000] flex justify-center items-center min-h-screen p-5 rounded-lg sm:py-24 ">
-      <div className="flex flex-col md:flex-row gap-4 w-full max-w-7xl min-h-[800px] md:min-h-[800px] md:h-[800px]">
+    <div className="bg-[#000000] flex justify-center items-center min-h-[560px] md:min-h-screen p-5 rounded-lg sm:py-24 ">
+      <div className="flex flex-col md:flex-row gap-4 w-full max-w-7xl min-h-[560px] md:min-h-[800px] md:h-[800px]">
         <CardWithEffect>
           <div className="flex flex-col justify-between h-full">
             <div className="mb-4 px-6 mt-6">
@@ -198,7 +198,7 @@ const BentoBox1 = () => {
               </div>
               
               {/* Chat Container */}
-              <div ref={chartRef} className="relative w-full mt-6 h-96 bg-gradient-to-b from-white/5 to-transparent rounded-2xl border border-white/10 p-4 flex flex-col gap-4 overflow-y-auto">
+              <div ref={chartRef} className="relative w-full mt-6 h-72 sm:h-96 bg-gradient-to-b from-white/5 to-transparent rounded-2xl border border-white/10 p-4 flex flex-col gap-4 overflow-y-auto">
                 {/* Customer Message */}
                 <motion.div 
                   className="flex justify-end"
@@ -259,8 +259,8 @@ const BentoBox1 = () => {
             <div className="flex flex-col justify-center h-full">
               <LogoBeam />
               <div className="text-left p-6">
-                <h1 className="text-white text-2xl font-bold mb-2">Seamless Integration</h1>
-                <p className="text-white/70 text-lg">Works with WordPress and Shopify in minutes through WordPress plugin and Shopify app. No coding required.</p>
+                <h1 className="text-white text-xl sm:text-2xl font-bold mb-2">Seamless Integration</h1>
+                <p className="text-white/70 text-base sm:text-lg">Works with WordPress and Shopify in minutes through WordPress plugin and Shopify app. No coding required.</p>
               </div>
             </div>
           </CardWithEffect>
@@ -276,7 +276,7 @@ const BentoBox1 = () => {
 
 function Bentodemo() {
   return (
-    <div className="h-screen flex items-center justify-center  ">
+    <div className="min-h-[520px] md:h-screen flex items-center justify-center">
       <BentoBox1 />
     </div>
   );

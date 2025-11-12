@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
     
-    // Check if subscription allows integrations (allow all tiers to connect)
-    const allowedTiers = ['basic', 'pro', 'business', 'enterprise', 'trial', 'ultra'];
+    // Check if subscription allows integrations (allow supported tiers to connect)
+    const allowedTiers = ['free', 'basic', 'pro', 'enterprise'];
     if (!allowedTiers.includes(user.subscription_tier)) {
       logger.warn('Subscription tier does not allow integrations', { 
         reqId, 

@@ -78,24 +78,18 @@ export const POST = withApi(async function POST(req: NextRequest) {
     let totalStored = usageRow?.total_stored_words || 0;
     let monthlyWords = usageRow?.monthly_words || 0;
 
-    // Upload count enforcement
-    if (monthlyUploads + 1 > quota.monthlyUploadLimit) {
-      throw new PlanLimitError('Monthly upload limit reached', { limit: quota.monthlyUploadLimit });
+    // SOFT CAP CHECKS - Show warnings but allow upload
+    let uploadLimitWarning = false;
+    let wordLimitWarning = false;
+
+    // Check if upload limit reached (soft cap)
+    if (monthlyUploads >= quota.monthlyUploadLimit) {
+      uploadLimitWarning = true;
     }
 
-    // Total stored enforcement (non-ultra hard cap; ultra uses fair use)
-    if (quota.totalWordCap && totalStored + wordCount > quota.totalWordCap) {
-      throw new PlanLimitError('Total stored word cap exceeded', { cap: quota.totalWordCap, attempted: totalStored + wordCount });
-    }
-
-    // Ultra fair use
-    if (!quota.totalWordCap && quota.fairUseHard && totalStored + wordCount > quota.fairUseHard) {
-      throw new PlanLimitError('Fair use hard limit reached', { hard: quota.fairUseHard });
-    }
-
-    let fairUseWarning: string | null = null;
-    if (!quota.totalWordCap && quota.fairUseSoft && totalStored + wordCount > quota.fairUseSoft) {
-      fairUseWarning = 'Approaching fair use threshold';
+    // Check if total word cap reached (soft cap)
+    if (quota.totalWordCap && totalStored >= quota.totalWordCap) {
+      wordLimitWarning = true;
     }
 
     // 1. Create the main document record to get an ID and set status to PENDING
@@ -233,13 +227,15 @@ export const POST = withApi(async function POST(req: NextRequest) {
         monthly_uploads: monthlyUploads + 1,
         monthly_upload_limit: quota.monthlyUploadLimit,
         total_stored_words: totalStored + wordCount,
-        total_stored_limit: quota.totalWordCap || quota.fairUseHard,
-        fair_use_warning: fairUseWarning,
+        total_stored_limit: quota.totalWordCap,
+      },
+      warnings: {
+        uploadLimitReached: uploadLimitWarning,
+        wordLimitReached: wordLimitWarning,
       },
       request_id: reqId
     }, {
       headers: {
-        ...(fairUseWarning ? { 'x-fair-use-warning': fairUseWarning } : {}),
         'x-rate-limit-remaining': String(rl.remaining)
       }
     });

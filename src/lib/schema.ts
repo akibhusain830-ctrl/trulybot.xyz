@@ -45,7 +45,7 @@ export const faqSchema = {
       name: 'What pricing plans does TrulyBot offer?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'TrulyBot offers flexible regional pricing. For Indian users: ₹99/month Basic, ₹399/month Pro, ₹599/month Ultra. For international users: $5/month Basic, $10/month Pro, $15/month Ultra. All plans include a free 7-day trial with no credit card required.'
+        text: 'TrulyBot offers four pricing plans in INR: Free (₹0/month with 300 replies), Basic (₹499/month with 1k replies), Pro (₹1,499/month with 3k replies), and Enterprise (₹2,999/month with 15k replies). All paid plans include a free 7-day trial with no credit card required.'
       }
     },
     {
@@ -79,25 +79,33 @@ export const serviceSchema = {
     itemListElement: [
       {
         '@type': 'Offer',
+        name: 'Free Plan',
+        description: 'Free AI chatbot with 300 conversations per month',
+        price: '0',
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock'
+      },
+      {
+        '@type': 'Offer',
         name: 'Basic Plan',
         description: 'Core AI chatbot with 1,000 conversations per month',
-        price: '99',
+        price: '499',
         priceCurrency: 'INR',
         availability: 'https://schema.org/InStock'
       },
       {
         '@type': 'Offer',
         name: 'Pro Plan',
-        description: 'Advanced AI chatbot with unlimited conversations and analytics',
-        price: '399',
+        description: 'Advanced AI chatbot with 3,000 conversations and analytics',
+        price: '1499',
         priceCurrency: 'INR',
         availability: 'https://schema.org/InStock'
       },
       {
         '@type': 'Offer',
-        name: 'Ultra Plan',
-        description: 'Enterprise AI chatbot with unlimited conversations',
-        price: '599',
+        name: 'Enterprise Plan',
+        description: 'Enterprise AI chatbot with 15,000 conversations',
+        price: '2999',
         priceCurrency: 'INR',
         availability: 'https://schema.org/InStock'
       }
@@ -234,7 +242,7 @@ export const localBusinessSchema = {
     longitude: 91.7362
   },
   url: 'https://trulybot.xyz',
-  priceRange: '₹99-₹599 per month',
+  priceRange: '₹0-₹2,999 per month',
   paymentAccepted: ['Credit Card', 'PayPal', 'Razorpay'],
   currenciesAccepted: 'USD, INR',
   openingHours: 'Mo-Su 00:00-23:59',

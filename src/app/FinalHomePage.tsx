@@ -12,6 +12,7 @@ import { FAQs } from '../../final landing page components/FAQs';
 import { CallToAction } from '../../final landing page components/CallToAction';
 import { Footer } from '../../final landing page components/Footer';
 import SignInPromptModal from '@/components/SignInPromptModal';
+import ChatWidgetLauncher from '@/components/ChatWidgetLauncher';
 
 export default function FinalHomePage() {
   const { user, loading, signOut } = useAuth();
@@ -56,6 +57,9 @@ export default function FinalHomePage() {
       <Pricing />
       <CallToAction />
       <Footer />
+
+      {/* Chat Widget with Thunderbolt Icon */}
+      <ChatWidgetLauncher />
 
       {showSignInModal && <SignInPromptModal onClose={() => setShowSignInModal(false)} />}
     </main>

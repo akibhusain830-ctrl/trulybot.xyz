@@ -22,6 +22,13 @@ interface SubscriptionInfo {
   created_at: string;
 }
 
+interface ProfileSubscription {
+  subscription_tier: 'free' | 'basic' | 'pro' | 'enterprise';
+  subscription_status: 'none' | 'trial' | 'active' | 'expired' | 'cancelled';
+  subscription_ends_at?: string;
+  trial_ends_at?: string;
+}
+
 interface TrialInfo {
   trial_end_date: string;
   is_trial_active: boolean;
@@ -41,28 +48,108 @@ export default function SettingsPage() {
     custom_css: ''
   });
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [profileSubscription, setProfileSubscription] = useState<ProfileSubscription | null>(null);
   const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
+  const [monthlyConversations, setMonthlyConversations] = useState<number | null>(null);
+  const [conversationCap, setConversationCap] = useState<number | null>(null);
   const [passwordData, setPasswordData] = useState({
     newPassword: '',
     confirmPassword: ''
   });
   const [changingPassword, setChangingPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [chatBubbleIcon, setChatBubbleIcon] = useState<string>('lightning');
+
+  const IconSVG = ({ name, size = 18, selected = false }: { name: string; size?: number; selected?: boolean }) => {
+    const common = {
+      width: size,
+      height: size,
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      xmlns: 'http://www.w3.org/2000/svg',
+    };
+    const stroke = selected ? '#60A5FA' : '#CBD5E1';
+    if (name === 'lightning') {
+      return (
+        <svg {...common}>
+          <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill={stroke} />
+        </svg>
+      );
+    }
+    if (name === 'chat') {
+      return (
+        <svg {...common}>
+          <path d="M4 6a4 4 0 014-4h8a4 4 0 014 4v8a4 4 0 01-4 4H9l-5 4V6z" stroke={stroke} strokeWidth={1.6} />
+          <circle cx="9" cy="10" r="1.5" fill={stroke} />
+          <circle cx="13" cy="10" r="1.5" fill={stroke} />
+          <circle cx="17" cy="10" r="1.5" fill={stroke} />
+        </svg>
+      );
+    }
+    if (name === 'robot') {
+      return (
+        <svg {...common}>
+          <rect x="4" y="7" width="16" height="12" rx="3" stroke={stroke} strokeWidth={1.6} />
+          <circle cx="9" cy="13" r="1.8" fill={stroke} />
+          <circle cx="15" cy="13" r="1.8" fill={stroke} />
+          <rect x="11" y="3" width="2" height="3" fill={stroke} />
+        </svg>
+      );
+    }
+    if (name === 'message') {
+      return (
+        <svg {...common}>
+          <path d="M3 5h18v12H9l-6 4V5z" stroke={stroke} strokeWidth={1.6} />
+          <path d="M6 9h12M6 12h8" stroke={stroke} strokeWidth={1.6} />
+        </svg>
+      );
+    }
+    if (name === 'spark') {
+      return (
+        <svg {...common}>
+          <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" fill={stroke} />
+        </svg>
+      );
+    }
+    if (name === 'help') {
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" stroke={stroke} strokeWidth={1.6} />
+          <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.2 2-2 2.5v1" stroke={stroke} strokeWidth={1.6} />
+          <circle cx="12" cy="17" r="1" fill={stroke} />
+        </svg>
+      );
+    }
+    return null;
+  };
 
   // Helper function to get current subscription tier
-  const getCurrentTier = (): 'basic' | 'pro' | 'ultra' | 'trial' => {
-    if (!subscription) {
-      // Check if user is in trial
-      if (trialInfo?.is_trial_active) {
-        return 'trial'; // Trial users are in trial mode
-      }
+  const getCurrentTier = (): 'free' | 'basic' | 'pro' | 'enterprise' | 'trial' => {
+    // First check if user is in trial
+    if (trialInfo?.is_trial_active) {
+      return 'trial'; // Trial users are in trial mode
+    }
+    
+    // Check profile subscription tier first (this is the primary source of truth)
+    if (profileSubscription?.subscription_tier) {
+      const profileTier = profileSubscription.subscription_tier.toLowerCase();
+      if (profileTier === 'free') return 'free';
+      if (profileTier === 'basic') return 'basic';
+      if (profileTier === 'pro') return 'pro';
+      if (profileTier === 'enterprise') return 'enterprise';
+    }
+    
+    // Fallback to subscriptions table if available
+    if (subscription) {
+      const planName = subscription.plan_name?.toLowerCase() || '';
+      if (planName.includes('enterprise')) return 'enterprise';
+      if (planName.includes('pro')) return 'pro';
       return 'basic';
     }
     
-    const planName = subscription.plan_name?.toLowerCase() || '';
-    if (planName.includes('ultra')) return 'ultra';
-    if (planName.includes('pro')) return 'pro';
-    return 'basic';
+    // Default to free tier for users with no subscription data
+    return 'free';
   };
 
   // Helper function to check if user is on trial
@@ -72,7 +159,7 @@ export default function SettingsPage() {
 
   // Helper function to check feature availability
   const canAccessFeature = (feature: 'name' | 'welcome' | 'color' | 'logo' | 'theme' | 'css'): boolean => {
-    // Trial users get full Ultra plan features during trial
+    // Trial users get full Enterprise plan features during trial
     if (isOnTrial()) {
       return true;
     }
@@ -82,12 +169,12 @@ export default function SettingsPage() {
     switch (feature) {
       case 'name':
       case 'welcome':
-        return tier === 'pro' || tier === 'ultra';
+        return tier === 'pro' || tier === 'enterprise';
       case 'color':
       case 'logo':
       case 'theme':
       case 'css':
-        return tier === 'ultra';
+        return tier === 'enterprise';
       default:
         return false;
     }
@@ -111,10 +198,10 @@ export default function SettingsPage() {
       
       setLoading(true);
       try {
-        // Fetch profile settings and trial info
+        // Fetch profile settings including subscription data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('chatbot_name, welcome_message, accent_color, chatbot_logo_url, chatbot_theme, custom_css, trial_ends_at, created_at')
+          .select('chatbot_name, welcome_message, accent_color, chatbot_logo_url, chatbot_theme, custom_css, chat_bubble_icon, trial_ends_at, subscription_tier, subscription_status, subscription_ends_at, created_at')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -125,20 +212,35 @@ export default function SettingsPage() {
             chatbot_name: profileData.chatbot_name || '',
             welcome_message: profileData.welcome_message || '',
             accent_color: profileData.accent_color || '#2563EB',
-            chatbot_logo_url: profileData.chatbot_logo_url || '', // Load from database
-            chatbot_theme: profileData.chatbot_theme || 'default', // Load from database
-            custom_css: profileData.custom_css || '' // Load from database
+            chatbot_logo_url: profileData.chatbot_logo_url || '',
+            chatbot_theme: profileData.chatbot_theme || 'default',
+            custom_css: profileData.custom_css || ''
+          });
+          setChatBubbleIcon(profileData.chat_bubble_icon || 'lightning');
+
+          // Set profile subscription data
+          const finalSubscriptionStatus = profileData.subscription_tier === 'free' && 
+            (profileData.subscription_status === 'expired' || profileData.subscription_status === 'none')
+            ? 'active' 
+            : profileData.subscription_status || 'none';
+          
+          setProfileSubscription({
+            subscription_tier: profileData.subscription_tier || 'free',
+            subscription_status: finalSubscriptionStatus,
+            subscription_ends_at: profileData.subscription_ends_at,
+            trial_ends_at: profileData.trial_ends_at
+          });
+
+          console.log('Profile subscription data:', {
+            tier: profileData.subscription_tier,
+            status: profileData.subscription_status,
+            finalStatus: finalSubscriptionStatus,
+            trial_ends_at: profileData.trial_ends_at
           });
 
           // Check for trial information
-          if (profileData.trial_ends_at) {
+          if (profileData.trial_ends_at && profileData.subscription_status === 'trial') {
             const trial = calculateTrialInfo(profileData.trial_ends_at);
-            setTrialInfo(trial);
-          } else if (profileData.created_at) {
-            // Fallback: calculate 7-day trial from profile creation date
-            const createdDate = new Date(profileData.created_at);
-            const trialEndDate = new Date(createdDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-            const trial = calculateTrialInfo(trialEndDate.toISOString());
             setTrialInfo(trial);
           }
         }
@@ -156,17 +258,26 @@ export default function SettingsPage() {
           console.error('Error fetching subscription:', subError);
         } else if (subData) {
           setSubscription(subData);
-          // If user has a subscription, clear trial info
-          setTrialInfo(null);
         }
 
-        // If no subscription and no trial info from profile, try to get from auth user
-        if (!subData && !profileData?.trial_ends_at && user.created_at) {
-          const createdDate = new Date(user.created_at);
-          const trialEndDate = new Date(createdDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-          const trial = calculateTrialInfo(trialEndDate.toISOString());
-          setTrialInfo(trial);
+        // Ensure a sensible default when profile data is missing
+        if (!profileData) {
+          setProfileSubscription({
+            subscription_tier: 'free',
+            subscription_status: 'active'
+          });
         }
+
+        setUsageLoading(true);
+        try {
+          const res = await fetch('/api/usage');
+          if (res.ok) {
+            const data = await res.json();
+            setMonthlyConversations(data.monthly_conversations ?? 0);
+            setConversationCap(data.monthly_conversation_cap ?? null);
+          }
+        } catch {}
+        setUsageLoading(false);
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -207,7 +318,7 @@ export default function SettingsPage() {
         advancedSettings.custom_css = settings.custom_css;
       }
 
-      const allSettings = { ...basicSettings, ...advancedSettings };
+      const allSettings = { ...basicSettings, ...advancedSettings, chat_bubble_icon: chatBubbleIcon };
 
       console.log('Saving all settings:', allSettings);
 
@@ -507,7 +618,7 @@ export default function SettingsPage() {
           <h2 className="text-xl font-semibold mb-4">Subscription & Billing</h2>
           {loading ? (
             <div className="text-center py-4 text-slate-400">Loading subscription info...</div>
-          ) : subscription ? (
+          ) : profileSubscription ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -516,7 +627,10 @@ export default function SettingsPage() {
                   </label>
                   <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
                     <span className="text-base font-medium text-blue-400 capitalize">
-                      {subscription.plan_name}
+                      {profileSubscription.subscription_tier === 'free' ? 'Free' : 
+                       profileSubscription.subscription_tier === 'basic' ? 'Basic' :
+                       profileSubscription.subscription_tier === 'pro' ? 'Pro' :
+                       profileSubscription.subscription_tier === 'enterprise' ? 'Enterprise' : 'Free'}
                     </span>
                   </div>
                 </div>
@@ -527,121 +641,132 @@ export default function SettingsPage() {
                   </label>
                   <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
                     <span className={`text-base font-medium capitalize ${
-                      subscription.status === 'active' ? 'text-green-400' : 'text-yellow-400'
+                      profileSubscription.subscription_status === 'active' ? 'text-green-400' : 
+                      profileSubscription.subscription_status === 'trial' ? 'text-blue-400' :
+                      profileSubscription.subscription_status === 'expired' ? 'text-red-400' :
+                      profileSubscription.subscription_status === 'cancelled' ? 'text-yellow-400' :
+                      'text-green-400'
                     }`}>
-                      {subscription.status}
+                      {profileSubscription.subscription_status === 'trial' && trialInfo?.is_trial_active ? 'Active Trial' :
+                       profileSubscription.subscription_status === 'trial' && !trialInfo?.is_trial_active ? 'Expired' :
+                       profileSubscription.subscription_status === 'active' ? 'Active' :
+                       profileSubscription.subscription_status === 'expired' ? 'Expired' :
+                       profileSubscription.subscription_status === 'cancelled' ? 'Cancelled' : 'Active'}
                     </span>
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Next Billing Date
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className="text-base text-slate-300">
-                      {formatDate(subscription.current_period_end)}
-                    </span>
-                  </div>
-                </div>
+                {/* Show trial end date if on trial */}
+                {profileSubscription.subscription_status === 'trial' && trialInfo && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">
+                        Plan Ends At
+                      </label>
+                      <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
+                        <span className="text-base text-slate-300">
+                          {formatDate(trialInfo.trial_end_date)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">
+                        Days Remaining
+                      </label>
+                      <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
+                        <span className={`text-base font-medium ${
+                          trialInfo.days_remaining > 3 ? 'text-green-400' : 
+                          trialInfo.days_remaining > 0 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {trialInfo.days_remaining} {trialInfo.days_remaining === 1 ? 'day' : 'days'} left
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
                 
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Subscribed Since
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className="text-base text-slate-300">
-                      {formatDate(subscription.created_at)}
-                    </span>
+                {/* Show never expires for free plan */}
+                {profileSubscription.subscription_tier === 'free' && profileSubscription.subscription_status !== 'trial' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                      Plan Ends At
+                    </label>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
+                      <span className="text-base text-green-400 font-medium">
+                        Never Expires
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {/* Show subscription end date if active paid plan */}
+                {profileSubscription.subscription_status === 'active' && profileSubscription.subscription_tier !== 'free' && profileSubscription.subscription_ends_at && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                      Plan Ends At
+                    </label>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
+                      <span className="text-base text-slate-300">
+                        {formatDate(profileSubscription.subscription_ends_at)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-slate-300 mb-1">Replies (Monthly)</label>
+                {usageLoading ? (
+                  <div className="text-slate-400 text-sm">Loading usage...</div>
+                ) : (
+                  <div className="w-full bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
+                    <div className="flex justify-between text-xs text-slate-400 mb-2">
+                      <span>Replies (Monthly)</span>
+                      <span className="text-slate-300">
+                        {(monthlyConversations ?? 0).toLocaleString()} / {((conversationCap ?? (profileSubscription.subscription_tier === 'free' ? 300 : null)) ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={(conversationCap ?? (profileSubscription.subscription_tier === 'free' ? 300 : 0)) || 0} aria-valuenow={monthlyConversations ?? 0}>
+                      <div
+                        className={`h-full transition-all duration-500 ${(((monthlyConversations ?? 0) / ((conversationCap ?? (profileSubscription.subscription_tier === 'free' ? 300 : 0)) || 1)) >= 0.95) ? 'bg-red-600' : (((monthlyConversations ?? 0) / ((conversationCap ?? (profileSubscription.subscription_tier === 'free' ? 300 : 0)) || 1)) >= 0.8) ? 'bg-amber-500' : 'bg-indigo-600'}`}
+                        style={{ width: `${Math.min(100, (((monthlyConversations ?? 0) / ((conversationCap ?? (profileSubscription.subscription_tier === 'free' ? 300 : 0)) || 1)) * 100)).toFixed(2)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => toast.error('Billing portal not implemented yet.')}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                >
-                  Manage Billing
-                </button>
-                <button
-                  onClick={() => toast.error('Plan changes not implemented yet.')}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
-                >
-                  Change Plan
-                </button>
-              </div>
-            </div>
-          ) : trialInfo ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Current Plan
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className="text-base font-medium text-blue-400 capitalize">
-                      Free Trial
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Status
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className={`text-base font-medium capitalize ${
-                      trialInfo.is_trial_active ? 'text-green-400' : 'text-yellow-400'
-                    }`}>
-                      {formatTrialStatus(trialInfo.is_trial_active)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Trial Ends
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className="text-base text-slate-300">
-                      {trialInfo.trial_end_date ? formatDate(trialInfo.trial_end_date) : 'Unknown'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Days Remaining
-                  </label>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2">
-                    <span className={`text-base font-medium ${
-                      trialInfo.days_remaining > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {trialInfo.days_remaining} {trialInfo.days_remaining === 1 ? 'day' : 'days'} left
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-2">
-                <button
-                  onClick={() => window.location.href = '/pricing'}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                >
-                  Upgrade Now
-                </button>
+                {profileSubscription.subscription_tier === 'free' || 
+                 (profileSubscription.subscription_status === 'trial' && trialInfo && !trialInfo.is_trial_active) ? (
+                  <button
+                    onClick={() => window.location.href = '/#pricing'}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    Upgrade Now
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => window.location.href = '/#pricing'}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Change Plan
+                    </button>
+                    <button
+                      onClick={() => toast('Contact support to manage your subscription: support@trulybot.xyz', { duration: 5000 })}
+                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                    >
+                      Manage Billing
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ) : (
             <div className="text-center py-8 text-slate-400">
-              <p className="mb-4">No active subscription found.</p>
-              <button
-                onClick={() => window.location.href = '/pricing'}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                View Plans
-              </button>
+              <p className="mb-4">Loading subscription information...</p>
             </div>
           )}
         </div>
@@ -651,19 +776,25 @@ export default function SettingsPage() {
           <h2 className="text-xl font-semibold mb-4">Chatbot Customization</h2>
           <p className="text-sm text-slate-400 mb-6">
             Customize your chatbot based on your subscription plan. 
-            {getCurrentTier() === 'trial' && ' You have full access to all Ultra plan features during your trial! Upgrade to keep these customization options after your trial ends.'}
-            {getCurrentTier() === 'basic' && ' Upgrade to Pro or Ultra to unlock customization features.'}
-            {getCurrentTier() === 'pro' && ' Upgrade to Ultra to unlock advanced customization options.'}
-            {getCurrentTier() === 'ultra' && ' You have access to all customization features!'}
+            {getCurrentTier() === 'trial' && ' You have full access to all Enterprise plan features during your trial! Upgrade to keep these customization options after your trial ends.'}
+            {getCurrentTier() === 'basic' && ' Upgrade to Pro or Enterprise to unlock customization features.'}
+            {getCurrentTier() === 'pro' && ' Upgrade to Enterprise to unlock advanced customization options.'}
+            {getCurrentTier() === 'enterprise' && ' You have access to all customization features!'}
           </p>
           
           {loading ? (
             <div className="text-center py-4 text-slate-400">Loading settings...</div>
           ) : (
             <>
-              {/* Basic Information - Pro & Ultra Plans */}
+              {(!canAccessFeature('name') && !canAccessFeature('welcome') && !canAccessFeature('color') && !canAccessFeature('logo') && !canAccessFeature('theme') && !canAccessFeature('css')) && (
+                <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
+                  <p className="text-slate-300 text-sm">Upgrade to unlock full customization (name, welcome, logo, colors, themes).</p>
+                  <button onClick={() => window.location.href = '/pricing'} className="mt-3 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Upgrade Now</button>
+                </div>
+              )}
+              {/* Basic Information - Pro & Enterprise Plans */}
               {(canAccessFeature('name') || canAccessFeature('welcome')) && (
-                <div className="mb-8">
+              <div className="mb-8">
                   <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                     Basic Information
@@ -704,13 +835,40 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Visual Customization - Ultra Plan Only */}
+              {/* Chat Icon - available for all plans */}
+              <div className="mb-8">
+                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Chat Icon
+                  <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full">All Plans</span>
+                </h3>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    {['lightning','chat','robot','message','spark','help'].map(icon => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setChatBubbleIcon(icon)}
+                        className={`flex items-center justify-center w-12 h-12 rounded-lg border ${chatBubbleIcon === icon ? 'border-blue-500 ring-2 ring-blue-400 bg-blue-900/25' : 'border-slate-700 bg-slate-800/60'} text-slate-200 hover:border-blue-400 transition-all`}
+                        aria-pressed={chatBubbleIcon === icon}
+                        aria-label={icon}
+                        title={icon}
+                      >
+                        <IconSVG name={icon} selected={chatBubbleIcon === icon} />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500">Icon selection is available for all plans.</p>
+                </div>
+              </div>
+
+              {/* Visual Customization - Enterprise Plan Only */}
               {canAccessFeature('color') && (
-                <div className="mb-8">
+              <div className="mb-8">
                   <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
                     <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                     Visual Customization
-                    <span className="px-2 py-1 text-xs bg-purple-600 text-white rounded-full">Ultra</span>
+                    <span className="px-2 py-1 text-xs bg-purple-600 text-white rounded-full">Enterprise</span>
                   </h3>
                   <div className="space-y-6">
                     {/* Accent Color */}
@@ -787,8 +945,38 @@ export default function SettingsPage() {
                             </div>
                           )}
                         </div>
-                      </div>
-                    )}
+              </div>
+              )}
+
+              {/* Chat Icon - available for all plans */}
+              <div className="mb-8">
+                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Chat Icon
+                  <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full">All Plans</span>
+                </h3>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {['lightning','chat','robot','message','spark','help'].map(icon => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setChatBubbleIcon(icon)}
+                        className={`px-3 py-2 rounded-lg border ${chatBubbleIcon === icon ? 'border-blue-500 bg-blue-900/30' : 'border-slate-700 bg-slate-800/50'} text-sm text-slate-200`}
+                        aria-pressed={chatBubbleIcon === icon}
+                      >
+                        {icon === 'lightning' && '⚡'}
+                        {icon === 'chat' && '💬'}
+                        {icon === 'robot' && '🤖'}
+                        {icon === 'message' && '✉️'}
+                        {icon === 'spark' && '✨'}
+                        {icon === 'help' && '❓'}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500">Icon selection is available for all plans.</p>
+                </div>
+              </div>
 
                     {/* Theme Selection */}
                     {canAccessFeature('theme') && (
@@ -851,7 +1039,7 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <h4 className="text-white font-medium">Trial - Keep Your Customizations</h4>
                       <p className="text-slate-300 text-sm mt-1">
-                        You're enjoying full Ultra features during your trial! Upgrade before your trial ends to keep all these customization options and ensure your branding remains active.
+                        You're enjoying full Enterprise features during your trial! Upgrade before your trial ends to keep all these customization options and ensure your branding remains active.
                       </p>
                       <button
                         onClick={() => window.location.href = '/pricing'}
@@ -875,7 +1063,7 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <h4 className="text-white font-medium">Unlock Chatbot Customization</h4>
                       <p className="text-slate-300 text-sm mt-1">
-                        Upgrade to Pro to customize your chatbot's name and welcome message, or go Ultra for full branding control including logo, colors, and themes.
+                        Upgrade to Pro to customize your chatbot's name and welcome message, or go Enterprise for full branding control including logo, colors, and themes.
                       </p>
                       <button
                         onClick={() => window.location.href = '/pricing'}
@@ -899,13 +1087,13 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <h4 className="text-white font-medium">Unlock Advanced Branding</h4>
                       <p className="text-slate-300 text-sm mt-1">
-                        Upgrade to Ultra to add your custom logo, brand colors, themes, and even custom CSS for complete control over your chatbot's appearance.
+                        Upgrade to Enterprise to add your custom logo, brand colors, themes, and even custom CSS for complete control over your chatbot's appearance.
                       </p>
                       <button
                         onClick={() => window.location.href = '/pricing'}
                         className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
                       >
-                        Upgrade to Ultra
+                        Upgrade to Enterprise
                       </button>
                     </div>
                   </div>

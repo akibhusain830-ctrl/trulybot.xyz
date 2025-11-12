@@ -60,8 +60,15 @@ const BaseModal = ({ children, onClose, labelledBy }: BaseModalProps) => {
       prev?.focus();
     };
   }, [onClose]);
+  
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose?.();
+    }
+  };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto" aria-modal="true" role="dialog" aria-labelledby={labelledBy}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto" aria-modal="true" role="dialog" aria-labelledby={labelledBy} onClick={handleBackdropClick}>
       <div ref={dialogRef} className="bg-slate-900/90 backdrop-blur-xl border border-blue-700 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl flex flex-col items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
         {children}
       </div>
@@ -92,17 +99,25 @@ const SubscriptionModal = ({ subscriptionStatus, onClose }: { subscriptionStatus
   </BaseModal>
 );
 
-const SignInModal = ({ onClose }: { onClose: () => void }) => (
-  <BaseModal labelledBy="signin-modal-title" onClose={onClose}>
-    <div className="mx-auto w-14 h-14 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 mb-4"><LockIcon /></div>
-    <h2 id="signin-modal-title" className="text-2xl font-bold">Sign In Required</h2>
-    <p className="text-slate-400 mt-3">Please sign in to access your dashboard and settings.</p>
-    <div className="mt-6 flex gap-3">
-      <Link href="/sign-in" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-colors">Sign In</Link>
-      <button onClick={onClose} className="px-5 py-2.5 rounded-full bg-slate-700/70 hover:bg-slate-600 text-sm font-medium">Close</button>
-    </div>
-  </BaseModal>
-);
+const SignInModal = ({ onClose }: { onClose: () => void }) => {
+  const router = useRouter();
+  
+  const handleSignIn = () => {
+    router.push('/sign-in');
+  };
+  
+  return (
+    <BaseModal labelledBy="signin-modal-title" onClose={onClose}>
+      <div className="mx-auto w-14 h-14 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 mb-4"><LockIcon /></div>
+      <h2 id="signin-modal-title" className="text-2xl font-bold">Sign In Required</h2>
+      <p className="text-slate-400 mt-3">Please sign in to access your dashboard and settings.</p>
+      <div className="mt-6 flex gap-3">
+        <button onClick={handleSignIn} className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-colors">Sign In</button>
+        <button onClick={onClose} className="px-5 py-2.5 rounded-full bg-slate-700/70 hover:bg-slate-600 text-sm font-medium">Close</button>
+      </div>
+    </BaseModal>
+  );
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

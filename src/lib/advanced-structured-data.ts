@@ -26,7 +26,7 @@ export function generateAdvancedFAQSchema(): StructuredDataSchema {
         name: 'How much does an AI chatbot cost for small businesses?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'TrulyBot pricing starts at ₹99/month ($5/month USD) for small businesses, making it the most affordable AI chatbot solution. This includes 1,000 conversations, 24/7 support, and all essential features to automate customer service and generate leads.'
+          text: 'TrulyBot offers a FREE plan (₹0/month with 300 replies) and paid plans starting at ₹499/month for small businesses. This includes 1,000 conversations, 24/7 support, and all essential features to automate customer service and generate leads.'
         }
       },
       {

@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import { ProfileManager } from '@/lib/profile-manager'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -132,6 +133,17 @@ export async function GET(request: Request) {
         logger.warn('Unverified email attempting access:', { userId: data.user.id, provider: data.user.app_metadata?.provider })
         return NextResponse.redirect(`${requestUrl.origin}/sign-in?error=email_not_verified`)
       }
+
+    // Ensure profile exists (fallback in case the DB trigger failed)
+    try {
+      if (data.user?.id) {
+        await ProfileManager.getOrCreateProfile(data.user.id, data.user.email || '')
+        logger.info('Profile ensured for authenticated user', { userId: data.user.id })
+      }
+    } catch (profileError: any) {
+      logger.error('Profile ensure failed after OAuth', { error: profileError?.message })
+      // Continue redirect; profile can be lazily created later by recovery endpoints
+    }
 
     // Create response with session cookies properly set
     const canonical = (process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin).replace(/\/$/, '')

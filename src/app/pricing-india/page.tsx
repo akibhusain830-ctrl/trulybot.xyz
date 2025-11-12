@@ -33,7 +33,7 @@ const indiaSpecificJsonLd = {
     {
       '@type': 'Offer',
       name: 'Basic Plan India',
-      price: '99',
+      price: '499',
       priceCurrency: 'INR',
       description: 'Perfect for small Indian businesses starting with AI automation',
       availability: 'https://schema.org/InStock',
@@ -45,7 +45,7 @@ const indiaSpecificJsonLd = {
     {
       '@type': 'Offer',
       name: 'Pro Plan India',
-      price: '399',
+      price: '1499',
       priceCurrency: 'INR',
       description: 'Advanced features for growing Indian e-commerce businesses',
       availability: 'https://schema.org/InStock',
@@ -56,8 +56,8 @@ const indiaSpecificJsonLd = {
     },
     {
       '@type': 'Offer',
-      name: 'Ultra Plan India',
-      price: '599',
+      name: 'Enterprise Plan India',
+      price: '2999',
       priceCurrency: 'INR',
       description: 'Enterprise-grade AI chatbot for large Indian businesses',
       availability: 'https://schema.org/InStock',

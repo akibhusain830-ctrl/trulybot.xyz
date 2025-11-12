@@ -371,7 +371,7 @@ export const commonSchemas = {
             'Filename contains path traversal characters'),
             
   userRole: z.enum(['owner', 'admin', 'member']),
-  subscriptionTier: z.enum(['basic', 'pro', 'ultra']),
+  subscriptionTier: z.enum(['basic', 'pro', 'enterprise']),
   subscriptionStatus: z.enum(['trial', 'active', 'cancelled', 'expired', 'none'])
 };
 

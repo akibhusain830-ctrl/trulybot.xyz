@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '@/lib/config/secrets';
 
@@ -65,6 +66,7 @@ export async function GET(
             chatbot_name,
             welcome_message,
             accent_color,
+            chat_bubble_icon,
             chatbot_logo_url,
             chatbot_theme,
             custom_css,
@@ -127,7 +129,7 @@ export async function GET(
       // Check if user is on trial
       const { data: trial } = await supabaseAdmin
         .from('profiles')
-        .select('trial_end_date')
+        .select('trial_ends_at')
         .eq('id', userId)
         .single();
       trialData = trial;
@@ -136,17 +138,17 @@ export async function GET(
       // Continue with fallback
     }
 
-    const isOnTrial = trialData?.trial_end_date && new Date(trialData.trial_end_date) > new Date();
+    const isOnTrial = trialData?.trial_ends_at && new Date(trialData.trial_ends_at) > new Date();
 
-    // Determine tier (basic, pro, ultra)
-    let tier: 'basic' | 'pro' | 'ultra' = 'basic';
+    // Determine tier (basic, pro, enterprise)
+    let tier: 'basic' | 'pro' | 'enterprise' = 'basic';
     
-    // Trial users get Ultra features
+    // Trial users get Enterprise features
     if (isOnTrial) {
-      tier = 'ultra';
+      tier = 'enterprise';
     } else if (subscription?.plan_name && subscription.status === 'active') {
       const planName = subscription.plan_name.toLowerCase();
-      if (planName.includes('ultra')) tier = 'ultra';
+      if (planName.includes('enterprise')) tier = 'enterprise';
       else if (planName.includes('pro')) tier = 'pro';
     }
 
@@ -157,6 +159,7 @@ export async function GET(
       chatbot_name: 'Assistant',
       welcome_message: 'Hello! How can I help you today?',
       accent_color: '#2563EB',
+      chat_bubble_icon: profile?.chat_bubble_icon || 'lightning',
       chatbot_logo_url: null,
       chatbot_theme: 'light',
       custom_css: null,
@@ -165,14 +168,15 @@ export async function GET(
     };
 
     // Pro features - name and welcome message customization
-    if (tier === 'pro' || tier === 'ultra') {
+    if (tier === 'pro' || tier === 'enterprise') {
       widgetConfig.chatbot_name = profile?.chatbot_name || 'Assistant';
       widgetConfig.welcome_message = profile?.welcome_message || 'Hello! How can I help you today?';
     }
 
-    // Ultra features - full customization
-    if (tier === 'ultra') {
+    // Enterprise features - full customization
+    if (tier === 'enterprise') {
       widgetConfig.accent_color = profile?.accent_color || '#2563EB';
+      widgetConfig.chat_bubble_icon = profile?.chat_bubble_icon || widgetConfig.chat_bubble_icon;
       widgetConfig.chatbot_logo_url = profile?.chatbot_logo_url || null;
       widgetConfig.chatbot_theme = profile?.chatbot_theme || 'light';
       widgetConfig.custom_css = profile?.custom_css || null;
@@ -199,20 +203,27 @@ export async function GET(
     widgetConfig.chatbot_name = String(widgetConfig.chatbot_name).slice(0, 100);
     widgetConfig.welcome_message = String(widgetConfig.welcome_message).slice(0, 500);
 
-    return NextResponse.json(widgetConfig, { 
+    const body = JSON.stringify(widgetConfig);
+    const etag = '"' + createHash('sha1').update(body).digest('hex') + '"';
+    const inm = req.headers.get('if-none-match');
+    if (inm && inm === etag) {
+      return new NextResponse(null, { status: 304, headers: { ...corsHeaders, ETag: etag } });
+    }
+    return new NextResponse(body, {
       status: 200,
       headers: {
         ...corsHeaders,
         'Cache-Control': 'public, max-age=300, s-maxage=300',
         'Content-Type': 'application/json',
-      }
+        ETag: etag,
+      },
     });
 
   } catch (error) {
     console.error('Widget config API error:', error);
     
     // Return fallback configuration on any error
-    return NextResponse.json({
+    const fallback = {
       chatbot_name: 'Assistant',
       welcome_message: 'Hello! How can I help you today?',
       accent_color: '#2563EB',
@@ -223,11 +234,20 @@ export async function GET(
       tier: 'basic',
       fallback: true,
       error_handled: true
-    }, {
+    };
+    const body = JSON.stringify(fallback);
+    const etag = '"' + createHash('sha1').update(body).digest('hex') + '"';
+    const inm = req.headers.get('if-none-match');
+    if (inm && inm === etag) {
+      return new NextResponse(null, { status: 304, headers: { ...corsHeaders, ETag: etag } });
+    }
+    return new NextResponse(body, {
       status: 200,
       headers: {
         ...corsHeaders,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Content-Type': 'application/json',
+        ETag: etag,
       },
     });
   }

@@ -52,7 +52,7 @@ function uid() {
 }
 
 export interface WidgetConfig {
-  tier: "basic" | "pro" | "ultra";
+  tier: "basic" | "pro" | "enterprise";
   chatbot_name: string;
   welcome_message: string;
   accent_color: string;
@@ -351,8 +351,8 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         `;
       }
 
-      // Apply custom CSS if provided (Ultra tier only)
-      if (widgetConfig.tier === "ultra" && widgetConfig.custom_css) {
+      // Apply custom CSS if provided (Enterprise tier only)
+      if (widgetConfig.tier === "enterprise" && widgetConfig.custom_css) {
         customCSS += widgetConfig.custom_css;
       }
 

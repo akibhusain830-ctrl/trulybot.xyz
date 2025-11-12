@@ -6,7 +6,7 @@ console.log('='.repeat(50));
 console.log('\n📊 ISSUE ANALYSIS:');
 console.log('   Problem: Trial user seeing "Start Free Trial" popup + "Free Plan" banner');
 console.log('   Root Cause: Frontend UI not properly detecting active trial status');
-console.log('   User Status: ULTRA trial with full premium features access');
+console.log('   User Status: ENTERPRISE trial with full premium features access');
 
 console.log('\n🔧 FIXES APPLIED:');
 
@@ -19,20 +19,20 @@ console.log('   ✅ TypeScript types updated to include "eligible"');
 console.log('\n2. 📋 KNOWLEDGE BASE MANAGER:');
 console.log('   ✅ Fixed subscription tier calculation');
 console.log('   ✅ Now fetches FULL profile (trial_ends_at, subscription_status, etc.)');
-console.log('   ✅ Trial users now get userTier="ultra" instead of "free"');
+console.log('   ✅ Trial users now get userTier="enterprise" instead of "free"');
 console.log('   ✅ Free plan banner will be HIDDEN for trial users');
 
 console.log('\n3. 🔄 SUBSCRIPTION LOGIC:');
-console.log('   ✅ Trial users with valid dates get tier="ultra"');
+console.log('   ✅ Trial users with valid dates get tier="enterprise"');
 console.log('   ✅ calculateSubscriptionAccess working correctly');
 console.log('   ✅ AuthContext returns status="trialing" for active trials');
 
 console.log('\n🎯 EXPECTED BEHAVIOR FOR YOUR TRIAL USER:');
 console.log('   📊 Subscription Status: "trialing" (AuthContext)');
-console.log('   🎁 User Tier: "ultra" (calculateSubscriptionAccess)');
+console.log('   🎁 User Tier: "enterprise" (calculateSubscriptionAccess)');
 console.log('   🚫 Trial Popup: HIDDEN (won\'t appear)');
 console.log('   🚫 Free Plan Banner: HIDDEN (won\'t appear)');
-console.log('   ✅ Dashboard Access: FULL ULTRA ACCESS');
+console.log('   ✅ Dashboard Access: FULL ENTERPRISE ACCESS');
 console.log('   ✅ All Features: Unlimited conversations, full customization, etc.');
 
 console.log('\n🏆 VERIFICATION STATUS:');
@@ -47,8 +47,8 @@ console.log('   Your trial dashboard should now be clean without any upgrade pro
 console.log('\n💡 EXPLANATION:');
 console.log('   - AuthContext properly detects your trial and returns status="trialing"');
 console.log('   - Dashboard layout recognizes "trialing" and hides the trial popup');
-console.log('   - KnowledgeBaseManager fetches full profile and calculates tier="ultra"');
+console.log('   - KnowledgeBaseManager fetches full profile and calculates tier="enterprise"');
 console.log('   - Free plan banner condition (userTier === "free") is now false');
-console.log('   - You get full ULTRA features access without any interruptions');
+console.log('   - You get full ENTERPRISE features access without any interruptions');
 
 console.log('\n🎉 The annoying popups and banners are GONE!');

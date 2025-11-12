@@ -6,7 +6,7 @@ export type SubscriptionStatus =
   | "canceled"
   | "expired"
   | "eligible";
-export type SubscriptionTier = "free" | "basic" | "pro" | "ultra";
+export type SubscriptionTier = "free" | "basic" | "pro" | "enterprise";
 
 export interface UserSubscription {
   status: SubscriptionStatus;
@@ -36,25 +36,31 @@ export interface UserProfile {
 const TIER_FEATURES = {
   free: [
     "Core AI Chatbot",
-    "100 Replies/month",
-    "Basic Knowledge Base (500 words)",
-    "1 Knowledge Upload",
-    "Website Embedding",
+    "Lead Capture",
+    "300 Replies/month",
+    "Shopify & WordPress Integration",
+    "Basic Support",
   ],
-  basic: ["Core AI Chatbot", "Unlimited Replies", "1,000 Messages/month"],
+  basic: [
+    "Core AI Chatbot",
+    "Lead Capture",
+    "1,000 Replies/month",
+    "Shopify & WordPress Integration",
+    "Basic Support",
+  ],
   pro: [
     "Core AI Chatbot",
-    "Unlimited Replies",
-    "Maximum Knowledge Base",
-    "Basic Customization",
+    "Advanced Lead Capture",
+    "3,000 Replies/month",
+    "Shopify & WordPress Integration",
+    "Priority Support",
   ],
-  ultra: [
+  enterprise: [
     "Core AI Chatbot",
-    "Unlimited Replies",
-    "Maximum Knowledge Base",
-    "Full Brand Customization",
-    "Enhanced Lead Capture",
-    "Priority Support Queue",
+    "Advanced Lead Capture",
+    "15,000 Replies/month",
+    "Shopify & WordPress Integration",
+    "Priority Support",
   ],
 };
 
@@ -116,13 +122,13 @@ export function calculateSubscriptionAccess(
 
     return {
       status: "trial",
-      tier: "ultra",
+      tier: "enterprise",
       trial_ends_at: profile.trial_ends_at || null,
       subscription_ends_at: null,
       is_trial_active: true,
       has_access: true,
       days_remaining: Math.max(0, daysRemaining),
-      features: TIER_FEATURES.ultra,
+      features: TIER_FEATURES.enterprise,
     };
   }
 
