@@ -10,9 +10,9 @@ import { ProductShowcase } from '../../final landing page components/ProductShow
 import { Results } from '../../final landing page components/Results';
 import { FAQs } from '../../final landing page components/FAQs';
 import { CallToAction } from '../../final landing page components/CallToAction';
-import { Footer } from '../../final landing page components/Footer';
 import SignInPromptModal from '@/components/SignInPromptModal';
 import ChatWidgetLauncher from '@/components/ChatWidgetLauncher';
+import { ProfessionalFooter } from '@/components/ProfessionalNavigation';
 
 export default function FinalHomePage() {
   const { user, loading, signOut } = useAuth();
@@ -46,21 +46,20 @@ export default function FinalHomePage() {
   }, [user, loading]);
 
   return (
-    <main className="min-h-screen bg-black text-white overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white overflow-x-hidden flex flex-col">
       <Navbar user={user} loading={loading} signOut={signOut} />
-      <Hero />
-      <HowItWorks />
-      <Results />
-      <Features />
-      <ProductShowcase />
-      <FAQs />
-      <Pricing />
-      <CallToAction />
-      <Footer />
-
-      {/* Chat Widget with Thunderbolt Icon */}
+      <div className="flex-1">
+        <Hero />
+        <HowItWorks />
+        <Results />
+        <Features />
+        <ProductShowcase />
+        <FAQs />
+        <Pricing />
+        <CallToAction />
+      </div>
+      <ProfessionalFooter />
       <ChatWidgetLauncher />
-
       {showSignInModal && <SignInPromptModal onClose={() => setShowSignInModal(false)} />}
     </main>
   );

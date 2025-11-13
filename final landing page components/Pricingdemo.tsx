@@ -13,7 +13,7 @@ export const Pricing = () => {
           Simple, transparent pricing that scales with your store. Choose the perfect plan and start answering customer questions instantly.
         </p>
         </div>
-        <div className="flex flex-col items-center justify-center sm:flex-row gap-4 px-24 py-[72px] sm:py-24  ">
+        <div className="w-full flex flex-col items-center justify-center gap-6 px-5 sm:px-10 py-[56px] sm:py-24">
           <PricingTable/>
           
 

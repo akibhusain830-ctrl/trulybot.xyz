@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withRateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 
 // WooCommerce widget script
-export async function GET(req: NextRequest) {
+export const GET = withRateLimit(async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
   const storeUrl = searchParams.get('storeUrl');
   const currency = searchParams.get('currency') || 'USD';
   const position = searchParams.get('position') || 'bottom-right';
   
-  if (!userId) {
-    return new NextResponse('Missing userId parameter', { status: 400 });
-  }
   
   const widgetScript = `
 (function() {
@@ -19,14 +17,17 @@ export async function GET(req: NextRequest) {
   // TrulyBot WooCommerce Widget
   window.TrulyBot = window.TrulyBot || {};
   
-  const config = {
-    userId: '${userId}',
-    platform: 'woocommerce',
-    storeUrl: '${storeUrl}',
-    currency: '${currency}',
-    position: '${position}',
-    apiBase: '${process.env.NEXT_PUBLIC_SITE_URL || 'https://trulybot.xyz'}/api'
-  };
+  const config = (function() {
+    var wcfg = (typeof window !== 'undefined' && window.trulyBotConfig) ? window.trulyBotConfig : {};
+    return {
+      userId: wcfg.userId || '${userId ?? ''}',
+      platform: 'woocommerce',
+      storeUrl: wcfg.storeUrl || '${storeUrl ?? ''}',
+      currency: wcfg.currency || '${currency}',
+      position: wcfg.position || '${position}',
+      apiBase: '${process.env.NEXT_PUBLIC_SITE_URL || 'https://trulybot.xyz'}/api'
+    };
+  })();
   
   let widget = null;
   let isOpen = false;
@@ -35,6 +36,10 @@ export async function GET(req: NextRequest) {
   // Load widget configuration
   async function loadConfig() {
     try {
+      if (!config.userId) {
+        userConfig = getDefaultConfig();
+        return;
+      }
       const response = await fetch(config.apiBase + '/widget/config/' + config.userId, {
         method: 'GET',
         headers: {
@@ -497,13 +502,20 @@ export async function GET(req: NextRequest) {
 })();
 `;
 
-  return new NextResponse(widgetScript, {
+  const res = new NextResponse(widgetScript, {
     headers: {
       'Content-Type': 'application/javascript',
-      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Cache-Control': 'public, max-age=3600',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'X-Content-Type-Options': 'nosniff',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Referrer-Policy': 'no-referrer',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Timing-Allow-Origin': '*',
     },
   });
-}
+  res.headers.set('Server-Timing', 'widget;desc="woocommerce_script"');
+  return res;
+}, rateLimitConfigs.general);

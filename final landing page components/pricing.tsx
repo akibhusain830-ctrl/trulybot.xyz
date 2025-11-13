@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+ 
 
 interface PricingTabProps {
   yearly: boolean
@@ -17,8 +18,8 @@ interface PricingTabProps {
 
 export function PricingTab(props: PricingTabProps) {
   return (
-    <div className={`h-full `}>
-      <div className="relative flex flex-col h-full p-6 rounded-2xl bg-black border border-white/30 shadow shadow-black/80">
+    <div className="h-full w-full">
+      <div className="w-full relative flex flex-col h-full p-7 rounded-3xl bg-gradient-to-b from-black to-[#0b0b0f] border border-white/20 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 hover:ring-1 hover:ring-[#5D2CA8] transition-all">
         {props.popular && (
           <div className="absolute top-0 right-0 mr-6 -mt-4">
             <div className="inline-flex items-center text-xs font-semibold py-1.5 px-3 bg-emerald-500 text-white rounded-full shadow-sm shadow-slate-950/5">Most Popular</div>
@@ -71,7 +72,7 @@ export default function PricingTable() {
         </div>
       </div>
 
-      <div className="max-w-sm mx-auto grid gap-6 lg:grid-cols-4 items-start lg:max-w-none">
+      <div className="mx-auto w-full max-w-none px-5 grid gap-6 sm:max-w-xl lg:grid-cols-4 items-start lg:max-w-none">
 
         {/* Pricing tab 1 - Free */}
         <PricingTab
@@ -132,6 +133,8 @@ export default function PricingTable() {
           ]} />
 
       </div>
+
+      
 
     </div>
   )

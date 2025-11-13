@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { encryptCredential } from '@/lib/encryption';
+import { withRateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 
 // Request validation schema
 const connectSchema = z.object({
@@ -16,8 +18,9 @@ const connectSchema = z.object({
   plugin_version: z.string().optional()
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const reqId = Math.random().toString(36).substring(7);
+  const startTime = Date.now();
   
   try {
     logger.info('WooCommerce connect request received', { reqId });
@@ -192,7 +195,7 @@ export async function POST(req: NextRequest) {
       store_url
     });
     
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: 'Successfully connected your WooCommerce store to TrulyBot! Your chatbot is now active.',
       data: {
@@ -200,6 +203,9 @@ export async function POST(req: NextRequest) {
         store_info: apiTestResult.storeInfo
       }
     });
+    const dur = Date.now() - startTime;
+    res.headers.set('Server-Timing', `api;desc="woocommerce_connect";dur=${dur}`);
+    return res;
     
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -214,12 +220,15 @@ export async function POST(req: NextRequest) {
     }
     
     logger.error('WooCommerce connection error', { reqId, error: error instanceof Error ? error.message : 'Unknown error' });
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: false,
       message: 'Internal server error. Please try again later.'
     }, { status: 500 });
+    const dur = Date.now() - startTime;
+    res.headers.set('Server-Timing', `api;desc="woocommerce_connect_error";dur=${dur}`);
+    return res;
   }
-}
+}, rateLimitConfigs.woocommerceConnect);
 
 /**
  * Test WooCommerce API connection
@@ -285,14 +294,7 @@ function normalizeUrl(url: string): string {
   return normalized;
 }
 
-/**
- * Encrypt credentials for secure storage
- */
-async function encryptCredential(credential: string): Promise<string> {
-  // In production, use proper encryption
-  // For now, return base64 encoded (replace with actual encryption)
-  return Buffer.from(credential).toString('base64');
-}
+/*** End of File
 
 /**
  * Send connection notification

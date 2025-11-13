@@ -198,7 +198,7 @@ const BentoBox1 = () => {
               </div>
               
               {/* Chat Container */}
-              <div ref={chartRef} className="relative w-full mt-6 h-72 sm:h-96 bg-gradient-to-b from-white/5 to-transparent rounded-2xl border border-white/10 p-4 flex flex-col gap-4 overflow-y-auto">
+              <div ref={chartRef} className="relative w-full mt-6 h-[460px] sm:h-[560px] bg-gradient-to-b from-white/10 via-black/20 to-transparent rounded-2xl border border-white/10 p-5 flex flex-col gap-5 overflow-y-auto shadow-xl">
                 {/* Customer Message */}
                 <motion.div 
                   className="flex justify-end"
@@ -206,7 +206,7 @@ const BentoBox1 = () => {
                   animate={isChartVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <div className="bg-gradient-to-br from-cyan-500/30 to-sky-500/20 border border-cyan-400/50 rounded-2xl p-3 max-w-xs">
+                  <div className="bg-gradient-to-br from-cyan-500/30 to-sky-500/20 border border-cyan-400/40 rounded-2xl p-3 max-w-[90%] shadow-[0_0_30px_-12px_rgba(14,165,233,0.6)]">
                     <p className="text-white text-sm">What's the shipping cost to Mumbai?</p>
                   </div>
                 </motion.div>
@@ -218,7 +218,7 @@ const BentoBox1 = () => {
                   animate={isChartVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                   transition={{ delay: 0.8 }}
                 >
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-3 max-w-xs">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-3 max-w-[90%] shadow-[0_0_30px_-12px_rgba(255,255,255,0.3)]">
                     <p className="text-white/90 text-sm">Shipping to Mumbai is ₹99 for orders under ₹500, free above that. Delivery in 3-5 business days.</p>
                   </div>
                 </motion.div>
@@ -230,7 +230,7 @@ const BentoBox1 = () => {
                   animate={isChartVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
                   transition={{ delay: 1.3 }}
                 >
-                  <div className="bg-gradient-to-br from-cyan-500/30 to-sky-500/20 border border-cyan-400/50 rounded-2xl p-3 max-w-xs">
+                  <div className="bg-gradient-to-br from-cyan-500/30 to-sky-500/20 border border-cyan-400/40 rounded-2xl p-3 max-w-[90%] shadow-[0_0_30px_-12px_rgba(14,165,233,0.6)]">
                     <p className="text-white text-sm">Do you accept returns? What's your policy?</p>
                   </div>
                 </motion.div>
@@ -242,7 +242,7 @@ const BentoBox1 = () => {
                   animate={isChartVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                   transition={{ delay: 1.8 }}
                 >
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-3 max-w-xs">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-3 max-w-[90%] shadow-[0_0_30px_-12px_rgba(255,255,255,0.3)]">
                     <p className="text-white/90 text-sm">Yes! 30-day returns on all items in original condition. Free return shipping with prepaid label.</p>
                   </div>
                 </motion.div>

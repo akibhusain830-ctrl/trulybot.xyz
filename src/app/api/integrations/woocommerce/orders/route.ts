@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { decryptCredential } from '@/lib/encryption';
+import { withRateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 
 // Request validation schema
 const orderLookupSchema = z.object({
@@ -11,8 +13,9 @@ const orderLookupSchema = z.object({
   customer_phone: z.string().optional()
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const reqId = Math.random().toString(36).substring(7);
+  const startTime = Date.now();
   
   try {
     logger.info('WooCommerce order lookup request', { reqId });
@@ -77,10 +80,13 @@ export async function POST(req: NextRequest) {
       order_status: normalizedOrder.status 
     });
     
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       order: normalizedOrder
     });
+    const dur = Date.now() - startTime;
+    res.headers.set('Server-Timing', `api;desc="woocommerce_orders";dur=${dur}`);
+    return res;
     
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,12 +104,15 @@ export async function POST(req: NextRequest) {
       reqId, 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: false,
       message: 'Failed to fetch order. Please try again later.'
     }, { status: 500 });
+    const dur = Date.now() - startTime;
+    res.headers.set('Server-Timing', `api;desc="woocommerce_orders_error";dur=${dur}`);
+    return res;
   }
-}
+}, rateLimitConfigs.woocommerceOrders);
 
 /**
  * Fetch order from WooCommerce API
@@ -298,13 +307,4 @@ function extractTrackingInfo(order: any): any[] {
   }
   
   return tracking;
-}
-
-/**
- * Decrypt credentials from secure storage
- */
-async function decryptCredential(encryptedCredential: string): Promise<string> {
-  // In production, use proper decryption
-  // For now, return base64 decoded (replace with actual decryption)
-  return Buffer.from(encryptedCredential, 'base64').toString();
 }
