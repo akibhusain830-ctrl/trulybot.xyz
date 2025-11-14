@@ -96,7 +96,14 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
         errMsg.includes("eai_again") ||
         errMsg.includes("enotfound") ||
         errMsg.includes("self-signed") ||
-        errMsg.includes("ssl");
+        errMsg.includes("ssl") ||
+        errMsg.includes("api returned 401") ||
+        errMsg.includes("api returned 403") ||
+        errMsg.includes("api returned 404") ||
+        errMsg.includes("api returned 500") ||
+        errMsg.includes("api returned 502") ||
+        errMsg.includes("api returned 503") ||
+        errMsg.includes("api returned 504");
       if (!transient) {
         logger.error("WooCommerce API test failed", {
           reqId,
@@ -343,43 +350,43 @@ async function testWooCommerceAPI(
 ) {
   try {
     const normalizedUrl = normalizeUrl(storeUrl);
-    const testEndpoint = `${normalizedUrl}/wp-json/wc/v3/system_status`;
+    const endpoints = [
+      `${normalizedUrl}/wp-json/wc/v3/system_status`,
+      `${normalizedUrl}/wordpress/wp-json/wc/v3/system_status`,
+    ];
 
     const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString(
       "base64",
     );
 
-    const response = await fetch(testEndpoint, {
-      method: "GET",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "User-Agent": "TrulyBot-Integration/1.0",
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(10000), // 10 second timeout
-    });
+    let lastError: string | undefined;
+    for (const testEndpoint of endpoints) {
+      const response = await fetch(testEndpoint, {
+        method: "GET",
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "User-Agent": "TrulyBot-Integration/1.0",
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(10000),
+      });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `API returned ${response.status}: ${response.statusText}`,
+      if (!response.ok) {
+        lastError = `API returned ${response.status}: ${response.statusText}`;
+        continue;
+      }
+
+      const data = await response.json();
+      const storeInfo = {
+        currency: data.settings?.currency?.value || "INR",
+        timezone: data.settings?.timezone?.value || "UTC",
+        version: data.environment?.wp_version || "unknown",
+        wc_version: data.environment?.wc_version || "unknown",
       };
+      return { success: true, storeInfo };
     }
 
-    const data = await response.json();
-
-    // Extract store information
-    const storeInfo = {
-      currency: data.settings?.currency?.value || "INR",
-      timezone: data.settings?.timezone?.value || "UTC",
-      version: data.environment?.wp_version || "unknown",
-      wc_version: data.environment?.wc_version || "unknown",
-    };
-
-    return {
-      success: true,
-      storeInfo,
-    };
+    return { success: false, error: lastError || "Unknown API error" };
   } catch (error) {
     return {
       success: false,
