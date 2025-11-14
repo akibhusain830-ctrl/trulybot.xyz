@@ -61,12 +61,11 @@ export default function WooCommerceIntegrationPage() {
           <h2 className="text-3xl font-bold mb-6 text-center">Download WordPress Plugin</h2>
           <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
             <a
-              href="/integrations/woocommerce/trulybot-woocommerce.zip"
-              download
+              href="/api/integrations/woocommerce/download"
               className="flex items-center px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg text-lg font-semibold"
             >
               <ArrowDownTrayIcon className="w-6 h-6 mr-3" />
-              Download Plugin (v1.0.0)
+              Download Plugin
             </a>
             <a
               href="/integrations/woocommerce/README.md"
@@ -150,8 +149,7 @@ export default function WooCommerceIntegrationPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="/integrations/woocommerce/trulybot-woocommerce.zip"
-              download
+              href="/api/integrations/woocommerce/download"
               className="bg-purple-600 text-white px-8 py-4 rounded-xl hover:bg-purple-700 transition-colors font-semibold"
             >
               Download Plugin Now

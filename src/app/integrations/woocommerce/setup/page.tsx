@@ -163,9 +163,8 @@ export default function WooCommerceSetupPage() {
                 <p className="text-slate-400 text-sm">Official WordPress plugin package</p>
               </div>
               <Link 
-                href="/integrations/woocommerce/trulybot-woocommerce.zip"
+                href="/api/integrations/woocommerce/download"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                download
               >
                 <DownloadIcon />
                 Download Plugin

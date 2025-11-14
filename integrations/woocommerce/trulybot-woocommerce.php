@@ -60,6 +60,9 @@ class TrulyBot_WooCommerce {
         // Hook into plugin activation and deactivation
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+
+        // Handle non-JS form submissions gracefully to prevent blank screens
+        add_action('admin_init', array($this, 'handle_non_js_connect'));
     }
     
     /**
@@ -185,7 +188,15 @@ class TrulyBot_WooCommerce {
      * Enqueue admin scripts and styles
      */
     public function admin_scripts($hook) {
-        if ($hook !== 'toplevel_page_trulybot-wc') {
+        // Enqueue scripts on any screen that matches our slug to avoid mismatch issues
+        $loadAssets = false;
+        if (function_exists('get_current_screen')) {
+            $screen = get_current_screen();
+            if ($screen && isset($screen->id) && strpos($screen->id, 'trulybot-wc') !== false) {
+                $loadAssets = true;
+            }
+        }
+        if (!$loadAssets && strpos($hook, 'trulybot-wc') === false) {
             return;
         }
         
@@ -218,6 +229,14 @@ class TrulyBot_WooCommerce {
             <h1><?php echo esc_html__('TrulyBot for WooCommerce', 'trulybot-woocommerce'); ?></h1>
             
             <div class="trulybot-admin-container">
+                <?php if (isset($_GET['trulybot_msg']) && $_GET['trulybot_msg'] === 'js_required'): ?>
+                    <div class="notice notice-warning inline">
+                        <p>
+                            <span class="dashicons dashicons-warning"></span>
+                            <?php echo esc_html__('JavaScript did not load correctly. Please disable admin script optimizers, ensure plugin assets are present, and try again.', 'trulybot-woocommerce'); ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
                 <div class="trulybot-connection-status">
                     <?php if ($is_connected): ?>
                         <div class="notice notice-success inline">
@@ -326,6 +345,29 @@ class TrulyBot_WooCommerce {
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * Gracefully handle non-JS form submissions to avoid blank page
+     */
+    public function handle_non_js_connect() {
+        if (!is_admin()) {
+            return;
+        }
+        // If the connect form submitted without JS, it will append trulybot_user_id in query
+        if (isset($_GET['trulybot_user_id'])) {
+            // Only allow WooCommerce managers
+            if (!current_user_can('manage_woocommerce')) {
+                return;
+            }
+            // Redirect back to the settings page with a helpful notice
+            $url = add_query_arg(array(
+                'page' => 'trulybot-wc',
+                'trulybot_msg' => 'js_required'
+            ), admin_url('admin.php'));
+            wp_safe_redirect($url);
+            exit;
+        }
     }
     
     /**
