@@ -137,8 +137,8 @@ class TrulyBot_WooCommerce {
         // Clear scheduled events
         wp_clear_scheduled_hook('trulybot_cleanup_logs');
         
-        // Disconnect from TrulyBot if connected
-        $this->disconnect_from_trulybot();
+        // Disconnect from TrulyBot if connected (safe)
+        try { $this->disconnect_from_trulybot(); } catch (Exception $e) {}
     }
     
     /**
@@ -383,6 +383,10 @@ class TrulyBot_WooCommerce {
             wp_die(__('Insufficient permissions', 'trulybot-woocommerce'));
         }
         
+        if (!class_exists('WooCommerce') || !function_exists('wc_rand_hash')) {
+            wp_send_json_error(__('WooCommerce is not active or unavailable in admin.', 'trulybot-woocommerce'));
+        }
+
         $user_id = sanitize_text_field($_POST['user_id'] ?? '');
         
         if (empty($user_id)) {
@@ -441,25 +445,31 @@ class TrulyBot_WooCommerce {
         if ($this->rate_limit_action('test')) {
             wp_send_json_error(__('Too many requests. Please try again later.', 'trulybot-woocommerce'));
         }
-        
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('Insufficient permissions', 'trulybot-woocommerce'));
         }
-        
         $settings = get_option('trulybot_wc_settings', array());
-        
         if (!isset($settings['connected']) || !$settings['connected']) {
             wp_send_json_error(__('Not connected to TrulyBot', 'trulybot-woocommerce'));
         }
-        
-        // Test WooCommerce API
-        $test_result = $this->test_woocommerce_api($settings['api_key'], $settings['api_secret']);
-        
-        if ($test_result['success']) {
-            wp_send_json_success(__('Connection test successful!', 'trulybot-woocommerce'));
-        } else {
-            wp_send_json_error($test_result['message']);
+        $payload = array(
+            'user_id' => isset($settings['trulybot_user_id']) ? $settings['trulybot_user_id'] : '',
+            'store_url' => home_url(),
+        );
+        $response = wp_remote_post(TRULYBOT_WC_API_BASE . '/integrations/woocommerce/test', array(
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode($payload),
+            'timeout' => 20,
+        ));
+        if (is_wp_error($response)) {
+            wp_send_json_error(__('Test failed: ', 'trulybot-woocommerce') . $response->get_error_message());
         }
+        $code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        if ($code !== 200) {
+            wp_send_json_error(__('Test failed: ', 'trulybot-woocommerce') . $code);
+        }
+        wp_send_json_success(__('Connection test successful!', 'trulybot-woocommerce'));
     }
     
     /**
