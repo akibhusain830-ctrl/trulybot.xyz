@@ -65,7 +65,7 @@ export default function WooCommerceIntegrationPage() {
               className="flex items-center px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg text-lg font-semibold"
             >
               <ArrowDownTrayIcon className="w-6 h-6 mr-3" />
-              Download Plugin
+              Download Plugin (v1.0.2)
             </a>
             <a
               href="/integrations/woocommerce/README.md"

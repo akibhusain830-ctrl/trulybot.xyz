@@ -3,7 +3,7 @@
  * Plugin Name: TrulyBot for WooCommerce
  * Plugin URI: https://trulybot.xyz
  * Description: Integrate TrulyBot AI chatbot with your WooCommerce store for automated customer support and order tracking.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: TrulyBot
  * Author URI: https://trulybot.xyz
  * License: GPL v2 or later
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TRULYBOT_WC_VERSION', '1.0.1');
+define('TRULYBOT_WC_VERSION', '1.0.2');
 define('TRULYBOT_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TRULYBOT_WC_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('TRULYBOT_WC_API_BASE', 'https://trulybot.xyz/api');
@@ -200,6 +200,7 @@ class TrulyBot_WooCommerce {
             return;
         }
         
+        wp_enqueue_script('jquery');
         wp_enqueue_script('trulybot-admin', TRULYBOT_WC_PLUGIN_URL . 'assets/admin.js', array('jquery'), TRULYBOT_WC_VERSION, true);
         wp_enqueue_style('trulybot-admin', TRULYBOT_WC_PLUGIN_URL . 'assets/admin.css', array(), TRULYBOT_WC_VERSION);
         
@@ -380,7 +381,7 @@ class TrulyBot_WooCommerce {
         }
         
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions', 'trulybot-woocommerce'));
+            wp_send_json_error(__('Insufficient permissions', 'trulybot-woocommerce'));
         }
         
         if (!class_exists('WooCommerce') || !function_exists('wc_rand_hash')) {
@@ -430,7 +431,7 @@ class TrulyBot_WooCommerce {
         }
         
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions', 'trulybot-woocommerce'));
+            wp_send_json_error(__('Insufficient permissions', 'trulybot-woocommerce'));
         }
         
         $this->disconnect_from_trulybot();
