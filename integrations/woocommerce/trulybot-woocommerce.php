@@ -410,6 +410,9 @@ class TrulyBot_WooCommerce {
             $settings['connected'] = true;
             $settings['trulybot_user_id'] = $user_id;
             $settings['api_key_truncated'] = isset($api_credentials['truncated_key']) ? $api_credentials['truncated_key'] : substr($api_credentials['key'], -7);
+            if (isset($api_credentials['consumer_key_hash'])) {
+                $settings['api_key_hash'] = $api_credentials['consumer_key_hash'];
+            }
             $settings['widget_enabled'] = true;
             $settings['connected_at'] = current_time('mysql');
             
@@ -447,7 +450,7 @@ class TrulyBot_WooCommerce {
             wp_send_json_error(__('Too many requests. Please try again later.', 'trulybot-woocommerce'));
         }
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions', 'trulybot-woocommerce'));
+            wp_send_json_error(__('Insufficient permissions', 'trulybot-woocommerce'));
         }
         $settings = get_option('trulybot_wc_settings', array());
         if (!isset($settings['connected']) || !$settings['connected']) {
@@ -483,13 +486,14 @@ class TrulyBot_WooCommerce {
             // Generate API key and secret
             $key = 'ck_' . wc_rand_hash();
             $secret = 'cs_' . wc_rand_hash();
+            $consumer_key_hash = wc_api_hash($key);
             
             // Create API key in WooCommerce
             $data = array(
                 'user_id' => get_current_user_id(),
                 'description' => 'TrulyBot Integration - ' . date('Y-m-d H:i:s'),
                 'permissions' => 'read',
-                'consumer_key' => wc_api_hash($key),
+                'consumer_key' => $consumer_key_hash,
                 'consumer_secret' => $secret,
                 'nonces' => '',
                 'truncated_key' => substr($key, -7)
@@ -509,7 +513,9 @@ class TrulyBot_WooCommerce {
             return array(
                 'key' => $key,
                 'secret' => $secret,
-                'permissions' => 'read'
+                'permissions' => 'read',
+                'consumer_key_hash' => $consumer_key_hash,
+                'truncated_key' => substr($key, -7)
             );
             
         } catch (Exception $e) {
@@ -639,11 +645,11 @@ class TrulyBot_WooCommerce {
         }
         
         // Remove API keys from database
-        if (isset($settings['api_key'])) {
+        if (isset($settings['api_key_hash'])) {
             global $wpdb;
             $wpdb->delete(
                 $wpdb->prefix . 'woocommerce_api_keys',
-                array('consumer_key' => wc_api_hash($settings['api_key']))
+                array('consumer_key' => $settings['api_key_hash'])
             );
         }
         
