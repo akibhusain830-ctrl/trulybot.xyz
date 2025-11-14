@@ -64,7 +64,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     }
 
     // Check if subscription allows integrations (allow supported tiers to connect)
-    const allowedTiers = ["free", "basic", "pro", "enterprise"];
+    const allowedTiers = ["trial", "free", "basic", "pro", "business", "enterprise", "ultra"];
     if (!allowedTiers.includes(user.subscription_tier)) {
       logger.warn("Subscription tier does not allow integrations", {
         reqId,
@@ -267,7 +267,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const msg = error instanceof Error ? error.message : "Unknown error";
+    const msg = normalizeError(error);
     const isDuplicate =
       typeof msg === "string" && msg.toLowerCase().includes("duplicate key");
     if (isDuplicate) {
@@ -297,6 +297,19 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     return res;
   }
 }, rateLimitConfigs.woocommerceConnect);
+
+function normalizeError(err: any): string {
+  try {
+    if (!err) return "Unknown error";
+    if (err instanceof Error) return err.message;
+    if (typeof err === "string") return err;
+    if (typeof err.message === "string") return err.message;
+    if (typeof err.details === "string") return err.details;
+    return JSON.stringify(err);
+  } catch {
+    return "Unknown error";
+  }
+}
 
 /**
  * Test WooCommerce API connection
