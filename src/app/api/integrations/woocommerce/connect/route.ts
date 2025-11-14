@@ -205,7 +205,14 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
         .eq("id", existingConnection.id);
 
       if (updateError) {
-        throw updateError;
+        const msg = normalizeError(updateError);
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Database update error: ${msg}`,
+          },
+          { status: 400 },
+        );
       }
     } else {
       const { error: upsertError } = await supabaseAdmin
@@ -215,7 +222,22 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
         });
 
       if (upsertError) {
-        throw upsertError;
+        const msg = normalizeError(upsertError);
+        // Treat duplicate key as already connected
+        if (typeof msg === "string" && msg.toLowerCase().includes("duplicate")) {
+          logger.info("Duplicate integration detected, treating as already connected", { reqId });
+          return NextResponse.json({
+            success: true,
+            message: "Store is already connected to TrulyBot.",
+          });
+        }
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Database upsert error: ${msg}`,
+          },
+          { status: 400 },
+        );
       }
     }
 
