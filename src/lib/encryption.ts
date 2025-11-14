@@ -26,10 +26,8 @@ function deriveKey(masterKey: string, salt: Buffer): Buffer {
  * Falls back to a generated key if not set (for development)
  */
 function getMasterKey(): string {
-  const masterKey = process.env.WOOCOMMERCE_ENCRYPTION_KEY;
+  const masterKey = process.env.WOOCOMMERCE_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY;
   if (!masterKey) {
-    // Generate a secure key for development (should be set in production)
-    console.warn('WOOCOMMERCE_ENCRYPTION_KEY not set, using generated key');
     return process.env.NEXTAUTH_SECRET || randomBytes(KEY_LENGTH).toString('hex');
   }
   return masterKey;
