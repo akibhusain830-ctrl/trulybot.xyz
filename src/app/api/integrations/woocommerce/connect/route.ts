@@ -210,7 +210,9 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     } else {
       const { error: upsertError } = await supabaseAdmin
         .from("store_integrations")
-        .upsert(integrationData, { onConflict: "user_id,platform" });
+        .upsert(integrationData, {
+          onConflict: "user_id,platform,store_url",
+        });
 
       if (upsertError) {
         throw upsertError;
