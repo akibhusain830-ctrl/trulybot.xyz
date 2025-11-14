@@ -26,6 +26,7 @@ export type PersistLeadParams = {
   intentKeywords: string[];
   intentPrompt?: boolean;
   followUpRequest?: boolean;
+  needsHumanSupport?: boolean;
   conversation?: Array<{ role: string; text: string }>;
 };
 
@@ -38,7 +39,8 @@ export async function persistLeadIfAny(
     !params.phone &&
     !params.intentKeywords.length &&
     !params.intentPrompt &&
-    !params.followUpRequest
+    !params.followUpRequest &&
+    !params.needsHumanSupport
   ) {
     return { created: false };
   }
@@ -100,6 +102,7 @@ export async function persistLeadIfAny(
           meta: {
             intentPrompt: params.intentPrompt,
             followUpRequest: params.followUpRequest,
+            needsHumanSupport: params.needsHumanSupport,
           },
         })
         .eq("id", existing.id);
@@ -129,6 +132,7 @@ export async function persistLeadIfAny(
       meta: {
         intentPrompt: params.intentPrompt,
         followUpRequest: params.followUpRequest,
+        needsHumanSupport: params.needsHumanSupport,
       },
     })
     .select("id")

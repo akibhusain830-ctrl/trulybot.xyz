@@ -7,6 +7,9 @@ import crypto from 'crypto';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ valid: false, error: 'Use /api/payments/verify-payment' }, { status: 410 });
+  }
   const reqId = createRequestId();
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();

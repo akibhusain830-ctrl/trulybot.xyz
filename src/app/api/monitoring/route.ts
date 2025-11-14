@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getMonitoringDashboard, checkDatabaseHealth } from '@/lib/robustness/monitoring';
+import { getMonitoringDashboard, checkDatabaseHealth, flushMonitoring } from '@/lib/robustness/monitoring';
 import { getFailsafeStatus, resetAllCircuitBreakers } from '@/lib/robustness/failsafe';
 import { logger } from '@/lib/logger';
 
@@ -148,6 +148,16 @@ export async function POST(request: NextRequest) {
           message: 'Health check completed',
           timestamp: new Date().toISOString()
         });
+
+      case 'flush-metrics':
+        {
+          const inserted = await flushMonitoring();
+          return NextResponse.json({
+            status: 'success',
+            inserted,
+            timestamp: new Date().toISOString()
+          });
+        }
 
       default:
         return NextResponse.json(

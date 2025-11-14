@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { createRequestId } from '../../../../lib/requestContext';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { ProfileManager } from '@/lib/profile-manager';
 import { getPricingTier } from '@/lib/constants/pricing';
 
 
@@ -49,13 +50,18 @@ export async function POST(req: Request) {
         // Assumption: you have a table `orders` with order_id, user_id, plan_id, etc.
         const { data: order, error: orderError } = await supabase
           .from('orders')
-          .select('user_id, plan_id, billing_period, amount, currency, status, created_at')
+          .select('user_id, plan_id, billing_period, amount, currency, status, created_at, razorpay_payment_id')
           .eq('razorpay_order_id', razorpay_order_id)
           .single();
 
         if (orderError || !order) {
           logger.error('Order not found for razorpay_order_id', { reqId, razorpay_order_id });
           return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
+        }
+
+        // Idempotency guard: if already completed, acknowledge
+        if (order.status === 'completed' && order.razorpay_payment_id) {
+          return NextResponse.json({ ok: true, idempotent: true });
         }
 
         // Lookup workspace_id from profiles
@@ -129,7 +135,24 @@ export async function POST(req: Request) {
           return NextResponse.json({ ok: false, error: 'Billing history insert failed' }, { status: 500 });
         }
 
-        // Optionally: grant access to plan, send email, etc.
+        const { error: updOrderErr } = await supabase
+          .from('orders')
+          .update({
+            status: 'completed',
+            razorpay_payment_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('razorpay_order_id', razorpay_order_id);
+
+        if (updOrderErr) {
+          return NextResponse.json({ ok: false, error: 'Order update failed' }, { status: 500 });
+        }
+
+        try {
+          await ProfileManager.activateSubscription(order.user_id, order.plan_id as any, razorpay_payment_id);
+        } catch (e: any) {
+          return NextResponse.json({ ok: false, error: 'Subscription activation failed' }, { status: 500 });
+        }
 
         break;
       }

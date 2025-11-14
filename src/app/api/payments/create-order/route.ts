@@ -178,9 +178,19 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
       created_at: new Date().toISOString(),
     };
 
-    const { error: supabaseError } = await supabase
+    const { data: existingOrder } = await supabase
       .from('orders')
-      .insert([insertPayload]);
+      .select('id, razorpay_order_id')
+      .eq('razorpay_order_id', order.id)
+      .maybeSingle();
+
+    let supabaseError = null as any;
+    if (!existingOrder) {
+      const { error } = await supabase
+        .from('orders')
+        .insert([insertPayload]);
+      supabaseError = error;
+    }
 
     if (supabaseError) {
       logger.error('Database order insert error', { 

@@ -22,19 +22,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { workspaceId, status } = await req.json();
+    const { status } = await req.json();
+
+    // Resolve user's workspace_id for secure filtering
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('workspace_id')
+      .eq('id', user.id)
+      .single();
 
     let query = admin
       .from('leads')
       .select('created_at,email,status,origin,workspace_id,name,company,intent_keywords')
       .order('created_at', { ascending: false });
 
-    if (workspaceId) {
-      if (workspaceId === 'demo') {
-        query = query.is('workspace_id', null);
-      } else {
-        query = query.eq('workspace_id', workspaceId);
-      }
+    if (profile?.workspace_id) {
+      query = query.eq('workspace_id', profile.workspace_id);
+    } else {
+      // No workspace: limit to demo
+      query = query.is('workspace_id', null);
     }
     if (status) {
       query = query.eq('status', status);

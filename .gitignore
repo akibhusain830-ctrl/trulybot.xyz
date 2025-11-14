@@ -12,6 +12,7 @@ coverage/
 .vercel/
 .DS_Store
 .vscode/
+.trae/
 
 # Logs
 npm-debug.log*
@@ -20,3 +21,4 @@ pnpm-debug.log*
 
 # Build artifacts
 *.local
+tsconfig.tsbuildinfo

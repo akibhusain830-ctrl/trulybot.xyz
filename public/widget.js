@@ -80,8 +80,15 @@
 
     w.addEventListener('message', function(e) {
       try {
-        // Validate origin
-        if (origin && !e.origin.includes(origin.replace(/^https?:\/\//, ''))) {
+        // Validate origin strictly
+        var allowedOrigins = [];
+        try {
+          var parsed = new URL(origin);
+          allowedOrigins = [parsed.origin];
+        } catch (_) {
+          allowedOrigins = [origin];
+        }
+        if (allowedOrigins.length > 0 && allowedOrigins.indexOf(e.origin) === -1) {
           return;
         }
 

@@ -74,6 +74,10 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
     accent_color: "#2563EB",
   });
   const [isEmbedded, setIsEmbedded] = useState(false);
+  const [showEscalationForm, setShowEscalationForm] = useState(false);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactIssue, setContactIssue] = useState("");
 
   // Storage keys
   const CHAT_HISTORY_KEY = "trulybot_chat_history";
@@ -530,6 +534,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
       let done = false;
       let fullResponse = ""; // Collect the entire response first
       let metadata: any = null;
+      const isFallbackHeader = res.headers.get("x-fallback") === "true";
 
       // Read all chunks first
       while (!done) {
@@ -633,7 +638,7 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
           text: finalText.trim() || "(No reply text returned)",
           sources: metadata?.sources,
           usedDocs: metadata?.usedDocs,
-          fallback: metadata?.meta?.fallback,
+          fallback: isFallbackHeader,
           buttons: Array.isArray(metadata?.buttons)
             ? metadata.buttons
             : undefined,
@@ -656,6 +661,12 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
 
         // Notify parent widget if embedded
         sendToParent('message', updatedMessage);
+        // Toggle escalation form if fallback, only for non-demo bots
+        if (isFallbackHeader && botId !== "demo") {
+          // Check if user has already provided contact info in history
+          const hasContact = currentMessages.some((m) => /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(m.text) || /(?:\+?\d[\d\s-]{6,})/.test(m.text));
+          if (!hasContact) setShowEscalationForm(true);
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Network error";
@@ -680,6 +691,25 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit(input);
+  };
+
+  const handleEscalationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parts: string[] = [];
+    parts.push("Please have a human contact me.");
+    if (contactEmail.trim()) parts.push(`Email: ${contactEmail.trim()}`);
+    if (contactPhone.trim()) parts.push(`Phone: ${contactPhone.trim()}`);
+    if (contactIssue.trim()) parts.push(`Issue: ${contactIssue.trim()}`);
+    const composed = parts.join(" \n");
+    if (!contactEmail.trim() && !contactPhone.trim()) {
+      alert("Please provide at least an email or phone.");
+      return;
+    }
+    setShowEscalationForm(false);
+    setContactEmail("");
+    setContactPhone("");
+    setContactIssue("");
+    handleSubmit(composed);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -1001,6 +1031,38 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
               </button>
             ))}
           </div>
+        )}
+        {showEscalationForm && (
+          <form className="anemo-escalation" onSubmit={handleEscalationSubmit}>
+            <div className="escalation-title">Need human help? Share contact and issue.</div>
+            <div className="escalation-grid">
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="Email"
+                className="escalation-input"
+              />
+              <input
+                type="text"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="Phone"
+                className="escalation-input"
+              />
+            </div>
+            <textarea
+              value={contactIssue}
+              onChange={(e) => setContactIssue(e.target.value)}
+              placeholder="Brief summary of the issue"
+              rows={2}
+              className="escalation-textarea"
+            />
+            <div className="escalation-actions">
+              <button type="submit" className="send-btn">Send to team</button>
+              <button type="button" className="anemo-cancel" onClick={() => setShowEscalationForm(false)}>Cancel</button>
+            </div>
+          </form>
         )}
         <form className="anemo-composer" onSubmit={handleFormSubmit}>
           <div className="composer-inner">
@@ -1469,6 +1531,49 @@ export default function ChatWidget({ onClose }: { onClose?: () => void }) {
         .anemo-button.secondary:hover {
           background: #4b5563;
           color: #fff;
+        }
+        .anemo-escalation {
+          border-top: 1px solid #2b3037;
+          padding: 12px 14px;
+          background: #262b33;
+        }
+        .escalation-title {
+          color: #e5e7eb;
+          font-size: 0.92rem;
+          margin-bottom: 8px;
+        }
+        .escalation-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .escalation-input {
+          background: #2d333b;
+          color: #fff;
+          border: 1px solid #38404a;
+          border-radius: 8px;
+          padding: 8px 10px;
+        }
+        .escalation-textarea {
+          background: #2d333b;
+          color: #fff;
+          border: 1px solid #38404a;
+          border-radius: 8px;
+          padding: 8px 10px;
+          margin-bottom: 8px;
+        }
+        .escalation-actions {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        .anemo-cancel {
+          background: transparent;
+          border: 1px solid #3a414b;
+          color: #cbd5e1;
+          border-radius: 8px;
+          padding: 8px 12px;
         }
       `}</style>
     </div>

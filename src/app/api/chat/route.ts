@@ -159,6 +159,24 @@ export async function POST(req: NextRequest) {
     const userText = lastUser.content.trim();
     if (!userText) return jsonError("Empty user message");
 
+    const injectionPatterns = [
+      /ignore\s+previous\s+instructions/i,
+      /disregard\s+the\s+rules/i,
+      /reveal\s+system\s+prompt/i,
+      /expose\s+secrets/i,
+      /role:\s*system/i,
+    ];
+    if (injectionPatterns.some((re) => re.test(userText))) {
+      return jsonError("Potential prompt injection detected", 400);
+    }
+
+    const moderationPatterns = [
+      /\b(hate|racist|violent|self\s*harm|suicide)\b/i,
+    ];
+    if (moderationPatterns.some((re) => re.test(userText))) {
+      return jsonError("Content not allowed by safety policy", 400);
+    }
+
     log("start", {
       botId,
       mode,
@@ -466,6 +484,12 @@ export async function POST(req: NextRequest) {
     };
 
     // 6. Lead persistence (if any)
+    const explicitEscalation = /\b(human|agent|representative|support|talk to|call|contact)\b/i.test(userText);
+    const needsHumanSupport = Boolean(fallback || explicitEscalation);
+
+    if (needsHumanSupport && !leadDetection?.email && !leadDetection?.phone) {
+      finalReply = `${finalReply}\n\nTo connect you with a human, please share your email or phone and a brief summary of the issue.`.trim();
+    }
     if (leadDetection) {
       await persistLeadIfAny({
         origin: mode,
@@ -478,6 +502,7 @@ export async function POST(req: NextRequest) {
         intentKeywords,
         intentPrompt: leadDetection.intentPrompt,
         followUpRequest: leadDetection.followUpRequest,
+        needsHumanSupport,
         conversation: [], // Optionally pass recent messages here
       });
     }

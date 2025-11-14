@@ -87,3 +87,26 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
 process.env.OPENAI_API_KEY = 'test-openai-key'
 process.env.RAZORPAY_KEY_ID = 'test-razorpay-id'
+
+// Minimal mock for Next.js server module to allow API route imports in Jest
+jest.mock('next/server', () => {
+  return {
+    NextResponse: {
+      json: (body, init) => new Response(JSON.stringify(body), { status: (init && init.status) || 200, headers: (init && init.headers) || {} }),
+    },
+    NextRequest: class {
+      constructor(url, init) {
+        this.url = url;
+        this.headers = new Headers(init && init.headers ? init.headers : {});
+        this._body = init && init.body ? init.body : null;
+      }
+      json() {
+        try {
+          return Promise.resolve(typeof this._body === 'string' ? JSON.parse(this._body) : this._body || {});
+        } catch {
+          return Promise.reject(new Error('Invalid JSON'));
+        }
+      }
+    },
+  };
+});

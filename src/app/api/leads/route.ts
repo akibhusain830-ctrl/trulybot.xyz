@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const workspaceId = searchParams.get('workspaceId');
   const status = searchParams.get('status');
+  const escalated = searchParams.get('escalated');
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const pageSize = Math.min(100, parseInt(searchParams.get('pageSize') || '20', 10));
   const from = (page - 1) * pageSize;
@@ -45,6 +46,10 @@ export async function GET(req: NextRequest) {
 
   if (status) {
     query = query.eq('status', status);
+  }
+
+  if (escalated === 'true') {
+    query = query.contains('meta', { needsHumanSupport: true });
   }
 
   const { data, error, count } = await query;

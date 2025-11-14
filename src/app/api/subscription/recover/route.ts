@@ -62,7 +62,7 @@ async function findUsersNeedingRecovery(): Promise<Array<{
       `)
       .eq('status', 'completed')
       .neq('profiles.subscription_status', 'active')
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false });
 
     if (error) {

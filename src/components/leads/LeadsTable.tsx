@@ -22,6 +22,7 @@ export interface Lead {
 
 interface Props {
   workspaceId: string | null; // 'demo' or null or actual workspace id
+  escalatedOnly?: boolean;
 }
 
 type ConversationCache = Record<string, Array<{ role: string; text: string }> | null>;
@@ -38,7 +39,7 @@ const getAuthHeaders = async () => {
   };
 };
 
-export default function LeadsTable({ workspaceId }: Props) {
+export default function LeadsTable({ workspaceId, escalatedOnly = false }: Props) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
@@ -61,6 +62,7 @@ export default function LeadsTable({ workspaceId }: Props) {
       });
       if (workspaceId) params.set('workspaceId', workspaceId);
       if (statusFilter) params.set('status', statusFilter);
+      if (escalatedOnly) params.set('escalated', 'true');
       
       const res = await fetch(`/api/leads?${params.toString()}`, {
         headers: {
@@ -77,7 +79,7 @@ export default function LeadsTable({ workspaceId }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, workspaceId, statusFilter]);
+  }, [page, pageSize, workspaceId, statusFilter, escalatedOnly]);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
@@ -258,7 +260,14 @@ export default function LeadsTable({ workspaceId }: Props) {
                   <span className="text-slate-300">{l.origin}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={l.status} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={l.status} />
+                    {l.meta?.needsHumanSupport && (
+                      <span className="px-2 py-0.5 rounded-md bg-yellow-800/40 text-[10px] text-yellow-200">
+                        needs human support
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-slate-400">
                   {l.intent_keywords && l.intent_keywords.length

@@ -84,7 +84,10 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
     // Handle different webhook events
     switch (payload.event) {
       case 'payment.authorized':
-        return await handlePaymentAuthorized(payload, requestId);
+        return createSuccessResponse(
+          { acknowledged: true },
+          { message: 'Payment authorized event processed', requestId }
+        );
 
       case 'payment.failed':
         return await handlePaymentFailed(payload, requestId);

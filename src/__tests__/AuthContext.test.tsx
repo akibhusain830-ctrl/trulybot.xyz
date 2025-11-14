@@ -6,13 +6,14 @@ import { AuthProvider, useAuth } from '@/context/AuthContext'
 jest.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: null }
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: null },
+        error: null,
       }),
       onAuthStateChange: jest.fn().mockReturnValue({
         data: { subscription: { unsubscribe: jest.fn() } }
       }),
-      signOut: jest.fn().mockResolvedValue({ error: null })
+      signOut: jest.fn().mockResolvedValue({ error: null }),
     },
     from: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
@@ -81,13 +82,10 @@ describe('AuthContext', () => {
       email: 'test@example.com'
     }
     
-    // Mock authenticated session
-    require('@/lib/supabaseClient').supabase.auth.getSession.mockResolvedValueOnce({
-      data: { 
-        session: { 
-          user: mockUser 
-        } 
-      }
+    // Mock authenticated user
+    require('@/lib/supabaseClient').supabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: mockUser },
+      error: null,
     })
     
     render(

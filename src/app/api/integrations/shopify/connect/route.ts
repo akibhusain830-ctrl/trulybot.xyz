@@ -295,9 +295,27 @@ function normalizeUrl(url: string): string {
  * Encrypt credentials for secure storage
  */
 async function encryptCredential(credential: string): Promise<string> {
-  // In production, use proper encryption
-  // For now, return base64 encoded (replace with actual encryption)
-  return Buffer.from(credential).toString('base64');
+  try {
+    const keyRaw = process.env.INTEGRATIONS_ENCRYPTION_KEY || '';
+    if (!keyRaw || keyRaw.length < 32) {
+      return Buffer.from(credential).toString('base64');
+    }
+    const key = Buffer.from(keyRaw.slice(0, 32));
+    const { createCipheriv, randomBytes } = await import('crypto');
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    const encrypted = Buffer.concat([cipher.update(credential, 'utf8'), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return [
+      'v1',
+      'gcm',
+      iv.toString('base64'),
+      encrypted.toString('base64'),
+      tag.toString('base64'),
+    ].join(':');
+  } catch (_) {
+    return Buffer.from(credential).toString('base64');
+  }
 }
 
 /**

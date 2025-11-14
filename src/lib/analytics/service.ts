@@ -3,6 +3,58 @@ import { config } from '@/lib/config/secrets';
 import { logger } from '@/lib/logger';
 import { BotAnalyticsEvent, BotAnalyticsEventType, ResponseType, AnalyticsSummary, ConversationMetrics } from './types';
 
+export class AnalyticsEventBuilder {
+  private event: any;
+  constructor(workspaceId: string, eventType: string, eventCategory: string) {
+    this.event = {
+      workspace_id: workspaceId,
+      event_type: eventType,
+      event_category: eventCategory
+    };
+  }
+  setUser(userId: string, sessionId?: string): AnalyticsEventBuilder {
+    this.event.user_id = userId;
+    this.event.session_id = sessionId;
+    return this;
+  }
+  setMessage(content: string, role?: string): AnalyticsEventBuilder {
+    this.event.message_content = content;
+    this.event.message_role = role;
+    return this;
+  }
+  setResponse(response: string, timeMs?: number, success?: boolean): AnalyticsEventBuilder {
+    this.event.response_content = response;
+    if (typeof timeMs === 'number') this.event.response_time_ms = timeMs;
+    if (typeof success === 'boolean') this.event.success = success;
+    return this;
+  }
+  setPerformance(responseTimeMs: number, satisfactionScore: number, knowledgeBaseUsed?: boolean): AnalyticsEventBuilder {
+    this.event.response_time_ms = responseTimeMs;
+    this.event.satisfaction_score = satisfactionScore;
+    this.event.knowledge_base_used = knowledgeBaseUsed === true;
+    return this;
+  }
+  setAnalytics(intentCategory: string, businessValue?: string, engagementScore?: number): AnalyticsEventBuilder {
+    this.event.intent_category = intentCategory;
+    if (businessValue) this.event.business_value = businessValue;
+    if (typeof engagementScore === 'number') this.event.engagement_score = engagementScore;
+    return this;
+  }
+  setBusiness(intentCategory: string, businessValue: string, leadStatus?: string): AnalyticsEventBuilder {
+    this.event.intent_category = intentCategory;
+    this.event.business_value = businessValue;
+    this.event.lead_status = leadStatus;
+    return this;
+  }
+  setMetadata(metadata: Record<string, any>): AnalyticsEventBuilder {
+    this.event.metadata = { ...(this.event.metadata || {}), ...metadata };
+    return this;
+  }
+  build(): any {
+    return { ...this.event, created_at: new Date().toISOString() };
+  }
+}
+
 // Use admin client for analytics (system-level operations)
 const supabaseAdmin = createClient(
   config.supabase.url,

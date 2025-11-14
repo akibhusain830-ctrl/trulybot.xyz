@@ -5,10 +5,10 @@ import { describe, test, expect, beforeAll } from '@jest/globals';
 import { createClient } from '@supabase/supabase-js';
 
 // Import all our services
-import { BotAnalyticsService, AnalyticsEventBuilder } from '../src/lib/analytics/service';
-import { ChatSessionService, SessionBuilder } from '../src/lib/sessions/service';
-import { BillingHistoryService, InvoiceBuilder } from '../src/lib/billing/service';
-import { AuditTrailService, AuditEventBuilder } from '../src/lib/audit/service';
+import { BotAnalyticsService, AnalyticsEventBuilder } from './src/lib/analytics/service';
+import { ChatSessionService, SessionBuilder } from './src/lib/sessions/service';
+import { BillingHistoryService, InvoiceBuilder } from './src/lib/billing/service';
+import { AuditTrailService, AuditEventBuilder } from './src/lib/audit/service';
 
 // Mock test data
 const TEST_WORKSPACE_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -90,7 +90,7 @@ describe('Enterprise Database Services', () => {
     });
 
     test('should create message tracker', () => {
-      const { SessionMessageTracker } = require('../src/lib/sessions/service');
+      const { SessionMessageTracker } = require('./src/lib/sessions/service');
       const tracker = new SessionMessageTracker();
       
       tracker.incrementUserMessage();
@@ -143,7 +143,7 @@ describe('Enterprise Database Services', () => {
     });
 
     test('should create payment status tracker', () => {
-      const { PaymentStatusTracker } = require('../src/lib/billing/service');
+      const { PaymentStatusTracker } = require('./src/lib/billing/service');
       const tracker = new PaymentStatusTracker('inv-123');
       
       const processing = tracker.markProcessing();
@@ -196,7 +196,7 @@ describe('Enterprise Database Services', () => {
     });
 
     test('should analyze security threats', () => {
-      const { SecurityAnalyzer } = require('../src/lib/audit/service');
+      const { SecurityAnalyzer } = require('./src/lib/audit/service');
       
       // Test low risk event
       const lowRiskEvent = {
@@ -220,7 +220,7 @@ describe('Enterprise Database Services', () => {
     });
 
     test('should detect anomalies', () => {
-      const { SecurityAnalyzer } = require('../src/lib/audit/service');
+      const { SecurityAnalyzer } = require('./src/lib/audit/service');
       
       const currentEvent = {
         ip_address: '192.168.1.100',

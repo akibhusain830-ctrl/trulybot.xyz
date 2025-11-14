@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/lib/logger';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export interface HealthMetrics {
   timestamp: string;
@@ -171,6 +172,30 @@ class MonitoringService {
       this.metrics = [];
     }
   }
+
+  async flushToSupabase(): Promise<number> {
+    try {
+      if (!this.metrics.length) return 0;
+      const records = this.metrics.map(m => ({
+        operation: m.operation,
+        duration: m.duration,
+        success: m.success,
+        timestamp: m.timestamp,
+        metadata: m.metadata || null,
+      }));
+      const { error } = await supabaseAdmin
+        .from('monitoring_metrics')
+        .insert(records);
+      if (error) {
+        logger.warn('Monitoring flush failed', { error: error.message });
+        return 0;
+      }
+      this.metrics = [];
+      return records.length;
+    } catch (e) {
+      return 0;
+    }
+  }
 }
 
 // Global monitoring instance
@@ -286,3 +311,7 @@ export function trackApplicationStart(): void {
 }
 
 export { monitoring };
+
+export async function flushMonitoring(): Promise<number> {
+  return monitoring.flushToSupabase();
+}

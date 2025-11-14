@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { ProfileManager } from '@/lib/profile-manager';
+import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { paymentRateLimit } from '@/lib/redisRateLimit';
 import { validateRequest, paymentVerificationSchema } from '@/lib/validation';
@@ -142,6 +143,28 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
         return createErrorResponse('Subscription activation failed', 500, {
           code: 'SUBSCRIPTION_ACTIVATION_FAILED',
           requestId,
+        });
+      }
+
+      const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      const { error: orderUpdateError } = await admin
+        .from('orders')
+        .update({
+          status: 'completed',
+          razorpay_payment_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('razorpay_order_id', razorpay_order_id);
+
+      if (orderUpdateError) {
+        return createErrorResponse('Order update failed', 500, {
+          code: 'ORDER_UPDATE_FAILED',
+          requestId,
+          details: orderUpdateError.message,
         });
       }
 
