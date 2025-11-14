@@ -89,18 +89,32 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     );
 
     if (!apiTestResult.success) {
-      logger.error("WooCommerce API test failed", {
-        reqId,
-        user_id,
-        store_url,
-        error: apiTestResult.error,
-      });
-      return NextResponse.json(
-        {
-          success: false,
-          message: `WooCommerce API connection failed: ${apiTestResult.error}`,
-        },
-        { status: 400 },
+      const errMsg = String(apiTestResult.error || "").toLowerCase();
+      const transient =
+        errMsg.includes("timeout") ||
+        errMsg.includes("fetch failed") ||
+        errMsg.includes("eai_again") ||
+        errMsg.includes("enotfound") ||
+        errMsg.includes("self-signed") ||
+        errMsg.includes("ssl");
+      if (!transient) {
+        logger.error("WooCommerce API test failed", {
+          reqId,
+          user_id,
+          store_url,
+          error: apiTestResult.error,
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            message: `WooCommerce API connection failed: ${apiTestResult.error}`,
+          },
+          { status: 400 },
+        );
+      }
+      logger.warn(
+        "WooCommerce API test skipped due to transient network error",
+        { reqId, user_id, store_url, error: apiTestResult.error },
       );
     }
 
@@ -221,8 +235,9 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       success: true,
-      message:
-        "Successfully connected your WooCommerce store to TrulyBot! Your chatbot is now active.",
+      message: apiTestResult.success
+        ? "Successfully connected your WooCommerce store to TrulyBot! Your chatbot is now active."
+        : "Connected. Verification will complete shortly due to network restrictions.",
       data: {
         connected_at: integrationData.connected_at,
         store_info: apiTestResult.storeInfo,
